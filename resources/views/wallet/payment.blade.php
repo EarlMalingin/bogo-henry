@@ -219,6 +219,90 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin: 0 0 15px;
+            color: #1f2d3d;
+            font-size: 20px;
+        }
+
+        .modal p {
+            margin: 0 0 20px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-group input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            background: #f9fafb;
+            cursor: pointer;
+        }
+
+        .form-group input[type="file"]:hover {
+            border-color: #4a90e2;
+            background: #f0f7ff;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 0 0.5rem;
@@ -293,7 +377,12 @@
                     <li>Scan the QR code above</li>
                     <li>Enter the amount: ₱{{ number_format($transaction->amount, 2) }}</li>
                     <li>Confirm your payment</li>
+                    <li><strong>After payment:</strong> Upload a screenshot of your payment confirmation</li>
                 </ul>
+                
+                <div style="background:#fff3cd;border:1px solid #ffeaa7;border-radius:8px;padding:12px;margin-top:15px;">
+                    <strong>⚠️ Important:</strong> After completing your payment, you must upload a screenshot of your GCash payment confirmation. Your transaction will remain pending until admin approval.
+                </div>
             </div>
 
             <div class="payment-actions">
@@ -301,10 +390,42 @@
                     <i class="fas fa-times"></i>
                     Cancel Payment
                 </a>
-                <button class="btn btn-primary" onclick="checkPaymentStatus()">
-                    <i class="fas fa-check"></i>
-                    I've Paid
+                <button class="btn btn-primary" onclick="showPaymentProofModal()">
+                    <i class="fas fa-camera"></i>
+                    Upload Payment Proof
                 </button>
+            </div>
+
+            <!-- Payment Proof Upload Modal -->
+            <div id="paymentProofModal" class="modal" style="display:none;">
+                <div class="modal-content">
+                    <h3>Upload Payment Proof</h3>
+                    <p>Please upload a screenshot of your payment confirmation from GCash.</p>
+                    
+                    <form id="paymentProofForm" method="POST" action="{{ Auth::guard('student')->check() ? route('student.wallet.upload-payment-proof') : route('tutor.wallet.upload-payment-proof') }}" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="transaction_id" value="{{ $transaction->id }}">
+                        
+                        <div class="form-group">
+                            <label for="payment_proof">Payment Screenshot:</label>
+                            <input type="file" id="payment_proof" name="payment_proof" accept="image/*" required>
+                            <small>Upload a screenshot showing your payment confirmation (Max: 5MB)</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Additional Notes (Optional):</label>
+                            <textarea id="description" name="description" rows="3" placeholder="Any additional information about your payment..."></textarea>
+                        </div>
+                        
+                        <div class="modal-buttons">
+                            <button type="button" onclick="hidePaymentProofModal()" class="btn btn-secondary">Cancel</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload"></i>
+                                Upload Proof
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <div class="countdown" id="countdown">
@@ -413,8 +534,21 @@
             }, 3000);
         }
 
-        // Manual check button
-        document.querySelector('.btn-primary').addEventListener('click', checkPaymentStatus);
+        function showPaymentProofModal() {
+            document.getElementById('paymentProofModal').style.display = 'flex';
+        }
+
+        function hidePaymentProofModal() {
+            document.getElementById('paymentProofModal').style.display = 'none';
+            document.getElementById('paymentProofForm').reset();
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('paymentProofModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hidePaymentProofModal();
+            }
+        });
     </script>
 </body>
 </html>

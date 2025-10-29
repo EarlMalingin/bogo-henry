@@ -62,6 +62,19 @@ Route::middleware('web')->group(function () {
         Route::post('/admin/users/toggle', [AdminUserController::class, 'toggleActive'])->name('admin.users.toggle');
         Route::get('/admin/users/{type}/{id}', [AdminUserController::class, 'show'])->name('admin.users.show');
         Route::get('/admin/users/{type}/{id}/detail', [AdminUserController::class, 'detail'])->name('admin.users.detail');
+
+        // Admin wallet management
+        Route::get('/admin/wallet', [App\Http\Controllers\AdminWalletController::class, 'index'])->name('admin.wallet.index');
+        Route::get('/admin/wallet/transactions', [App\Http\Controllers\AdminWalletController::class, 'transactions'])->name('admin.wallet.transactions');
+        Route::get('/admin/wallet/pending-payouts', [App\Http\Controllers\AdminWalletController::class, 'pendingPayouts'])->name('admin.wallet.pending-payouts');
+        Route::post('/admin/wallet/payouts/{id}/approve', [App\Http\Controllers\AdminWalletController::class, 'approvePayout'])->name('admin.wallet.approve-payout');
+        Route::post('/admin/wallet/payouts/{id}/reject', [App\Http\Controllers\AdminWalletController::class, 'rejectPayout'])->name('admin.wallet.reject-payout');
+        Route::get('/admin/wallet/pending-cash-ins', [App\Http\Controllers\AdminWalletController::class, 'pendingCashIns'])->name('admin.wallet.pending-cash-ins');
+        Route::post('/admin/wallet/cash-ins/{id}/approve', [App\Http\Controllers\AdminWalletController::class, 'approveCashIn'])->name('admin.wallet.approve-cash-in');
+        Route::post('/admin/wallet/cash-ins/{id}/reject', [App\Http\Controllers\AdminWalletController::class, 'rejectCashIn'])->name('admin.wallet.reject-cash-in');
+        Route::get('/admin/wallet/user-wallets', [App\Http\Controllers\AdminWalletController::class, 'userWallets'])->name('admin.wallet.user-wallets');
+        Route::get('/admin/wallet/user-wallet/{userType}/{userId}', [App\Http\Controllers\AdminWalletController::class, 'showUserWallet'])->name('admin.wallet.user-wallet-detail');
+        Route::post('/admin/wallet/manual-transaction', [App\Http\Controllers\AdminWalletController::class, 'manualTransaction'])->name('admin.wallet.manual-transaction');
     });
 });
 
@@ -127,6 +140,7 @@ Route::middleware(['auth:student'])->group(function () {
             Route::get('/student/wallet/cash-out', [App\Http\Controllers\SecureWalletController::class, 'showCashOut'])->name('student.wallet.cash-out');
             Route::post('/student/wallet/cash-out', [App\Http\Controllers\SecureWalletController::class, 'cashOut'])->name('student.wallet.cash-out.submit');
             Route::get('/student/wallet/balance', [App\Http\Controllers\SecureWalletController::class, 'getBalance'])->name('student.wallet.balance');
+            Route::post('/student/wallet/upload-payment-proof', [App\Http\Controllers\SecureWalletController::class, 'uploadPaymentProof'])->name('student.wallet.upload-payment-proof');
         });
    
 });
@@ -180,6 +194,7 @@ Route::middleware(['auth:tutor'])->group(function () {
             Route::get('/tutor/wallet/cash-out', [App\Http\Controllers\SecureWalletController::class, 'showCashOut'])->name('tutor.wallet.cash-out');
             Route::post('/tutor/wallet/cash-out', [App\Http\Controllers\SecureWalletController::class, 'cashOut'])->name('tutor.wallet.cash-out.submit');
             Route::get('/tutor/wallet/balance', [App\Http\Controllers\SecureWalletController::class, 'getBalance'])->name('tutor.wallet.balance');
+            Route::post('/tutor/wallet/upload-payment-proof', [App\Http\Controllers\SecureWalletController::class, 'uploadPaymentProof'])->name('tutor.wallet.upload-payment-proof');
         });
 });
 

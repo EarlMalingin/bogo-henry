@@ -11,7 +11,7 @@
         .topbar{background:linear-gradient(90deg,var(--primary),var(--secondary));color:#fff}
         .nav{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:14px 16px}
         .logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
-        .logo img{height:40px}
+        .logo-img{height:70px}
         .tabs{display:flex;gap:8px;margin-left:auto;margin-right:12px}
         .tab{color:#eaf2ff;text-decoration:none;padding:8px 14px;border-radius:999px}
         .tab.active{background:rgba(255,255,255,.22);backdrop-filter:blur(4px)}
@@ -40,7 +40,7 @@
     <div class="topbar">
         <div class="nav">
             <a class="logo" href="#">
-                <img src="{{ asset('images/MentorHub.png') }}" alt="MentorHub">
+                <img src="{{ asset('images/MentorHub.png') }}" alt="MentorHub" class="logo-img">
             </a>
             <div class="tabs">
                 <a class="tab active" href="{{ route('admin.dashboard') }}">Dashboard</a>
@@ -74,14 +74,16 @@
                     <div class="label">upcoming today</div>
                 </div>
             </div>
+            <a href="{{ route('admin.wallet.index') }}" style="text-decoration:none;color:inherit">
             <div class="card">
                 <h4>Wallet</h4>
                 <p>Inspect transactions and payouts.</p>
                 <div class="stat">
-                    <div class="num">{{ number_format($pendingPayouts ?? 0) }}</div>
-                    <div class="label">pending payouts</div>
+                    <div class="num">{{ number_format(($pendingPayouts ?? 0) + ($pendingCashIns ?? 0)) }}</div>
+                    <div class="label">pending requests</div>
                 </div>
             </div>
+            </a>
         </div>
 
         <div class="row">

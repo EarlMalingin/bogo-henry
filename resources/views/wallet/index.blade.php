@@ -412,6 +412,11 @@
             color: #FF9800;
         }
 
+        .status-pending_approval {
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+
         .status-failed {
             background: #FFEBEE;
             color: #F44336;
@@ -614,7 +619,7 @@
                             @endif
                             <br>
                             <span class="transaction-status status-{{ $transaction->status }}">
-                                {{ $transaction->status }}
+                                {{ $transaction->status === 'pending_approval' ? 'Pending Approval' : ucfirst(str_replace('_', ' ', $transaction->status)) }}
                             </span>
                         </div>
                     </div>

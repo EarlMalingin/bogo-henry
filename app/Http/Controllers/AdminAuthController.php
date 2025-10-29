@@ -52,6 +52,10 @@ class AdminAuthController extends Controller
             ->where('status', 'pending')
             ->count();
 
+        $pendingCashIns = WalletTransaction::where('type', 'cash_in')
+            ->where('status', 'pending_approval')
+            ->count();
+
         $recentSessions = Session::with(['student', 'tutor'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
@@ -81,7 +85,7 @@ class AdminAuthController extends Controller
         $recentUsers = $recentStudents->merge($recentTutors)->sortByDesc('created_at')->values()->take(8);
 
         return view('admin.dashboard', compact(
-            'totalUsers', 'upcomingToday', 'pendingPayouts', 'recentSessions', 'recentWallet', 'recentUsers'
+            'totalUsers', 'upcomingToday', 'pendingPayouts', 'pendingCashIns', 'recentSessions', 'recentWallet', 'recentUsers'
         ));
     }
 }

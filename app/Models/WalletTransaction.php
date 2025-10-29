@@ -19,14 +19,18 @@ class WalletTransaction extends Model
         'paymongo_payment_intent_id',
         'paymongo_source_id',
         'description',
-        'metadata'
+        'metadata',
+        'payment_proof_path',
+        'payment_proof_description',
+        'payment_proof_uploaded_at'
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'balance_before' => 'decimal:2',
         'balance_after' => 'decimal:2',
-        'metadata' => 'array'
+        'metadata' => 'array',
+        'payment_proof_uploaded_at' => 'datetime'
     ];
 
     /**
@@ -72,6 +76,24 @@ class WalletTransaction extends Model
     public function isFailed(): bool
     {
         return $this->status === 'failed';
+    }
+
+    public function isPendingApproval(): bool
+    {
+        return $this->status === 'pending_approval';
+    }
+
+    public function hasPaymentProof(): bool
+    {
+        return !empty($this->payment_proof_path);
+    }
+
+    public function getPaymentProofUrl(): ?string
+    {
+        if ($this->payment_proof_path) {
+            return asset('storage/' . $this->payment_proof_path);
+        }
+        return null;
     }
 
     public function markAsCompleted(): void

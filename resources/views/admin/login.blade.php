@@ -45,7 +45,7 @@
         .brand {
             display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
         }
-        .brand img { height: 40px; }
+        .brand img { height: 70px; }
         .brand h2 { margin: 0; font-size: 22px; color: #1f2d3d; }
         .hint { color:#6b7280; font-size: 13px; margin-bottom: 16px; }
         .alert { background:#fde7ea; color:#b00020; padding:10px 12px; border-radius:10px; margin-bottom:12px; }

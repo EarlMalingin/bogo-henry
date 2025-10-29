@@ -118,24 +118,25 @@ class WebhookController extends Controller
 
         DB::beginTransaction();
         try {
-            // Add funds to wallet
-            $transaction->wallet->addFunds($transaction->amount, 'cash_in', [
-                'payment_intent_id' => $paymentIntentId,
-                'webhook_verified' => true,
-                'webhook_timestamp' => now()
-            ]);
-
-            // Update transaction status
+            // Update transaction to pending admin approval instead of adding funds immediately
             $transaction->update([
-                'status' => 'completed',
-                'reference_number' => $paymentIntentId
+                'status' => 'pending_approval',
+                'reference_number' => $paymentIntentId,
+                'metadata' => array_merge($transaction->metadata ?? [], [
+                    'payment_intent_id' => $paymentIntentId,
+                    'webhook_verified' => true,
+                    'webhook_timestamp' => now(),
+                    'approval_requested_at' => now()
+                ])
             ]);
 
             DB::commit();
             
-            Log::info('Payment paid processed successfully', [
+            Log::info('Payment paid - pending admin approval', [
                 'transaction_id' => $transaction->id,
-                'amount' => $transaction->amount
+                'amount' => $transaction->amount,
+                'user_id' => $transaction->wallet->user_id,
+                'user_type' => $transaction->wallet->user_type
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

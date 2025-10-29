@@ -10,7 +10,8 @@
         body{margin:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.92)),url('{{ asset('images/Uc-background.jpg') }}') no-repeat center/cover fixed;min-height:100vh}
         .topbar{background:linear-gradient(90deg,var(--primary),var(--secondary));color:#fff}
         .nav{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:14px 16px}
-        .logo img{height:36px}
+        .logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
+        .logo-img{height:70px}
         .tabs{display:flex;gap:8px;margin-left:auto}
         .tab{color:#eaf2ff;text-decoration:none;padding:8px 14px;border-radius:999px}
         .tab.active{background:rgba(255,255,255,.22)}
@@ -32,7 +33,7 @@
 <body>
     <div class="topbar">
         <div class="nav">
-            <a class="logo" href="{{ route('admin.dashboard') }}"><img src="{{ asset('images/MentorHub.png') }}" alt="logo"></a>
+            <a class="logo" href="{{ route('admin.dashboard') }}"><img src="{{ asset('images/MentorHub.png') }}" alt="logo" class="logo-img"></a>
             <div class="tabs">
                 <a class="tab" href="{{ route('admin.dashboard') }}">Dashboard</a>
                 <span class="tab active">Users</span>
