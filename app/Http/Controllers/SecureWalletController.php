@@ -290,22 +290,23 @@ class SecureWalletController extends Controller
                 'qr_code_url' => 'data:image/svg+xml;base64,' . base64_encode('<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="200" fill="#0070ba"/><text x="100" y="100" text-anchor="middle" fill="white" font-family="Arial" font-size="14">GCash QR</text><text x="100" y="120" text-anchor="middle" fill="white" font-family="Arial" font-size="12">₱' . number_format($amount, 2) . '</text></svg>')
             ];
             
-            // Create pending transaction
+            // Create pending approval transaction (requires payment proof upload)
             $transaction = $wallet->transactions()->create([
                 'type' => 'cash_in',
                 'amount' => $amount,
                 'balance_before' => $wallet->balance,
                 'balance_after' => $wallet->balance,
-                'status' => 'pending',
+                'status' => 'pending_approval',
                 'payment_method' => 'gcash',
                 'paymongo_payment_intent_id' => $simulatedPaymentIntent['payment_intent_id'],
                 'paymongo_source_id' => $simulatedSource['source_id'],
-                'description' => 'Cash in via GCash QR (Simulated)',
+                'description' => 'Cash in via GCash QR (Simulated) - Payment proof required',
                 'metadata' => [
                     'checkout_url' => $simulatedSource['checkout_url'],
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
-                    'simulated' => true
+                    'simulated' => true,
+                    'requires_payment_proof' => true
                 ]
             ]);
 
@@ -567,41 +568,31 @@ class SecureWalletController extends Controller
                 return redirect()->route($walletRoute)->with('error', 'Transaction not found.');
             }
 
-            DB::beginTransaction();
-            try {
-                // Add funds to wallet
-                $transaction->wallet->addFunds($transaction->amount, 'cash_in', [
-                    'payment_intent_id' => $paymentIntentId,
-                    'verified' => true,
-                    'simulated' => true
+            // Don't auto-complete simulated payments - they need admin approval with payment proof
+            // Just mark that payment was initiated/verified
+            if ($transaction->status === 'pending_approval') {
+                $transaction->update([
+                    'metadata' => array_merge($transaction->metadata ?? [], [
+                        'payment_verified' => true,
+                        'payment_verified_at' => now()->toISOString()
+                    ])
                 ]);
 
-                $transaction->markAsCompleted();
-                
-                $this->logAudit('simulated_payment_success', [
+                $this->logAudit('simulated_payment_verified', [
                     'transaction_id' => $transaction->id,
                     'amount' => $transaction->amount,
-                    'payment_intent_id' => $paymentIntentId,
-                    'new_balance' => $transaction->wallet->fresh()->balance
+                    'payment_intent_id' => $paymentIntentId
                 ]);
-                
-                DB::commit();
 
                 $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
                 $walletRoute = $userType . '.wallet';
-                return redirect()->route($walletRoute)->with('success', 'Payment successful! Funds have been added to your wallet.');
-
-            } catch (\Exception $e) {
-                DB::rollBack();
-                
-                $this->logAudit('simulated_payment_processing_failed', [
-                    'transaction_id' => $transaction->id,
-                    'payment_intent_id' => $paymentIntentId,
-                    'error' => $e->getMessage()
-                ]);
-                
-                return redirect()->route('wallet.index')->with('error', 'Failed to process payment: ' . $e->getMessage());
+                return redirect()->route($walletRoute)->with('success', 'Payment verified! Please upload your payment proof and wait for admin approval.');
             }
+            
+            // If already completed or failed, just redirect
+            $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+            $walletRoute = $userType . '.wallet';
+            return redirect()->route($walletRoute);
         }
 
         // Verify webhook signature if provided
@@ -832,8 +823,8 @@ class SecureWalletController extends Controller
             return back()->with('error', 'Unauthorized access to transaction.');
         }
 
-        // Verify transaction is in pending approval status
-        if ($transaction->status !== 'pending_approval') {
+        // Verify transaction is in pending approval status (or pending for backward compatibility)
+        if (!in_array($transaction->status, ['pending_approval', 'pending'])) {
             return back()->with('error', 'Transaction is not in pending approval status.');
         }
 
@@ -842,13 +833,16 @@ class SecureWalletController extends Controller
             // Store the payment proof image
             $imagePath = $request->file('payment_proof')->store('payment-proofs', 'public');
 
-            // Update transaction with payment proof
+            // Update transaction with payment proof and ensure status is pending_approval
             $transaction->update([
                 'payment_proof_path' => $imagePath,
                 'payment_proof_description' => $request->description,
                 'payment_proof_uploaded_at' => now(),
-                'status' => 'pending_approval' // Keep as pending for admin review
+                'status' => 'pending_approval' // Ensure status is pending_approval for admin review
             ]);
+
+            // Refresh the model to ensure we have the latest data
+            $transaction->refresh();
 
             $this->logAudit('payment_proof_uploaded', [
                 'transaction_id' => $transaction->id,

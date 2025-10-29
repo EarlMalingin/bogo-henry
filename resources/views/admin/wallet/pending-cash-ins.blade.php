@@ -104,15 +104,17 @@
                             </td>
                             <td>{{ ucfirst($cashIn->payment_method ?? 'GCash') }}</td>
                             <td>
-                                @if($cashIn->hasPaymentProof() && !empty($cashIn->payment_proof_path))
-                                    <button onclick="showPaymentProofModal('{{ $cashIn->getPaymentProofUrl() }}', '{{ $cashIn->payment_proof_description ?? 'No description provided' }}')" class="btn btn-primary" style="font-size:12px;padding:4px 8px;">
+                                @php
+                                    // Check payment proof directly
+                                    $hasProof = !empty($cashIn->payment_proof_path);
+                                    $proofUrl = $hasProof ? asset('storage/' . $cashIn->payment_proof_path) : null;
+                                @endphp
+                                @if($hasProof && $proofUrl)
+                                    <button onclick="showPaymentProofModal('{{ $proofUrl }}', '{{ $cashIn->payment_proof_description ?? 'No description provided' }}')" class="btn btn-primary" style="font-size:12px;padding:4px 8px;">
                                         <i class="fas fa-image"></i> View Proof
                                     </button>
                                 @else
-                                    <span style="color:#6b7280;font-size:12px;margin-right:8px;">No proof uploaded</span>
-                                    <button onclick="showUploadProofModal({{ $cashIn->id }})" class="btn btn-primary" style="font-size:12px;padding:4px 8px;">
-                                        <i class="fas fa-upload"></i> Upload Proof
-                                    </button>
+                                    <span style="color:#6b7280;font-size:12px;">No proof uploaded</span>
                                 @endif
                             </td>
                             <td>{{ $cashIn->created_at->format('M d, Y H:i') }}</td>
@@ -181,31 +183,6 @@
         </div>
     </div>
 
-    <!-- Upload Payment Proof Modal -->
-    <div id="uploadProofModal" class="modal">
-        <div class="modal-content">
-            <h3>Upload Payment Proof</h3>
-            <form id="uploadProofForm" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="form-group" style="margin-bottom:16px;">
-                    <label for="payment_proof" style="display:block;margin-bottom:8px;font-weight:500;">Payment Screenshot:</label>
-                    <input type="file" id="payment_proof" name="payment_proof" accept="image/*" required style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;">
-                    <small style="display:block;margin-top:4px;color:#6b7280;">Upload a screenshot showing the payment confirmation (Max: 5MB)</small>
-                </div>
-                <div class="form-group" style="margin-bottom:16px;">
-                    <label for="proof_description" style="display:block;margin-bottom:8px;font-weight:500;">Additional Notes (Optional):</label>
-                    <textarea id="proof_description" name="description" rows="3" placeholder="Any additional information about the payment..." style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;resize:vertical;"></textarea>
-                </div>
-                <div class="modal-buttons">
-                    <button type="button" onclick="hideUploadProofModal()" class="btn btn-secondary">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-upload"></i> Upload Proof
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Reject Modal -->
     <div id="rejectModal" class="modal">
         <div class="modal-content">
@@ -232,16 +209,6 @@
             document.getElementById('paymentProofViewModal').style.display = 'none';
         }
 
-        function showUploadProofModal(cashInId) {
-            document.getElementById('uploadProofForm').action = '{{ route("admin.wallet.upload-payment-proof", ":id") }}'.replace(':id', cashInId);
-            document.getElementById('uploadProofModal').style.display = 'block';
-        }
-
-        function hideUploadProofModal() {
-            document.getElementById('uploadProofModal').style.display = 'none';
-            document.getElementById('uploadProofForm').reset();
-        }
-
         function showRejectModal(cashInId) {
             document.getElementById('rejectForm').action = '{{ route("admin.wallet.reject-cash-in", ":id") }}'.replace(':id', cashInId);
             document.getElementById('rejectModal').style.display = 'block';
@@ -256,12 +223,6 @@
         document.getElementById('paymentProofViewModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 hidePaymentProofViewModal();
-            }
-        });
-
-        document.getElementById('uploadProofModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                hideUploadProofModal();
             }
         });
 

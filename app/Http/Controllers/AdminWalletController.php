@@ -230,11 +230,15 @@ class AdminWalletController extends Controller
     public function pendingCashIns()
     {
         $pendingCashIns = WalletTransaction::where('type', 'cash_in')
-            ->where('status', 'pending_approval')
+            ->whereIn('status', ['pending_approval', 'pending']) // Also include 'pending' for backward compatibility
             ->with(['wallet'])
-            ->select('wallet_transactions.*') // Ensure all columns are selected
             ->orderBy('created_at', 'desc')
             ->paginate(20);
+
+        // Refresh each transaction to ensure we have the latest payment proof data
+        foreach ($pendingCashIns as $transaction) {
+            $transaction->refresh();
+        }
 
         return view('admin.wallet.pending-cash-ins', compact('pendingCashIns'));
     }
@@ -246,7 +250,7 @@ class AdminWalletController extends Controller
     {
         $transaction = WalletTransaction::findOrFail($id);
 
-        if ($transaction->type !== 'cash_in' || $transaction->status !== 'pending_approval') {
+        if ($transaction->type !== 'cash_in' || !in_array($transaction->status, ['pending_approval', 'pending'])) {
             return back()->with('error', 'Invalid cash-in request.');
         }
 
@@ -293,7 +297,7 @@ class AdminWalletController extends Controller
 
         $transaction = WalletTransaction::findOrFail($id);
 
-        if ($transaction->type !== 'cash_in' || $transaction->status !== 'pending_approval') {
+        if ($transaction->type !== 'cash_in' || !in_array($transaction->status, ['pending_approval', 'pending'])) {
             return back()->with('error', 'Invalid cash-in request.');
         }
 
@@ -384,7 +388,7 @@ class AdminWalletController extends Controller
 
         $transaction = WalletTransaction::findOrFail($id);
 
-        if ($transaction->type !== 'cash_in' || $transaction->status !== 'pending_approval') {
+        if ($transaction->type !== 'cash_in' || !in_array($transaction->status, ['pending_approval', 'pending'])) {
             return back()->with('error', 'Invalid cash-in request or transaction is not in pending approval status.');
         }
 
@@ -400,6 +404,9 @@ class AdminWalletController extends Controller
                 'payment_proof_uploaded_at' => now(),
                 'status' => 'pending_approval' // Keep as pending for admin review
             ]);
+
+            // Refresh the model to ensure we have the latest data
+            $transaction->refresh();
 
             DB::commit();
 
