@@ -131,7 +131,7 @@
                         @forelse($recentWallet as $w)
                             <tr>
                                 <td>{{ ucfirst(str_replace('_',' ',$w->description ?? 'transaction')) }}</td>
-                                <td><span class="badge {{ $w->type === 'cash_in' ? 'green' : 'orange' }}">{{ $w->type }}</span></td>
+                                <td><span class="badge {{ $w->type === 'cash_in' ? 'green' : 'orange' }}">{{ ucfirst(str_replace('_', ' ', $w->type)) }}</span></td>
                                 <td>₱{{ number_format($w->amount, 2) }}</td>
                             </tr>
                         @empty

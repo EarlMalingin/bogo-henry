@@ -232,6 +232,7 @@ class AdminWalletController extends Controller
         $pendingCashIns = WalletTransaction::where('type', 'cash_in')
             ->where('status', 'pending_approval')
             ->with(['wallet'])
+            ->select('wallet_transactions.*') // Ensure all columns are selected
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -368,6 +369,44 @@ class AdminWalletController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to process transaction: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Upload payment proof for a cash-in transaction (Admin)
+     */
+    public function uploadPaymentProof(Request $request, $id)
+    {
+        $request->validate([
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+            'description' => 'nullable|string|max:500'
+        ]);
+
+        $transaction = WalletTransaction::findOrFail($id);
+
+        if ($transaction->type !== 'cash_in' || $transaction->status !== 'pending_approval') {
+            return back()->with('error', 'Invalid cash-in request or transaction is not in pending approval status.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Store the payment proof image
+            $imagePath = $request->file('payment_proof')->store('payment-proofs', 'public');
+
+            // Update transaction with payment proof
+            $transaction->update([
+                'payment_proof_path' => $imagePath,
+                'payment_proof_description' => $request->description,
+                'payment_proof_uploaded_at' => now(),
+                'status' => 'pending_approval' // Keep as pending for admin review
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Payment proof uploaded successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to upload payment proof: ' . $e->getMessage());
         }
     }
 }

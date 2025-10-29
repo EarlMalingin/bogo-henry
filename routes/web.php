@@ -72,6 +72,7 @@ Route::middleware('web')->group(function () {
         Route::get('/admin/wallet/pending-cash-ins', [App\Http\Controllers\AdminWalletController::class, 'pendingCashIns'])->name('admin.wallet.pending-cash-ins');
         Route::post('/admin/wallet/cash-ins/{id}/approve', [App\Http\Controllers\AdminWalletController::class, 'approveCashIn'])->name('admin.wallet.approve-cash-in');
         Route::post('/admin/wallet/cash-ins/{id}/reject', [App\Http\Controllers\AdminWalletController::class, 'rejectCashIn'])->name('admin.wallet.reject-cash-in');
+        Route::post('/admin/wallet/cash-ins/{id}/upload-proof', [App\Http\Controllers\AdminWalletController::class, 'uploadPaymentProof'])->name('admin.wallet.upload-payment-proof');
         Route::get('/admin/wallet/user-wallets', [App\Http\Controllers\AdminWalletController::class, 'userWallets'])->name('admin.wallet.user-wallets');
         Route::get('/admin/wallet/user-wallet/{userType}/{userId}', [App\Http\Controllers\AdminWalletController::class, 'showUserWallet'])->name('admin.wallet.user-wallet-detail');
         Route::post('/admin/wallet/manual-transaction', [App\Http\Controllers\AdminWalletController::class, 'manualTransaction'])->name('admin.wallet.manual-transaction');

@@ -85,6 +85,7 @@ class WalletTransaction extends Model
 
     public function hasPaymentProof(): bool
     {
+        // Check if payment_proof_path exists and is not empty/null
         return !empty($this->payment_proof_path);
     }
 
