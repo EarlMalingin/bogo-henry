@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Tutor;
+use App\Models\Wallet;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\EmailVerificationController;
@@ -53,6 +54,14 @@ class TutorRegisterController extends Controller
             'cv' => $cvPath,
             'session_rate' => $request->input('rate'),
             'is_verified' => false,
+        ]);
+
+        // Create wallet for the tutor
+        Wallet::create([
+            'user_id' => $tutor->id,
+            'user_type' => 'tutor',
+            'balance' => 0.00,
+            'currency' => 'PHP'
         ]);
 
         // Send verification email

@@ -275,7 +275,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="{{ Auth::guard('student')->check() ? route('student.wallet') : route('tutor.wallet') }}" class="back-btn">
+        <a href="{{ $userType === 'student' ? route('student.wallet') : route('tutor.wallet') }}" class="back-btn">
             <i class="fas fa-arrow-left"></i>
             Back to Wallet
         </a>
@@ -304,7 +304,7 @@
                 </div>
             </div>
 
-            <form id="cashOutForm" method="POST" action="{{ Auth::guard('student')->check() ? route('student.wallet.cash-out.submit') : route('tutor.wallet.cash-out.submit') }}">
+            <form id="cashOutForm" method="POST" action="{{ $userType === 'student' ? route('student.wallet.cash-out.submit') : route('tutor.wallet.cash-out.submit') }}">
                 @csrf
                 
                 <div class="form-group">
@@ -362,7 +362,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <a href="{{ Auth::guard('student')->check() ? route('student.wallet') : route('tutor.wallet') }}" class="btn btn-secondary">
+                    <a href="{{ $userType === 'student' ? route('student.wallet') : route('tutor.wallet') }}" class="btn btn-secondary">
                         Cancel
                     </a>
                     <button type="submit" class="btn btn-primary" id="submitBtn">

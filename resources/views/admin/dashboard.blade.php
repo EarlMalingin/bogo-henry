@@ -31,7 +31,7 @@
         table{width:100%;border-collapse:collapse}
         th,td{padding:12px 14px;text-align:left;border-bottom:1px solid #f1f5f9}
         th{font-size:12px;letter-spacing:.02em;color:#6b7280;background:#f8fafc}
-        .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px}
+        .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;white-space:nowrap}
         .badge.green{background:#e7f8ef;color:#0f9d58}
         .badge.orange{background:#fff1e6;color:#f47c1f}
     </style>
@@ -131,7 +131,7 @@
                         @forelse($recentWallet as $w)
                             <tr>
                                 <td>{{ ucfirst(str_replace('_',' ',$w->description ?? 'transaction')) }}</td>
-                                <td><span class="badge {{ $w->type === 'cash_in' ? 'green' : 'orange' }}">{{ ucfirst(str_replace('_', ' ', $w->type)) }}</span></td>
+                                <td><span class="badge {{ $w->type === 'cash_in' ? 'green' : 'orange' }}">{{ strtolower(str_replace('_', ' ', $w->type)) }}</span></td>
                                 <td>₱{{ number_format($w->amount, 2) }}</td>
                             </tr>
                         @empty

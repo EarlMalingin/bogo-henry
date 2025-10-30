@@ -26,12 +26,42 @@ class SecureWalletController extends Controller
     }
 
     /**
+     * Helper method to get authenticated user and type based on route
+     * This prevents guard conflicts when same user has both roles
+     */
+    private function getAuthenticatedUser()
+    {
+        $routeName = request()->route()->getName();
+        
+        if (str_contains($routeName, 'student')) {
+            if (!Auth::guard('student')->check()) {
+                abort(403, 'Unauthorized');
+            }
+            return [
+                'user' => Auth::guard('student')->user(),
+                'userType' => 'student'
+            ];
+        } elseif (str_contains($routeName, 'tutor')) {
+            if (!Auth::guard('tutor')->check()) {
+                abort(403, 'Unauthorized');
+            }
+            return [
+                'user' => Auth::guard('tutor')->user(),
+                'userType' => 'tutor'
+            ];
+        } else {
+            abort(403, 'Unauthorized route');
+        }
+    }
+
+    /**
      * Display wallet dashboard
      */
     public function index()
     {
-        $user = Auth::guard('student')->user() ?? Auth::guard('tutor')->user();
-        $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+        $auth = $this->getAuthenticatedUser();
+        $user = $auth['user'];
+        $userType = $auth['userType'];
         
         $wallet = Wallet::where('user_id', $user->id)
             ->where('user_type', $userType)
@@ -55,7 +85,7 @@ class SecureWalletController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return view('wallet.index', compact('wallet', 'transactions'));
+        return view('wallet.index', compact('wallet', 'transactions', 'userType', 'user'));
     }
 
     /**
@@ -63,8 +93,9 @@ class SecureWalletController extends Controller
      */
     public function showCashIn()
     {
-        $user = Auth::guard('student')->user() ?? Auth::guard('tutor')->user();
-        $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+        $auth = $this->getAuthenticatedUser();
+        $user = $auth['user'];
+        $userType = $auth['userType'];
         
         $wallet = Wallet::firstOrCreate(
             ['user_id' => $user->id, 'user_type' => $userType],
@@ -72,7 +103,7 @@ class SecureWalletController extends Controller
         );
 
         $this->logAudit('view_cash_in_form', $user);
-        return view('wallet.cash-in', compact('wallet'));
+        return view('wallet.cash-in', compact('wallet', 'userType', 'user'));
     }
 
     /**
@@ -90,8 +121,9 @@ class SecureWalletController extends Controller
                 'amount.max' => 'Maximum cash-in amount is ₱50,000 per transaction.'
             ]);
 
-            $user = Auth::guard('student')->user() ?? Auth::guard('tutor')->user();
-            $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+            $auth = $this->getAuthenticatedUser();
+            $user = $auth['user'];
+            $userType = $auth['userType'];
             
             // Check daily limits
             if (!$this->checkDailyLimits($user, $userType, 'cash_in', $request->amount)) {
@@ -189,8 +221,9 @@ class SecureWalletController extends Controller
                 'amount.max' => 'Maximum cash-in amount is ₱50,000 per transaction.'
             ]);
 
-        $user = Auth::guard('student')->user() ?? Auth::guard('tutor')->user();
-        $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+        $auth = $this->getAuthenticatedUser();
+        $user = $auth['user'];
+        $userType = $auth['userType'];
         
         // Check daily limits
         if (!$this->checkDailyLimits($user, $userType, 'cash_in', $request->amount)) {
@@ -320,7 +353,9 @@ class SecureWalletController extends Controller
             return view('wallet.payment', [
                 'transaction' => $transaction,
                 'checkout_url' => $simulatedSource['checkout_url'],
-                'qr_code_url' => $simulatedSource['qr_code_url']
+                'qr_code_url' => $simulatedSource['qr_code_url'],
+                'userType' => $userType,
+                'user' => $user
             ]);
         }
         
@@ -396,7 +431,9 @@ class SecureWalletController extends Controller
         return view('wallet.payment', [
             'transaction' => $transaction,
             'checkout_url' => $source['checkout_url'],
-            'qr_code_url' => $source['qr_code_url']
+            'qr_code_url' => $source['qr_code_url'],
+            'userType' => $userType,
+            'user' => $user
         ]);
         
         } catch (\Exception $e) {
@@ -415,14 +452,15 @@ class SecureWalletController extends Controller
      */
     public function showCashOut()
     {
-        $user = Auth::guard('student')->user() ?? Auth::guard('tutor')->user();
-        $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+        $auth = $this->getAuthenticatedUser();
+        $user = $auth['user'];
+        $userType = $auth['userType'];
         
         $wallet = Wallet::where('user_id', $user->id)
             ->where('user_type', $userType)
             ->first();
 
-        return view('wallet.cash-out', compact('wallet'));
+        return view('wallet.cash-out', compact('wallet', 'userType', 'user'));
     }
 
     /**
@@ -441,8 +479,9 @@ class SecureWalletController extends Controller
             'account_name.regex' => 'Account name can only contain letters, spaces, dots, hyphens, and apostrophes.'
         ]);
 
-        $user = Auth::guard('student')->user() ?? Auth::guard('tutor')->user();
-        $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+        $auth = $this->getAuthenticatedUser();
+        $user = $auth['user'];
+        $userType = $auth['userType'];
         
         // Check daily limits
         if (!$this->checkDailyLimits($user, $userType, 'cash_out', $request->amount)) {
@@ -494,25 +533,28 @@ class SecureWalletController extends Controller
                 throw new \Exception($payout['error']);
             }
 
-            // Deduct funds
-            $transaction = $wallet->deductFunds($amount, 'cash_out', [
-                'account_number' => $accountNumber,
-                'account_name' => $accountName,
-                'payout_id' => $payout['payout_id'],
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent()
+            // Create pending transaction instead of removing funds
+            $transaction = $wallet->transactions()->create([
+                'type' => 'cash_out',
+                'amount' => $amount,
+                'balance_before' => $wallet->balance,
+                'balance_after' => $wallet->balance, // no deduction yet
+                'status' => 'pending',
+                'payment_method' => 'gcash',
+                'reference_number' => $payout['payout_id'],
+                'description' => 'Cash out to GCash: ' . $accountNumber,
+                'metadata' => [
+                    'account_number' => $accountNumber,
+                    'account_name' => $accountName,
+                    'payout_id' => $payout['payout_id'],
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent()
+                ]
             ]);
 
             if (!$transaction) {
                 throw new \Exception('Failed to process cash out.');
             }
-
-            $transaction->update([
-                'status' => 'pending',
-                'payment_method' => 'gcash',
-                'reference_number' => $payout['payout_id'],
-                'description' => 'Cash out to GCash: ' . $accountNumber
-            ]);
 
             $this->logAudit('cash_out_initiated', [
                 'amount' => $amount,
@@ -523,8 +565,7 @@ class SecureWalletController extends Controller
             ]);
 
             DB::commit();
-
-            return redirect()->route('wallet.index')->with('success', 'Cash out request submitted successfully. It will be processed within 24 hours.');
+            return redirect()->route($userType . '.wallet')->with('success', 'Cash out request submitted successfully. It will be processed within 24 hours.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -553,20 +594,30 @@ class SecureWalletController extends Controller
                 'ip_address' => $request->ip()
             ]);
             
-            $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-            $walletRoute = $userType . '.wallet';
-            return redirect()->route($walletRoute)->with('error', 'Invalid payment callback.');
+            // Try to get userType from session or default to student
+            if (Auth::guard('student')->check()) {
+                return redirect()->route('student.wallet')->with('error', 'Invalid payment callback.');
+            } elseif (Auth::guard('tutor')->check()) {
+                return redirect()->route('tutor.wallet')->with('error', 'Invalid payment callback.');
+            }
+            return redirect('/login')->with('error', 'Please login to continue.');
         }
 
         // Handle simulated payments (small amounts)
         if ($isSimulated || strpos($paymentIntentId, 'SIM_') === 0) {
-            $transaction = WalletTransaction::where('paymongo_payment_intent_id', $paymentIntentId)->first();
+            $transaction = WalletTransaction::where('paymongo_payment_intent_id', $paymentIntentId)->with('wallet')->first();
             
             if (!$transaction) {
-                $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-                $walletRoute = $userType . '.wallet';
-                return redirect()->route($walletRoute)->with('error', 'Transaction not found.');
+                if (Auth::guard('student')->check()) {
+                    return redirect()->route('student.wallet')->with('error', 'Transaction not found.');
+                } elseif (Auth::guard('tutor')->check()) {
+                    return redirect()->route('tutor.wallet')->with('error', 'Transaction not found.');
+                }
+                return redirect('/login')->with('error', 'Please login to continue.');
             }
+
+            // Get userType from the transaction's wallet
+            $userType = $transaction->wallet->user_type;
 
             // Don't auto-complete simulated payments - they need admin approval with payment proof
             // Just mark that payment was initiated/verified
@@ -584,15 +635,11 @@ class SecureWalletController extends Controller
                     'payment_intent_id' => $paymentIntentId
                 ]);
 
-                $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-                $walletRoute = $userType . '.wallet';
-                return redirect()->route($walletRoute)->with('success', 'Payment verified! Please upload your payment proof and wait for admin approval.');
+                return redirect()->route($userType . '.wallet')->with('success', 'Payment verified! Please upload your payment proof and wait for admin approval.');
             }
             
             // If already completed or failed, just redirect
-            $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-            $walletRoute = $userType . '.wallet';
-            return redirect()->route($walletRoute);
+            return redirect()->route($userType . '.wallet');
         }
 
         // Verify webhook signature if provided
@@ -617,13 +664,16 @@ class SecureWalletController extends Controller
                 'error' => $paymentIntent['error']
             ]);
             
-            $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-            $walletRoute = $userType . '.wallet';
-            return redirect()->route($walletRoute)->with('error', 'Failed to verify payment.');
+            if (Auth::guard('student')->check()) {
+                return redirect()->route('student.wallet')->with('error', 'Failed to verify payment.');
+            } elseif (Auth::guard('tutor')->check()) {
+                return redirect()->route('tutor.wallet')->with('error', 'Failed to verify payment.');
+            }
+            return redirect('/login')->with('error', 'Please login to continue.');
         }
 
         // Find transaction
-        $transaction = WalletTransaction::where('paymongo_payment_intent_id', $paymentIntentId)->first();
+        $transaction = WalletTransaction::where('paymongo_payment_intent_id', $paymentIntentId)->with('wallet')->first();
         
         if (!$transaction) {
             $this->logAudit('payment_callback_failed', [
@@ -631,10 +681,16 @@ class SecureWalletController extends Controller
                 'payment_intent_id' => $paymentIntentId
             ]);
             
-            $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-            $walletRoute = $userType . '.wallet';
-            return redirect()->route($walletRoute)->with('error', 'Transaction not found.');
+            if (Auth::guard('student')->check()) {
+                return redirect()->route('student.wallet')->with('error', 'Transaction not found.');
+            } elseif (Auth::guard('tutor')->check()) {
+                return redirect()->route('tutor.wallet')->with('error', 'Transaction not found.');
+            }
+            return redirect('/login')->with('error', 'Please login to continue.');
         }
+        
+        // Get userType from the transaction's wallet
+        $userType = $transaction->wallet->user_type;
 
         if ($paymentIntent['status'] === 'succeeded') {
             DB::beginTransaction();
@@ -661,9 +717,7 @@ class SecureWalletController extends Controller
                 
                 DB::commit();
 
-                $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-                $walletRoute = $userType . '.wallet';
-                return redirect()->route($walletRoute)->with('success', 'Payment received! Your transaction is pending admin approval and will be processed within 24 hours.');
+                return redirect()->route($userType . '.wallet')->with('success', 'Payment received! Your transaction is pending admin approval and will be processed within 24 hours.');
             } catch (\Exception $e) {
                 DB::rollBack();
                 
@@ -684,9 +738,7 @@ class SecureWalletController extends Controller
                 'status' => $paymentIntent['status']
             ]);
             
-            $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-            $walletRoute = $userType . '.wallet';
-            return redirect()->route($walletRoute)->with('error', 'Payment failed.');
+            return redirect()->route($userType . '.wallet')->with('error', 'Payment failed.');
         }
     }
 
@@ -697,10 +749,13 @@ class SecureWalletController extends Controller
     {
         $paymentIntentId = $request->get('payment_intent_id');
         
+        $userType = null;
         if ($paymentIntentId) {
-            $transaction = WalletTransaction::where('paymongo_payment_intent_id', $paymentIntentId)->first();
+            $transaction = WalletTransaction::where('paymongo_payment_intent_id', $paymentIntentId)->with('wallet')->first();
             if ($transaction) {
                 $transaction->markAsFailed();
+                // Get userType from the transaction's wallet
+                $userType = $transaction->wallet->user_type;
                 
                 $this->logAudit('payment_cancelled', [
                     'transaction_id' => $transaction->id,
@@ -709,9 +764,17 @@ class SecureWalletController extends Controller
             }
         }
 
-        $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-        $walletRoute = $userType . '.wallet';
-        return redirect()->route($walletRoute)->with('error', 'Payment was cancelled or failed.');
+        // Fallback to auth guards if userType not found
+        if (!$userType) {
+            if (Auth::guard('student')->check()) {
+                return redirect()->route('student.wallet')->with('error', 'Payment was cancelled or failed.');
+            } elseif (Auth::guard('tutor')->check()) {
+                return redirect()->route('tutor.wallet')->with('error', 'Payment was cancelled or failed.');
+            }
+            return redirect('/login')->with('error', 'Please login to continue.');
+        }
+        
+        return redirect()->route($userType . '.wallet')->with('error', 'Payment was cancelled or failed.');
     }
 
     /**
@@ -719,8 +782,9 @@ class SecureWalletController extends Controller
      */
     public function getBalance()
     {
-        $user = Auth::guard('student')->user() ?? Auth::guard('tutor')->user();
-        $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+        $auth = $this->getAuthenticatedUser();
+        $user = $auth['user'];
+        $userType = $auth['userType'];
         
         $wallet = Wallet::where('user_id', $user->id)
             ->where('user_type', $userType)
@@ -731,6 +795,25 @@ class SecureWalletController extends Controller
         }
 
         return response()->json(['balance' => $wallet->balance]);
+    }
+
+    /**
+     * ADMIN DEBUG: Output all user_ids which have both student and tutor wallet entries
+     */
+    public function auditDuplicateWallets()
+    {
+        $studentWallets = \App\Models\Wallet::where('user_type', 'student')->pluck('user_id')->toArray();
+        $tutorWallets = \App\Models\Wallet::where('user_type', 'tutor')->pluck('user_id')->toArray();
+        $duplicateIds = array_intersect($studentWallets, $tutorWallets);
+        $results = [];
+        foreach ($duplicateIds as $uid) {
+            $results[] = [
+                'user_id' => $uid,
+                'student_wallet' => \App\Models\Wallet::where('user_id', $uid)->where('user_type', 'student')->first(),
+                'tutor_wallet' => \App\Models\Wallet::where('user_id', $uid)->where('user_type', 'tutor')->first(),
+            ];
+        }
+        return response()->json($results);
     }
 
     /**
@@ -782,17 +865,46 @@ class SecureWalletController extends Controller
     private function logAudit($action, $details = [])
     {
         try {
-            $user = Auth::guard('student')->user() ?? Auth::guard('tutor')->user();
-            $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+            // Try to get authenticated user from context
+            $user = null;
+            $userType = null;
             
-            AuditLog::create([
-                'user_id' => $user->id,
-                'user_type' => $userType,
-                'action' => $action,
-                'details' => $details,
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent()
-            ]);
+            // Check if we're in a request context with authenticated users
+            if (Auth::guard('student')->check()) {
+                $user = Auth::guard('student')->user();
+                $userType = 'student';
+            } elseif (Auth::guard('tutor')->check()) {
+                $user = Auth::guard('tutor')->user();
+                $userType = 'tutor';
+            } elseif (Auth::guard('admin')->check()) {
+                $user = Auth::guard('admin')->user();
+                $userType = 'admin';
+            }
+            
+            // If we have user data in details (like in uploadPaymentProof), use that
+            if (!$user && isset($details['user_id']) && isset($details['user_type'])) {
+                AuditLog::create([
+                    'user_id' => $details['user_id'],
+                    'user_type' => $details['user_type'],
+                    'action' => $action,
+                    'details' => $details,
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent()
+                ]);
+                return;
+            }
+            
+            // Only create log if we have user info
+            if ($user && $userType) {
+                AuditLog::create([
+                    'user_id' => $user->id,
+                    'user_type' => $userType,
+                    'action' => $action,
+                    'details' => $details,
+                    'ip_address' => request()->ip(),
+                    'user_agent' => request()->userAgent()
+                ]);
+            }
         } catch (\Exception $e) {
             Log::error('Failed to create audit log', [
                 'action' => $action,
@@ -813,10 +925,11 @@ class SecureWalletController extends Controller
             'description' => 'nullable|string|max:500'
         ]);
 
-        $user = Auth::guard('student')->user() ?? Auth::guard('tutor')->user();
-        $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
+        $auth = $this->getAuthenticatedUser();
+        $user = $auth['user'];
+        $userType = $auth['userType'];
 
-        $transaction = WalletTransaction::findOrFail($request->transaction_id);
+        $transaction = WalletTransaction::with('wallet')->findOrFail($request->transaction_id);
 
         // Verify transaction belongs to current user
         if ($transaction->wallet->user_id !== $user->id || $transaction->wallet->user_type !== $userType) {
@@ -854,9 +967,7 @@ class SecureWalletController extends Controller
 
             DB::commit();
 
-            $userType = Auth::guard('student')->check() ? 'student' : 'tutor';
-            $walletRoute = $userType . '.wallet';
-            return redirect()->route($walletRoute)->with('success', 'Payment proof uploaded successfully! Your transaction is now pending admin review.');
+            return redirect()->route($userType . '.wallet')->with('success', 'Payment proof uploaded successfully! Your transaction is now pending admin review.');
 
         } catch (\Exception $e) {
             DB::rollBack();

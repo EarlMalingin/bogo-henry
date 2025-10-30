@@ -498,13 +498,13 @@
 <body>
     <header>
         <div class="navbar">
-            <a href="{{ Auth::guard('student')->check() ? route('student.dashboard') : route('tutor.dashboard') }}" class="logo">
+            <a href="{{ $userType === 'student' ? route('student.dashboard') : route('tutor.dashboard') }}" class="logo">
                 <img src="{{ asset('images/MentorHub.png') }}" alt="MentorHub" class="logo-img">
                 MentorHub
             </a>
             <nav class="nav-links">
-                <a href="{{ Auth::guard('student')->check() ? route('student.dashboard') : route('tutor.dashboard') }}">Dashboard</a>
-                @if(Auth::guard('student')->check())
+                <a href="{{ $userType === 'student' ? route('student.dashboard') : route('tutor.dashboard') }}">Dashboard</a>
+                @if($userType === 'student')
                     <a href="{{ route('student.book-session') }}">Book Session</a>
                     <a href="{{ route('student.my-sessions') }}">Sessions</a>
                     <a href="{{ route('student.schedule') }}">Schedule</a>
@@ -516,7 +516,7 @@
             </nav>
             <div class="header-right-section">
                 <!-- Currency Display -->
-                <div class="currency-display" onclick="window.location.href='{{ Auth::guard('student')->check() ? route('student.wallet') : route('tutor.wallet') }}'">
+                <div class="currency-display" onclick="window.location.href='{{ $userType === 'student' ? route('student.wallet') : route('tutor.wallet') }}'">
                     <div class="currency-icon">
                         <i class="fas fa-wallet"></i>
                     </div>
@@ -529,26 +529,26 @@
                 <!-- Profile Dropdown -->
                 <div class="profile-dropdown-container">
                     <div class="profile-icon" id="profile-icon">
-                        @if(Auth::guard('student')->check())
-                            @if(Auth::guard('student')->user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?v={{ file_exists(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) ? filemtime(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
+                        @if($userType === 'student')
+                            @if($user->profile_picture)
+                                <img src="{{ asset('storage/' . $user->profile_picture) }}?v={{ file_exists(public_path('storage/' . $user->profile_picture)) ? filemtime(public_path('storage/' . $user->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
-                                {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
+                                {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
                             @endif
                         @else
-                            @if(Auth::guard('tutor')->user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::guard('tutor')->user()->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                            @if($user->profile_picture)
+                                <img src="{{ asset('storage/' . $user->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
-                                {{ strtoupper(substr(Auth::guard('tutor')->user()->first_name, 0, 1) . substr(Auth::guard('tutor')->user()->last_name, 0, 1)) }}
+                                {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
                             @endif
                         @endif
                     </div>
                     <div class="dropdown-menu" id="dropdown-menu">
-                        <a href="{{ Auth::guard('student')->check() ? route('student.profile.edit') : route('tutor.profile.edit') }}">My Profile</a>
+                        <a href="{{ $userType === 'student' ? route('student.profile.edit') : route('tutor.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
                         <a href="#">Help Center</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                        <form id="logout-form" method="POST" action="{{ Auth::guard('student')->check() ? route('student.logout') : route('tutor.logout') }}" style="display: none;">
+                        <form id="logout-form" method="POST" action="{{ $userType === 'student' ? route('student.logout') : route('tutor.logout') }}" style="display: none;">
                             @csrf
                         </form>
                     </div>
@@ -574,13 +574,13 @@
         </div>
 
         <div class="action-buttons">
-            <a href="{{ Auth::guard('student')->check() ? route('student.wallet.cash-in') : route('tutor.wallet.cash-in') }}" class="action-btn cash-in">
+            <a href="{{ $userType === 'student' ? route('student.wallet.cash-in') : route('tutor.wallet.cash-in') }}" class="action-btn cash-in">
                 <div class="action-btn-icon">
                     <i class="fas fa-plus-circle"></i>
                 </div>
                 <div class="action-btn-text">Cash In</div>
             </a>
-            <a href="{{ Auth::guard('student')->check() ? route('student.wallet.cash-out') : route('tutor.wallet.cash-out') }}" class="action-btn cash-out">
+            <a href="{{ $userType === 'student' ? route('student.wallet.cash-out') : route('tutor.wallet.cash-out') }}" class="action-btn cash-out">
                 <div class="action-btn-icon">
                     <i class="fas fa-minus-circle"></i>
                 </div>
@@ -609,18 +609,32 @@
                                 <h4>{{ ucfirst(str_replace('_', ' ', $transaction->type)) }}</h4>
                                 <p>{{ $transaction->description ?? 'Wallet transaction' }}</p>
                                 <p>{{ $transaction->created_at->format('M d, Y h:i A') }}</p>
+                                @if($transaction->type === 'cash_in' && in_array($transaction->status, ['pending_approval', 'pending']) && empty($transaction->payment_proof_path))
+                                    <p style="color: #ff9800; font-weight: bold; margin-top: 5px;">
+                                        <i class="fas fa-exclamation-triangle"></i> Payment proof required
+                                    </p>
+                                @endif
                             </div>
                         </div>
-                        <div class="transaction-amount {{ $transaction->type === 'cash_in' ? 'positive' : 'negative' }}">
+                        <div class="transaction-amount 
+                            @if($transaction->type === 'cash_in') positive @elseif($transaction->type === 'cash_out' && $transaction->status === 'completed') negative @else pending @endif">
                             @if($transaction->type === 'cash_in')
                                 +₱{{ number_format($transaction->amount, 2) }}
-                            @else
+                            @elseif($transaction->type === 'cash_out' && $transaction->status === 'completed')
                                 -₱{{ number_format($transaction->amount, 2) }}
+                            @elseif($transaction->type === 'cash_out' && $transaction->status === 'pending')
+                                ₱{{ number_format($transaction->amount, 2) }}
                             @endif
                             <br>
                             <span class="transaction-status status-{{ $transaction->status }}">
                                 {{ $transaction->status === 'pending_approval' ? 'Pending Approval' : ucfirst(str_replace('_', ' ', $transaction->status)) }}
                             </span>
+                            @if($transaction->type === 'cash_in' && in_array($transaction->status, ['pending_approval', 'pending']) && empty($transaction->payment_proof_path))
+                                <br><br>
+                                <button onclick="showUploadModal({{ $transaction->id }})" class="btn btn-sm" style="background: #4CAF50; color: white; padding: 5px 10px; border-radius: 5px; border: none; cursor: pointer;">
+                                    <i class="fas fa-upload"></i> Upload Proof
+                                </button>
+                            @endif
                         </div>
                     </div>
                 @endforeach
@@ -639,6 +653,122 @@
             @endif
         </div>
     </div>
+
+    <!-- Upload Payment Proof Modal -->
+    <div id="uploadModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h3>Upload Payment Proof</h3>
+            <p>Please upload a screenshot of your payment confirmation from GCash.</p>
+            
+            <form id="uploadProofForm" method="POST" action="{{ $userType === 'student' ? route('student.wallet.upload-payment-proof') : route('tutor.wallet.upload-payment-proof') }}" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" id="uploadTransactionId" name="transaction_id" value="">
+                
+                <div class="form-group">
+                    <label for="upload_payment_proof">Payment Screenshot:</label>
+                    <input type="file" id="upload_payment_proof" name="payment_proof" accept="image/*" required>
+                    <small>Upload a screenshot showing your payment confirmation (Max: 5MB)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="upload_description">Additional Notes (Optional):</label>
+                    <textarea id="upload_description" name="description" rows="3" placeholder="Any additional information about your payment..."></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="hideUploadModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload"></i>
+                        Upload Proof
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-content h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        .modal-content p {
+            margin-bottom: 1.5rem;
+            color: #666;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input[type="file"],
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group small {
+            display: block;
+            margin-top: 0.5rem;
+            color: #666;
+            font-size: 12px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #45a049;
+        }
+    </style>
 
     <script>
         // Profile dropdown functionality
@@ -664,6 +794,23 @@
                     dropdownMenu.classList.remove('active');
                 }
             });
+        });
+
+        function showUploadModal(transactionId) {
+            document.getElementById('uploadTransactionId').value = transactionId;
+            document.getElementById('uploadModal').style.display = 'flex';
+        }
+
+        function hideUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+            document.getElementById('uploadProofForm').reset();
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('uploadModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideUploadModal();
+            }
         });
     </script>
 </body>

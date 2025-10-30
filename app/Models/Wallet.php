@@ -93,4 +93,19 @@ class Wallet extends Model
     {
         return $this->balance >= $amount;
     }
+
+    /**
+     * Get the user's full name based on user_type
+     */
+    public function getUserFullNameAttribute()
+    {
+        if ($this->user_type === 'student') {
+            $student = \App\Models\Student::find($this->user_id);
+            return $student ? $student->first_name . ' ' . $student->last_name : null;
+        } elseif ($this->user_type === 'tutor') {
+            $tutor = \App\Models\Tutor::find($this->user_id);
+            return $tutor ? $tutor->first_name . ' ' . $tutor->last_name : null;
+        }
+        return null;
+    }
 }

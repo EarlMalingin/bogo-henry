@@ -452,13 +452,13 @@
 <body>
     <header>
         <div class="navbar">
-            <a href="{{ Auth::guard('student')->check() ? route('student.dashboard') : route('tutor.dashboard') }}" class="logo">
+            <a href="{{ $userType === 'student' ? route('student.dashboard') : route('tutor.dashboard') }}" class="logo">
                 <img src="{{ asset('images/MentorHub.png') }}" alt="MentorHub" class="logo-img">
                 MentorHub
             </a>
             <nav class="nav-links">
-                <a href="{{ Auth::guard('student')->check() ? route('student.dashboard') : route('tutor.dashboard') }}">Dashboard</a>
-                @if(Auth::guard('student')->check())
+                <a href="{{ $userType === 'student' ? route('student.dashboard') : route('tutor.dashboard') }}">Dashboard</a>
+                @if($userType === 'student')
                     <a href="{{ route('student.book-session') }}">Book Session</a>
                     <a href="{{ route('student.my-sessions') }}">Sessions</a>
                     <a href="{{ route('student.schedule') }}">Schedule</a>
@@ -470,7 +470,7 @@
             </nav>
             <div class="header-right-section">
                 <!-- Currency Display -->
-                <div class="currency-display" onclick="window.location.href='{{ Auth::guard('student')->check() ? route('student.wallet') : route('tutor.wallet') }}'">
+                <div class="currency-display" onclick="window.location.href='{{ $userType === 'student' ? route('student.wallet') : route('tutor.wallet') }}'">
                     <div class="currency-icon">
                         <i class="fas fa-wallet"></i>
                     </div>
@@ -483,26 +483,26 @@
                 <!-- Profile Dropdown -->
                 <div class="profile-dropdown-container">
                     <div class="profile-icon" id="profile-icon">
-                        @if(Auth::guard('student')->check())
-                            @if(Auth::guard('student')->user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?v={{ file_exists(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) ? filemtime(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
+                        @if($userType === 'student')
+                            @if($user->profile_picture)
+                                <img src="{{ asset('storage/' . $user->profile_picture) }}?v={{ file_exists(public_path('storage/' . $user->profile_picture)) ? filemtime(public_path('storage/' . $user->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
-                                {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
+                                {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
                             @endif
                         @else
-                            @if(Auth::guard('tutor')->user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::guard('tutor')->user()->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                            @if($user->profile_picture)
+                                <img src="{{ asset('storage/' . $user->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
-                                {{ strtoupper(substr(Auth::guard('tutor')->user()->first_name, 0, 1) . substr(Auth::guard('tutor')->user()->last_name, 0, 1)) }}
+                                {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
                             @endif
                         @endif
                     </div>
                     <div class="dropdown-menu" id="dropdown-menu">
-                        <a href="{{ Auth::guard('student')->check() ? route('student.profile.edit') : route('tutor.profile.edit') }}">My Profile</a>
+                        <a href="{{ $userType === 'student' ? route('student.profile.edit') : route('tutor.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
                         <a href="#">Help Center</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                        <form id="logout-form" method="POST" action="{{ Auth::guard('student')->check() ? route('student.logout') : route('tutor.logout') }}" style="display: none;">
+                        <form id="logout-form" method="POST" action="{{ $userType === 'student' ? route('student.logout') : route('tutor.logout') }}" style="display: none;">
                             @csrf
                         </form>
                     </div>
@@ -548,7 +548,7 @@
                 </div>
             @endif
 
-            <form id="cashInForm" method="POST" action="{{ Auth::guard('student')->check() ? route('student.wallet.cash-in.submit') : route('tutor.wallet.cash-in.submit') }}">
+            <form id="cashInForm" method="POST" action="{{ $userType === 'student' ? route('student.wallet.cash-in.submit') : route('tutor.wallet.cash-in.submit') }}">
                 @csrf
                 <input type="hidden" name="payment_method" id="paymentMethod" value="gcash">
                 
@@ -589,7 +589,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <a href="{{ Auth::guard('student')->check() ? route('student.wallet') : route('tutor.wallet') }}" class="btn btn-secondary">
+                    <a href="{{ $userType === 'student' ? route('student.wallet') : route('tutor.wallet') }}" class="btn btn-secondary">
                         Cancel
                     </a>
                     <button type="button" class="btn btn-success" id="internalCashInBtn">
@@ -604,7 +604,7 @@
             </form>
 
             <!-- Internal Cash-in Form (Hidden) -->
-            <form id="internalCashInForm" method="POST" action="{{ Auth::guard('student')->check() ? route('student.wallet.internal-cash-in') : route('tutor.wallet.internal-cash-in') }}" style="display: none;">
+            <form id="internalCashInForm" method="POST" action="{{ $userType === 'student' ? route('student.wallet.internal-cash-in') : route('tutor.wallet.internal-cash-in') }}" style="display: none;">
                 @csrf
                 <input type="hidden" id="internalAmount" name="amount">
             </form>

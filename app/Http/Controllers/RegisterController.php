@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\Tutor;
+use App\Models\Wallet;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\EmailVerificationController;
 
@@ -42,6 +43,14 @@ class RegisterController extends Controller
             'subjects_interest' => $request->input('subjects_interest'),
             'phone' => $request->input('phone'),
             'is_verified' => false,
+        ]);
+
+        // Create wallet for the student
+        Wallet::create([
+            'user_id' => $student->id,
+            'user_type' => 'student',
+            'balance' => 0.00,
+            'currency' => 'PHP'
         ]);
 
         // Send verification email

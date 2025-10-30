@@ -584,6 +584,12 @@
             gap: 1rem;
             margin-bottom: 2rem;
         }
+        
+        @media (min-width: 769px) {
+            .quick-actions {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
 
         .action-card {
             background-color: white;
@@ -937,6 +943,10 @@
                 <div class="action-icon"><i class="fas fa-chalkboard-teacher"></i></div>
                 <div>My Sessions</div>
             </div>
+            <div class="action-card" onclick="viewAssignments()">
+                <div class="action-icon"><i class="fas fa-tasks"></i></div>
+                <div>See Assignments</div>
+            </div>
             <div class="action-card" onclick="uploadResources()">
                 <div class="action-icon"><i class="fas fa-folder-open"></i></div>
                 <div>Resources</div>
@@ -1161,6 +1171,14 @@
 
         function viewMySessions() {
             window.location.href = "{{ route('tutor.my-sessions') }}";
+        }
+
+        function viewAssignments() {
+            window.location.href = "{{ route('tutor.my-sessions') }}";
+        }
+
+        function uploadResources() {
+            alert('Resources functionality coming soon!');
         }
 
         function viewMessages() {

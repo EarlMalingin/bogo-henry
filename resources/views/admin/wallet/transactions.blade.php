@@ -26,7 +26,7 @@
         .badge.green{background:#e7f8ef;color:#0f9d58}
         .badge.orange{background:#fff1e6;color:#f47c1f}
         .badge.red{background:#fee2e2;color:#dc2626}
-        .btn{display:inline-block;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:500;cursor:pointer;border:none}
+        .btn{display:inline-block;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:500;cursor:pointer;border:none;text-align:center}
         .btn-primary{background:#4a90e2;color:#fff}
         .btn-secondary{background:#6b7280;color:#fff}
         .btn:hover{opacity:0.9}
@@ -105,7 +105,7 @@
                     </div>
                     <div class="filter-group">
                         <button type="submit" class="btn btn-primary">Filter</button>
-                        <a href="{{ route('admin.wallet.transactions') }}" class="btn btn-secondary">Clear</a>
+                        <button type="button" onclick="clearFilters()" class="btn btn-secondary">Clear</button>
                     </div>
                 </div>
             </form>
@@ -142,12 +142,13 @@
                             </td>
                             <td>
                                 @if($transaction->wallet)
-                                    {{ ucfirst($transaction->wallet->user_type) }} #{{ $transaction->wallet->user_id }}
+                                    {{ $transaction->wallet->user_full_name ?? ucfirst($transaction->wallet->user_type) . ' #' . $transaction->wallet->user_id }}
+                                    <br><small style="color:#6b7280;">({{ ucfirst($transaction->wallet->user_type) }})</small>
                                 @else
                                     N/A
                                 @endif
                             </td>
-                            <td>{{ $transaction->created_at->format('M d, Y H:i') }}</td>
+                            <td>{{ $transaction->created_at->format('M d, Y h:i A') }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -186,5 +187,12 @@
             <a href="{{ route('admin.wallet.index') }}" class="btn btn-secondary">Back to Wallet</a>
         </div>
     </main>
+
+    <script>
+        function clearFilters() {
+            // Redirect to the transactions page without any query parameters
+            window.location.href = '{{ route('admin.wallet.transactions') }}';
+        }
+    </script>
 </body>
 </html>

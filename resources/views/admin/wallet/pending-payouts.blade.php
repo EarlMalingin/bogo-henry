@@ -96,7 +96,8 @@
                             <td>₱{{ number_format($payout->amount, 2) }}</td>
                             <td>
                                 @if($payout->wallet)
-                                    {{ ucfirst($payout->wallet->user_type) }} #{{ $payout->wallet->user_id }}
+                                    {{ $payout->wallet->user_full_name ?? ucfirst($payout->wallet->user_type) . ' #' . $payout->wallet->user_id }}
+                                    <br><small style="color:#6b7280;">({{ ucfirst($payout->wallet->user_type) }})</small>
                                 @else
                                     N/A
                                 @endif
@@ -109,7 +110,7 @@
                                     N/A
                                 @endif
                             </td>
-                            <td>{{ $payout->created_at->format('M d, Y H:i') }}</td>
+                            <td>{{ $payout->created_at->format('M d, Y h:i A') }}</td>
                             <td>
                                 <div class="action-buttons">
                                     <form method="POST" action="{{ route('admin.wallet.approve-payout', $payout->id) }}" style="display:inline">

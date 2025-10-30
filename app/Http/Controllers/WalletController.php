@@ -161,7 +161,7 @@ class WalletController extends Controller
 
         DB::beginTransaction();
         try {
-            // Create payout request
+            // Create payout request (simulate PayMongo or similar service)
             $payout = $this->paymongoService->createPayout(
                 $request->amount,
                 $request->account_number,
@@ -172,28 +172,25 @@ class WalletController extends Controller
                 throw new \Exception($payout['error']);
             }
 
-            // Deduct funds
-            $transaction = $wallet->deductFunds($request->amount, 'cash_out', [
-                'account_number' => $request->account_number,
-                'account_name' => $request->account_name,
-                'payout_id' => $payout['payout_id']
-            ]);
-
-            if (!$transaction) {
-                throw new \Exception('Failed to process cash out.');
-            }
-
-            $transaction->update([
+            // Only create a PENDING transaction, no deduction on wallet
+            $transaction = $wallet->transactions()->create([
+                'type' => 'cash_out',
+                'amount' => $request->amount,
+                'balance_before' => $wallet->balance,
+                'balance_after' => $wallet->balance,
                 'status' => 'pending',
                 'payment_method' => 'gcash',
                 'reference_number' => $payout['payout_id'],
-                'description' => 'Cash out to GCash: ' . $request->account_number
+                'description' => 'Cash out to GCash: ' . $request->account_number,
+                'metadata' => [
+                    'account_number' => $request->account_number,
+                    'account_name' => $request->account_name,
+                    'payout_id' => $payout['payout_id']
+                ],
             ]);
 
             DB::commit();
-
-            return redirect()->route('wallet.index')->with('success', 'Cash out request submitted successfully. It will be processed within 24 hours.');
-
+            return redirect()->route(Auth::guard('student')->check() ? 'student.wallet' : 'tutor.wallet')->with('success', 'Cash out request submitted successfully. It will be processed within 24 hours.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to process cash out: ' . $e->getMessage());

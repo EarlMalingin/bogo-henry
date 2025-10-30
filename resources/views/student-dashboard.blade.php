@@ -324,16 +324,16 @@
         <h2 class="section-title">Quick Links</h2>
         <div class="quick-links">
             <a href="#" class="quick-link">
-                <div class="quick-link-icon"><i class="fas fa-chart-line"></i></div>
-                <div>Progress</div>
-            </a>
-            <a href="#" class="quick-link">
                 <div class="quick-link-icon"><i class="fas fa-folder-open"></i></div>
                 <div>Resources</div>
             </a>
             <a href="{{ route('student.messages') }}" class="quick-link">
                 <div class="quick-link-icon"><i class="fas fa-comments"></i></div>
                 <div>Messages</div> 
+            </a>
+            <a href="{{ route('student.schedule') }}" class="quick-link">
+                <div class="quick-link-icon"><i class="fas fa-calendar-alt"></i></div>
+                <div>My Schedule</div>
             </a>
             <a href="#" class="quick-link">
                 <div class="quick-link-icon"><i class="fas fa-file-alt"></i></div>

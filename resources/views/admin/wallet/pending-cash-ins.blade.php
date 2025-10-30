@@ -97,7 +97,8 @@
                             <td>₱{{ number_format($cashIn->amount, 2) }}</td>
                             <td>
                                 @if($cashIn->wallet)
-                                    {{ ucfirst($cashIn->wallet->user_type) }} #{{ $cashIn->wallet->user_id }}
+                                    {{ $cashIn->wallet->user_full_name ?? ucfirst($cashIn->wallet->user_type) . ' #' . $cashIn->wallet->user_id }}
+                                    <br><small style="color:#6b7280;">({{ ucfirst($cashIn->wallet->user_type) }})</small>
                                 @else
                                     N/A
                                 @endif
@@ -117,7 +118,7 @@
                                     <span style="color:#6b7280;font-size:12px;">No proof uploaded</span>
                                 @endif
                             </td>
-                            <td>{{ $cashIn->created_at->format('M d, Y H:i') }}</td>
+                            <td>{{ $cashIn->created_at->format('M d, Y h:i A') }}</td>
                             <td>
                                 <div class="action-buttons">
                                     <form method="POST" action="{{ route('admin.wallet.approve-cash-in', $cashIn->id) }}" style="display:inline">

@@ -118,7 +118,7 @@
                             <td>₱{{ number_format($wallet->balance, 2) }}</td>
                             <td>{{ $wallet->currency }}</td>
                             <td>{{ $wallet->created_at->format('M d, Y') }}</td>
-                            <td>{{ $wallet->updated_at->format('M d, Y H:i') }}</td>
+                            <td>{{ $wallet->updated_at->format('M d, Y h:i A') }}</td>
                             <td>
                                 <a href="{{ route('admin.wallet.user-wallet-detail', [$wallet->user_type, $wallet->user_id]) }}" class="btn btn-primary">View Details</a>
                             </td>

@@ -176,7 +176,7 @@
                                         {{ ucfirst($transaction->status) }}
                                     </span>
                                 </td>
-                                <td>{{ $transaction->created_at->format('M d, Y H:i') }}</td>
+                                <td>{{ $transaction->created_at->format('M d, Y h:i A') }}</td>
                             </tr>
                         @empty
                             <tr>

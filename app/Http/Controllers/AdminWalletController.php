@@ -130,16 +130,28 @@ class AdminWalletController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update transaction status
+            $wallet = $transaction->wallet;
+            // Check if wallet can afford payout right now
+            if (!$wallet->canAfford($transaction->amount)) {
+                return back()->with('error', 'User does not have enough balance for this payout at this moment.');
+            }
+
+            // Deduct funds now using proper method
+            $balanceBefore = $wallet->balance;
+            $wallet->balance = $wallet->balance - $transaction->amount;
+            $wallet->save();
+
+            // Update transaction: completed, update balances
             $transaction->update([
                 'status' => 'completed',
+                'balance_before' => $balanceBefore,
+                'balance_after' => $wallet->balance,
                 'processed_at' => now(),
                 'processed_by' => Auth::guard('admin')->id()
             ]);
 
             DB::commit();
-
-            return back()->with('success', 'Payout approved successfully.');
+            return back()->with('success', 'Payout approved and deducted from balance.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to approve payout: ' . $e->getMessage());

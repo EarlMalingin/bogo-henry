@@ -386,7 +386,7 @@
             </div>
 
             <div class="payment-actions">
-                <a href="{{ Auth::guard('student')->check() ? route('student.wallet') : route('tutor.wallet') }}" class="btn btn-secondary">
+                <a href="{{ $userType === 'student' ? route('student.wallet') : route('tutor.wallet') }}" class="btn btn-secondary">
                     <i class="fas fa-times"></i>
                     Cancel Payment
                 </a>
@@ -402,7 +402,7 @@
                     <h3>Upload Payment Proof</h3>
                     <p>Please upload a screenshot of your payment confirmation from GCash.</p>
                     
-                    <form id="paymentProofForm" method="POST" action="{{ Auth::guard('student')->check() ? route('student.wallet.upload-payment-proof') : route('tutor.wallet.upload-payment-proof') }}" enctype="multipart/form-data">
+                    <form id="paymentProofForm" method="POST" action="{{ $userType === 'student' ? route('student.wallet.upload-payment-proof') : route('tutor.wallet.upload-payment-proof') }}" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="transaction_id" value="{{ $transaction->id }}">
                         
