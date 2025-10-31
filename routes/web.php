@@ -76,6 +76,17 @@ Route::middleware('web')->group(function () {
         Route::get('/admin/wallet/user-wallets', [App\Http\Controllers\AdminWalletController::class, 'userWallets'])->name('admin.wallet.user-wallets');
         Route::get('/admin/wallet/user-wallet/{userType}/{userId}', [App\Http\Controllers\AdminWalletController::class, 'showUserWallet'])->name('admin.wallet.user-wallet-detail');
         Route::post('/admin/wallet/manual-transaction', [App\Http\Controllers\AdminWalletController::class, 'manualTransaction'])->name('admin.wallet.manual-transaction');
+
+        // Admin messaging
+        Route::post('/admin/message/send', [App\Http\Controllers\AdminMessageController::class, 'send'])->name('admin.message.send');
+
+        // Admin ratings
+        Route::get('/admin/ratings', [AdminAuthController::class, 'ratings'])->name('admin.ratings');
+
+        // Admin tutor approvals
+        Route::get('/admin/pending-tutors', [AdminAuthController::class, 'pendingTutors'])->name('admin.pending-tutors');
+        Route::post('/admin/tutors/{id}/approve', [AdminAuthController::class, 'approveTutor'])->name('admin.tutors.approve');
+        Route::post('/admin/tutors/{id}/reject', [AdminAuthController::class, 'rejectTutor'])->name('admin.tutors.reject');
     });
 });
 
@@ -144,6 +155,13 @@ Route::middleware(['auth:student'])->group(function () {
             Route::post('/student/wallet/upload-payment-proof', [App\Http\Controllers\SecureWalletController::class, 'uploadPaymentProof'])->name('student.wallet.upload-payment-proof');
         });
    
+    // Student assignment routes
+    Route::get('/student/assignments/post', [App\Http\Controllers\StudentAssignmentController::class, 'create'])->name('student.assignments.post');
+    Route::post('/student/assignments', [App\Http\Controllers\StudentAssignmentController::class, 'store'])->name('student.assignments.store');
+    Route::get('/student/assignments', [App\Http\Controllers\StudentAssignmentController::class, 'myAssignments'])->name('student.assignments.my-assignments');
+    Route::get('/student/assignments/{id}', [App\Http\Controllers\StudentAssignmentController::class, 'show'])->name('student.assignments.show');
+    Route::post('/student/assignments/{id}/pay', [App\Http\Controllers\StudentAssignmentController::class, 'payAndView'])->name('student.assignments.pay');
+    Route::get('/student/assignments/{id}/download', [App\Http\Controllers\StudentAssignmentController::class, 'downloadFile'])->name('student.assignments.download');
 });
 
 // Protected tutor routes
@@ -197,6 +215,14 @@ Route::middleware(['auth:tutor'])->group(function () {
             Route::get('/tutor/wallet/balance', [App\Http\Controllers\SecureWalletController::class, 'getBalance'])->name('tutor.wallet.balance');
             Route::post('/tutor/wallet/upload-payment-proof', [App\Http\Controllers\SecureWalletController::class, 'uploadPaymentProof'])->name('tutor.wallet.upload-payment-proof');
         });
+
+    // Tutor assignment routes
+    Route::get('/tutor/assignments', [App\Http\Controllers\TutorAssignmentController::class, 'index'])->name('tutor.assignments.index');
+    Route::get('/tutor/assignments/{id}', [App\Http\Controllers\TutorAssignmentController::class, 'show'])->name('tutor.assignments.show');
+    Route::post('/tutor/assignments/{id}/answer', [App\Http\Controllers\TutorAssignmentController::class, 'storeAnswer'])->name('tutor.assignments.answer');
+    Route::get('/tutor/assignments/my-answers', [App\Http\Controllers\TutorAssignmentController::class, 'myAnswers'])->name('tutor.assignments.my-answers');
+    Route::get('/tutor/assignments/{id}/download', [App\Http\Controllers\TutorAssignmentController::class, 'downloadFile'])->name('tutor.assignments.download');
+    Route::get('/tutor/assignments/answers/{id}/download', [App\Http\Controllers\TutorAssignmentController::class, 'downloadAnswerFile'])->name('tutor.assignments.answer.download');
 });
 
 // Test route to check sessions (remove in production)

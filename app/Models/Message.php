@@ -35,6 +35,9 @@ class Message extends Model
     {
         if ($this->sender_type === 'student') {
             return $this->belongsTo(Student::class, 'sender_id');
+        } elseif ($this->sender_type === 'admin') {
+            // Admin doesn't have a model, return null or handle differently
+            return null;
         }
         return $this->belongsTo(Tutor::class, 'sender_id');
     }

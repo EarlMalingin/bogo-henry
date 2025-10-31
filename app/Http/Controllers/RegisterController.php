@@ -14,8 +14,8 @@ class RegisterController extends Controller
     public function studentRegister(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255|regex:/^[a-zA-Z\s\-\']+$/',
+            'last_name' => 'required|string|max:255|regex:/^[a-zA-Z\s\-\']+$/',
             'email' => 'required|string|email|max:255|unique:students',
             'password' => 'required|string|confirmed|min:8',
             'student_id' => 'required|string|unique:students',
@@ -24,6 +24,9 @@ class RegisterController extends Controller
             'subjects_interest' => 'nullable|string',
             'phone' => 'nullable|string',
             'terms' => 'accepted',
+        ], [
+            'first_name.regex' => 'First name can only contain letters, spaces, hyphens, and apostrophes.',
+            'last_name.regex' => 'Last name can only contain letters, spaces, hyphens, and apostrophes.',
         ]);
 
         if ($validator->fails()) {

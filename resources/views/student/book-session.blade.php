@@ -67,6 +67,59 @@
             background-color: #f5f5f5;
         }
 
+        .header-right-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .currency-display {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .currency-display:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .currency-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+            color: #ffd700;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .currency-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .currency-amount {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            line-height: 1;
+        }
+
+        .currency-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
         .logo {
             display: flex;
             align-items: center;
@@ -551,6 +604,18 @@
             .tutor-grid {
                 grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             }
+
+            .header-right-section {
+                flex-direction: column;
+                gap: 0.5rem;
+                width: 100%;
+                margin-top: 1rem;
+            }
+
+            .currency-display {
+                width: 100%;
+                justify-content: center;
+            }
             
             .tutor-modal-header {
                 flex-direction: column;
@@ -581,33 +646,47 @@
             <nav class="nav-links" id="nav-links">
                 <a href="{{route('student.dashboard')}}">Dashboard</a>
                 <a href="{{route('student.book-session')}}" class="active">Book Session</a>
-                <a href="{{route('student.my-sessions')}}">Sessions</a>
+                <a href="{{route('student.my-sessions')}}">Activities</a>
                 <a href="{{route('student.schedule')}}">Schedule</a>
                 
             </nav>
-            <div class="profile-dropdown-container" style="position: relative;">
-                <div class="profile-icon" id="profile-icon">
-                    @auth('student')
-                        @if(Auth::guard('student')->user()->profile_picture)
-                            <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?v={{ file_exists(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) ? filemtime(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
+            <div class="header-right-section">
+                <!-- Currency Display -->
+                <div class="currency-display">
+                    <div class="currency-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="currency-info">
+                        <div class="currency-amount" id="currency-amount">₱0.00</div>
+                        <div class="currency-label">Balance</div>
+                    </div>
+                </div>
+                
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown-container" style="position: relative;">
+                    <div class="profile-icon" id="profile-icon">
+                        @auth('student')
+                            @if(Auth::guard('student')->user()->profile_picture)
+                                <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                            @else
+                                {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
+                            @endif
                         @else
-                            {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
-                        @endif
-                    @else
-                        <a href="{{ route('login.student') }}" class="login-link">Login</a>
+                            <a href="{{ route('login.student') }}" class="login-link">Login</a>
+                        @endauth
+                    </div>
+                    @auth('student')
+                    <div class="dropdown-menu" id="dropdown-menu">
+                        <a href="{{ route('student.profile.edit') }}">My Profile</a>
+                        <a href="#">Settings</a>
+                        <a href="#">Help Center</a>
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                        <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
+                            @csrf
+                        </form>
+                    </div>
                     @endauth
                 </div>
-                @auth('student')
-                <div class="dropdown-menu" id="dropdown-menu">
-                    <a href="{{ route('student.profile.edit') }}">My Profile</a>
-                    <a href="#">Settings</a>
-                    <a href="#">Help Center</a>
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                    <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
-                        @csrf
-                    </form>
-                </div>
-                @endauth
             </div>
         </div>
     </header>
@@ -707,7 +786,7 @@
                             @endif
                         </div>
                         <div class="tutor-footer">
-                            <a href="mailto:{{ $tutor->email }}" class="message-tutor">Message</a>
+                            <a href="{{ route('student.messages') }}?tutor_id={{ $tutor->id }}" class="message-tutor">Message</a>
                             <button class="view-details" onclick="viewTutorDetails({{ $tutor->id }})">View Details</button>
                             <button class="book-session" onclick="bookSession({{ $tutor->id }})">Book Session</button>
                         </div>
@@ -866,7 +945,7 @@
                     e.stopPropagation();
                     dropdownMenu.classList.toggle('active');
                 });
-                
+
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
                     if (!profileIcon.contains(e.target)) {
@@ -874,22 +953,67 @@
                     }
                 });
             }
-            
+
             // Update current date and time
             const dateTimeElement = document.getElementById('current-date-time');
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const currentDate = new Date();
-            dateTimeElement.textContent = currentDate.toLocaleDateString('en-US', options);
+            if (dateTimeElement) {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const currentDate = new Date();
+                dateTimeElement.textContent = currentDate.toLocaleDateString('en-US', options);
+            }
+
+            // Initialize currency display
+            initializeCurrencyDisplay();
+            // Load currency data with a slight delay to ensure DOM is ready
+            setTimeout(function() {
+                loadCurrencyData();
+            }, 100);
             
             // Initialize booking modal functionality
             initializeBookingModal();
             
             // Add event listener for price filter
             const priceFilter = document.getElementById('price-filter');
-            priceFilter.addEventListener('change', function() {
-                searchTutors();
-            });
+            if (priceFilter) {
+                priceFilter.addEventListener('change', function() {
+                    searchTutors();
+                });
+            }
         });
+
+        // Currency display functionality
+        function initializeCurrencyDisplay() {
+            const currencyDisplay = document.querySelector('.currency-display');
+            if (currencyDisplay) {
+                currencyDisplay.addEventListener('click', function() {
+                    viewWallet();
+                });
+            }
+        }
+
+        // Load currency data from API
+        function loadCurrencyData() {
+            fetch('{{ route("student.wallet.balance") }}')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const currencyAmount = document.getElementById('currency-amount');
+                    if (currencyAmount && data.balance !== undefined) {
+                        currencyAmount.textContent = '₱' + parseFloat(data.balance).toFixed(2);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wallet balance:', error);
+                });
+        }
+
+        function viewWallet() {
+            window.location.href = "{{ route('student.wallet') }}";
+        }
         
         function searchTutors() {
             const searchTerm = document.getElementById('search-input').value.toLowerCase();

@@ -119,7 +119,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="first_name">First Name *</label>
-                                <input type="text" id="first_name" name="first_name" value="{{ old('first_name') }}" required>
+                                <input type="text" id="first_name" name="first_name" value="{{ old('first_name') }}" required pattern="[a-zA-Z\s\-\']+" title="First name can only contain letters, spaces, hyphens, and apostrophes" onkeypress="return /[a-zA-Z\s\-\']/.test(event.key)">
                                 @error('first_name')
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror
@@ -127,7 +127,7 @@
                             
                             <div class="form-group">
                                 <label for="last_name">Last Name *</label>
-                                <input type="text" id="last_name" name="last_name" value="{{ old('last_name') }}" required>
+                                <input type="text" id="last_name" name="last_name" value="{{ old('last_name') }}" required pattern="[a-zA-Z\s\-\']+" title="Last name can only contain letters, spaces, hyphens, and apostrophes" onkeypress="return /[a-zA-Z\s\-\']/.test(event.key)">
                                 @error('last_name')
                                     <span class="error-message">{{ $message }}</span>
                                 @enderror

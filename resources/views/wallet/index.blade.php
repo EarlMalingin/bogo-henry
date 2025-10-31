@@ -55,7 +55,7 @@
         .logo {
             display: flex;
             align-items: center;
-            font-size: 1.5rem;
+            font-size: 2rem;
             font-weight: bold;
             color: white;
             text-decoration: none;
@@ -63,7 +63,17 @@
 
         .logo-img {
             margin-right: 0.5rem;
-            height: 50px;
+            height: 70px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
         }
 
         .nav-links {
@@ -321,6 +331,74 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
+        .pagination-wrapper {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+            text-align: center;
+        }
+
+        /* Pagination Styling */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1rem 0;
+        }
+
+        .pagination-link,
+        .pagination-active,
+        .pagination-disabled {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            font-size: 0.95rem;
+            line-height: 1;
+            transition: all 0.3s ease;
+            background: white;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .pagination-link:hover {
+            background: #f8f9fa;
+            border-color: #4CAF50;
+            color: #4CAF50;
+            transform: translateY(-2px);
+        }
+
+        .pagination-active {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+            font-weight: 600;
+        }
+
+        .pagination-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f8f9fa;
+            color: #999;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
         .section-title {
             font-size: 1.5rem;
             font-weight: bold;
@@ -436,7 +514,53 @@
         }
 
 
+        /* Responsive Styles */
         @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: linear-gradient(135deg, #4a90e2, #5637d9);
+                flex-direction: column;
+                padding: 1rem 0;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 0.75rem 5%;
+                width: 100%;
+            }
+
+            .header-right-section {
+                gap: 0.5rem;
+            }
+
+            .currency-display {
+                padding: 0.4rem 0.8rem;
+            }
+
+            .currency-amount {
+                font-size: 1rem;
+            }
+
+            .currency-label {
+                font-size: 0.7rem;
+            }
+
+            .logo-img {
+                height: 50px;
+            }
+
             .container {
                 padding: 0 0.5rem;
             }
@@ -473,6 +597,19 @@
                 text-align: left;
             }
 
+            .pagination {
+                gap: 0.25rem;
+            }
+
+            .pagination-link,
+            .pagination-active,
+            .pagination-disabled {
+                min-width: 35px;
+                height: 35px;
+                padding: 0 8px;
+                font-size: 0.85rem;
+            }
+
             .header-right-section {
                 gap: 0.5rem;
             }
@@ -499,14 +636,15 @@
     <header>
         <div class="navbar">
             <a href="{{ $userType === 'student' ? route('student.dashboard') : route('tutor.dashboard') }}" class="logo">
-                <img src="{{ asset('images/MentorHub.png') }}" alt="MentorHub" class="logo-img">
-                MentorHub
+                <img src="{{asset('images/MentorHub.png')}}" alt="UCTutor Logo" class="logo-img">
+                
             </a>
-            <nav class="nav-links">
+            <button class="menu-toggle" id="menu-toggle">☰</button>
+            <nav class="nav-links" id="nav-links">
                 <a href="{{ $userType === 'student' ? route('student.dashboard') : route('tutor.dashboard') }}">Dashboard</a>
                 @if($userType === 'student')
                     <a href="{{ route('student.book-session') }}">Book Session</a>
-                    <a href="{{ route('student.my-sessions') }}">Sessions</a>
+                    <a href="{{ route('student.my-sessions') }}">Activities</a>
                     <a href="{{ route('student.schedule') }}">Schedule</a>
                 @else
                     <a href="{{ route('tutor.bookings.index') }}">My Bookings</a>
@@ -516,18 +654,18 @@
             </nav>
             <div class="header-right-section">
                 <!-- Currency Display -->
-                <div class="currency-display" onclick="window.location.href='{{ $userType === 'student' ? route('student.wallet') : route('tutor.wallet') }}'">
+                <div class="currency-display">
                     <div class="currency-icon">
                         <i class="fas fa-wallet"></i>
                     </div>
                     <div class="currency-info">
-                        <div class="currency-amount" id="currency-amount">₱{{ number_format($wallet->balance, 2) }}</div>
+                        <div class="currency-amount" id="currency-amount">₱0.00</div>
                         <div class="currency-label">Balance</div>
                     </div>
                 </div>
                 
                 <!-- Profile Dropdown -->
-                <div class="profile-dropdown-container">
+                <div class="profile-dropdown-container" style="position: relative;">
                     <div class="profile-icon" id="profile-icon">
                         @if($userType === 'student')
                             @if($user->profile_picture)
@@ -543,15 +681,27 @@
                             @endif
                         @endif
                     </div>
+                    @if($userType === 'student')
                     <div class="dropdown-menu" id="dropdown-menu">
-                        <a href="{{ $userType === 'student' ? route('student.profile.edit') : route('tutor.profile.edit') }}">My Profile</a>
+                        <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
                         <a href="#">Help Center</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                        <form id="logout-form" method="POST" action="{{ $userType === 'student' ? route('student.logout') : route('tutor.logout') }}" style="display: none;">
+                        <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
                         </form>
                     </div>
+                    @else
+                    <div class="dropdown-menu" id="dropdown-menu">
+                        <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
+                        <a href="#">Settings</a>
+                        <a href="#">Help Center</a>
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                        <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
+                            @csrf
+                        </form>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -640,8 +790,65 @@
                 @endforeach
 
                 @if($transactions->hasPages())
-                    <div class="mt-4">
-                        {{ $transactions->links() }}
+                    <div class="pagination-wrapper">
+                        <div class="pagination">
+                            @if($transactions->onFirstPage())
+                                <span class="pagination-disabled">&laquo; Previous</span>
+                            @else
+                                <a href="{{ $transactions->previousPageUrl() }}" class="pagination-link">&laquo; Previous</a>
+                            @endif
+
+                            @php
+                                $currentPage = $transactions->currentPage();
+                                $lastPage = $transactions->lastPage();
+                                $startPage = max(1, $currentPage - 2);
+                                $endPage = min($lastPage, $currentPage + 2);
+                                
+                                if ($lastPage > 5) {
+                                    if ($currentPage <= 3) {
+                                        $startPage = 1;
+                                        $endPage = 5;
+                                    } elseif ($currentPage >= $lastPage - 2) {
+                                        $startPage = $lastPage - 4;
+                                        $endPage = $lastPage;
+                                    }
+                                } else {
+                                    $startPage = 1;
+                                    $endPage = $lastPage;
+                                }
+                            @endphp
+
+                            @if($startPage > 1)
+                                <a href="{{ $transactions->url(1) }}" class="pagination-link">1</a>
+                                @if($startPage > 2)
+                                    <span class="pagination-disabled">...</span>
+                                @endif
+                            @endif
+
+                            @foreach($transactions->getUrlRange($startPage, $endPage) as $page => $url)
+                                @if($page == $currentPage)
+                                    <span class="pagination-active">{{ $page }}</span>
+                                @else
+                                    <a href="{{ $url }}" class="pagination-link">{{ $page }}</a>
+                                @endif
+                            @endforeach
+
+                            @if($endPage < $lastPage)
+                                @if($endPage < $lastPage - 1)
+                                    <span class="pagination-disabled">...</span>
+                                @endif
+                                <a href="{{ $transactions->url($lastPage) }}" class="pagination-link">{{ $lastPage }}</a>
+                            @endif
+
+                            @if($transactions->hasMorePages())
+                                <a href="{{ $transactions->nextPageUrl() }}" class="pagination-link">Next &raquo;</a>
+                            @else
+                                <span class="pagination-disabled">Next &raquo;</span>
+                            @endif
+                        </div>
+                        <div class="pagination-info">
+                            Showing {{ $transactions->firstItem() }} to {{ $transactions->lastItem() }} of {{ $transactions->total() }} results
+                        </div>
                     </div>
                 @endif
             @else
@@ -771,30 +978,92 @@
     </style>
 
     <script>
-        // Profile dropdown functionality
         document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const menuToggle = document.getElementById('menu-toggle');
+            const navLinks = document.getElementById('nav-links');
+            
+            if (menuToggle && navLinks) {
+                menuToggle.addEventListener('click', function() {
+                    navLinks.classList.toggle('active');
+                });
+            }
+            
+            // Profile dropdown functionality
             const profileIcon = document.getElementById('profile-icon');
             const dropdownMenu = document.getElementById('dropdown-menu');
+            
+            if (profileIcon && dropdownMenu) {
+                profileIcon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('active');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!profileIcon.contains(e.target)) {
+                        dropdownMenu.classList.remove('active');
+                    }
+                });
+            }
 
-            profileIcon.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdownMenu.classList.toggle('active');
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!profileIcon.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                    dropdownMenu.classList.remove('active');
-                }
-            });
-
-            // Close dropdown when clicking on a menu item
-            dropdownMenu.addEventListener('click', function(e) {
-                if (e.target.tagName === 'A') {
-                    dropdownMenu.classList.remove('active');
-                }
-            });
+            // Initialize currency display
+            @if($userType === 'student')
+            initializeCurrencyDisplay();
+            loadCurrencyData();
+            @endif
         });
+
+        @if($userType === 'student')
+        function viewWallet() {
+            window.location.href = "{{ route('student.wallet') }}";
+        }
+
+        // Currency display functionality
+        function initializeCurrencyDisplay() {
+            const currencyDisplay = document.querySelector('.currency-display');
+            if (currencyDisplay) {
+                currencyDisplay.addEventListener('click', function() {
+                    viewWallet();
+                });
+            }
+        }
+
+        // Load currency data from API
+        function loadCurrencyData() {
+            fetch('{{ route("student.wallet.balance") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const currencyAmount = document.getElementById('currency-amount');
+                    if (currencyAmount) {
+                        currencyAmount.textContent = '₱' + parseFloat(data.balance).toFixed(2);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wallet balance:', error);
+                    // Fallback to displaying the balance from the server
+                    const currencyAmount = document.getElementById('currency-amount');
+                    if (currencyAmount) {
+                        currencyAmount.textContent = '₱{{ number_format($wallet->balance, 2) }}';
+                    }
+                });
+        }
+        @else
+        // For tutors, use static balance display
+        document.addEventListener('DOMContentLoaded', function() {
+            const currencyDisplay = document.querySelector('.currency-display');
+            if (currencyDisplay) {
+                currencyDisplay.addEventListener('click', function() {
+                    window.location.href = "{{ route('tutor.wallet') }}";
+                });
+            }
+            // Set the balance from server-side data
+            const currencyAmount = document.getElementById('currency-amount');
+            if (currencyAmount) {
+                currencyAmount.textContent = '₱{{ number_format($wallet->balance, 2) }}';
+            }
+        });
+        @endif
 
         function showUploadModal(transactionId) {
             document.getElementById('uploadTransactionId').value = transactionId;

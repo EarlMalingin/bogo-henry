@@ -943,10 +943,10 @@
                 <div class="action-icon"><i class="fas fa-chalkboard-teacher"></i></div>
                 <div>My Sessions</div>
             </div>
-            <div class="action-card" onclick="viewAssignments()">
+            <a href="{{ route('tutor.assignments.index') }}" class="action-card">
                 <div class="action-icon"><i class="fas fa-tasks"></i></div>
                 <div>See Assignments</div>
-            </div>
+            </a>
             <div class="action-card" onclick="uploadResources()">
                 <div class="action-icon"><i class="fas fa-folder-open"></i></div>
                 <div>Resources</div>

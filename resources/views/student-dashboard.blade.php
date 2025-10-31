@@ -252,7 +252,7 @@
             <nav class="nav-links" id="nav-links">
                 <a href="#" class="active">Dashboard</a>
                 <a href="{{route('student.book-session')}}">Book Session</a>
-                <a href="{{route('student.my-sessions')}}">Sessions</a>
+                <a href="{{route('student.my-sessions')}}">Activities</a>
                 <a href="{{route('student.schedule')}}">Schedule</a>
             </nav>
             <div class="header-right-section">
@@ -335,7 +335,7 @@
                 <div class="quick-link-icon"><i class="fas fa-calendar-alt"></i></div>
                 <div>My Schedule</div>
             </a>
-            <a href="#" class="quick-link">
+            <a href="{{ route('student.assignments.post') }}" class="quick-link">
                 <div class="quick-link-icon"><i class="fas fa-file-alt"></i></div>
                 <div>Post Assignments</div>
             </a>

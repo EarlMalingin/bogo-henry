@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Bookings | MentorHub</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -18,7 +19,7 @@
             color: #333;
             background:
                 linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
-                url('../images/Uc-background.jpg');
+                url('{{ asset('images/Uc-background.jpg') }}');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -153,6 +154,59 @@
 
         .dropdown-menu a:hover {
             background-color: #f5f5f5;
+        }
+
+        .header-right-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .currency-display {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .currency-display:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .currency-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+            color: #ffd700;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .currency-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .currency-amount {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            line-height: 1;
+        }
+
+        .currency-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
         }
 
         /* Main Content Styles */
@@ -322,6 +376,18 @@
             .nav-links.active {
                 display: flex;
             }
+
+            .header-right-section {
+                flex-direction: column;
+                gap: 0.5rem;
+                width: 100%;
+                margin-top: 1rem;
+            }
+
+            .currency-display {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -335,26 +401,40 @@
             <nav class="nav-links" id="nav-links">
                 <a href="{{ route('tutor.dashboard') }}">Dashboard</a>
                 <a href="{{ route('tutor.bookings.index') }}" class="active">My Bookings</a>
-                <a href="#">Students</a>
-                <a href="#">Schedule</a>
+                <a href="{{ route('tutor.students') }}">Students</a>
+                <a href="{{ route('tutor.schedule') }}">Schedule</a>
                 
             </nav>
-            <div class="profile-dropdown-container" style="position: relative;">
-                <div class="profile-icon" id="profile-icon">
-                    @if($tutor->profile_picture)
-                        <img src="{{ asset('storage/' . $tutor->profile_picture) }}?v={{ file_exists(public_path('storage/' . $tutor->profile_picture)) ? filemtime(public_path('storage/' . $tutor->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
-                    @else
-                        {{ strtoupper(substr($tutor->first_name, 0, 1) . substr($tutor->last_name, 0, 1)) }}
-                    @endif
+            <div class="header-right-section">
+                <!-- Currency Display -->
+                <div class="currency-display">
+                    <div class="currency-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="currency-info">
+                        <div class="currency-amount" id="currency-amount">₱0.00</div>
+                        <div class="currency-label">Balance</div>
+                    </div>
                 </div>
-                <div class="dropdown-menu" id="dropdown-menu">
-                    <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
-                    <a href="#">Settings</a>
-                    <a href="#">Help Center</a>
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                    <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
-                        @csrf
-                    </form>
+                
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown-container" style="position: relative;">
+                    <div class="profile-icon" id="profile-icon">
+                        @if($tutor->profile_picture)
+                            <img src="{{ asset('storage/' . $tutor->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                        @else
+                            {{ strtoupper(substr($tutor->first_name, 0, 1) . substr($tutor->last_name, 0, 1)) }}
+                        @endif
+                    </div>
+                    <div class="dropdown-menu" id="dropdown-menu">
+                        <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
+                        <a href="#">Settings</a>
+                        <a href="#">Help Center</a>
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                        <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
+                            @csrf
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -499,7 +579,43 @@
                     }
                 });
             }
+
+            // Initialize currency display
+            initializeCurrencyDisplay();
+            loadCurrencyData();
         });
+
+        function initializeCurrencyDisplay() {
+            const currencyDisplay = document.querySelector('.currency-display');
+            if (currencyDisplay) {
+                currencyDisplay.addEventListener('click', function() {
+                    viewWallet();
+                });
+            }
+        }
+
+        function loadCurrencyData() {
+            fetch('{{ route('tutor.wallet.balance') }}', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const currencyAmount = document.getElementById('currency-amount');
+                if (currencyAmount && data.balance !== undefined) {
+                    currencyAmount.textContent = '₱' + parseFloat(data.balance).toFixed(2);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading currency data:', error);
+            });
+        }
+
+        function viewWallet() {
+            window.location.href = "{{ route('tutor.wallet') }}";
+        }
 
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;

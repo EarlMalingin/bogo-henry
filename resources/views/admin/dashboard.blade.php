@@ -34,6 +34,8 @@
         .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;white-space:nowrap}
         .badge.green{background:#e7f8ef;color:#0f9d58}
         .badge.orange{background:#fff1e6;color:#f47c1f}
+        .badge.red{background:#fee2e2;color:#dc2626}
+        .badge.yellow{background:#fef3c7;color:#d97706}
     </style>
     </head>
 <body>
@@ -44,6 +46,8 @@
             </a>
             <div class="tabs">
                 <a class="tab active" href="{{ route('admin.dashboard') }}">Dashboard</a>
+                <a class="tab" href="{{ route('admin.pending-tutors') }}">Pending Tutors</a>
+                <a class="tab" href="{{ route('admin.ratings') }}">Ratings</a>
             </div>
             <form method="POST" action="{{ route('admin.logout') }}">
                 @csrf
@@ -81,6 +85,16 @@
                 <div class="stat">
                     <div class="num">{{ number_format(($pendingPayouts ?? 0) + ($pendingCashIns ?? 0)) }}</div>
                     <div class="label">pending requests</div>
+                </div>
+            </div>
+            </a>
+            <a href="{{ route('admin.pending-tutors') }}" style="text-decoration:none;color:inherit">
+            <div class="card">
+                <h4>Pending Tutors</h4>
+                <p>Review and approve tutor registrations.</p>
+                <div class="stat">
+                    <div class="num">{{ number_format($pendingTutorRegistrations ?? 0) }}</div>
+                    <div class="label">awaiting approval</div>
                 </div>
             </div>
             </a>
@@ -178,6 +192,7 @@
                 </table>
             </div>
         </div>
+
     </main>
 </body>
 </html>

@@ -369,6 +369,12 @@ main {
     margin-bottom: 2rem;
 }
 
+@media (min-width: 769px) {
+    .quick-links {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
 .quick-link {
     background-color: white;
     border-radius: 8px;
@@ -381,6 +387,7 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
+    cursor: pointer;
 }
 
 .quick-link:hover {
@@ -391,7 +398,12 @@ main {
 .quick-link-icon {
     font-size: 1.5rem;
     margin-bottom: 0.8rem;
-    color: #4a90e2;
+    color: #2d7dd2;
+    transition: transform 0.3s;
+}
+
+.quick-link:hover .quick-link-icon {
+    transform: scale(1.2);
 }
 
 /* Recent Activity */

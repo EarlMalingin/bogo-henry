@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\Tutor;
 use App\Models\Session;
 use App\Models\WalletTransaction;
+use App\Models\Review;
 
 class AdminAuthController extends Controller
 {
@@ -56,6 +57,8 @@ class AdminAuthController extends Controller
             ->where('status', 'pending_approval')
             ->count();
 
+        $pendingTutorRegistrations = Tutor::where('registration_status', 'pending')->count();
+
         $recentSessions = Session::with(['student', 'tutor'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
@@ -85,8 +88,78 @@ class AdminAuthController extends Controller
         $recentUsers = $recentStudents->merge($recentTutors)->sortByDesc('created_at')->values()->take(8);
 
         return view('admin.dashboard', compact(
-            'totalUsers', 'upcomingToday', 'pendingPayouts', 'pendingCashIns', 'recentSessions', 'recentWallet', 'recentUsers'
+            'totalUsers', 'upcomingToday', 'pendingPayouts', 'pendingCashIns', 'recentSessions', 'recentWallet', 'recentUsers', 'pendingTutorRegistrations'
         ));
+    }
+
+    public function ratings()
+    {
+        // Get tutors with their ratings
+        $tutorsWithRatings = Tutor::with('reviews')
+            ->get()
+            ->map(function ($tutor) {
+                $avgRating = $tutor->getAverageRating();
+                $ratingCount = $tutor->getRatingCount();
+                return [
+                    'id' => $tutor->id,
+                    'name' => $tutor->getFullName(),
+                    'email' => $tutor->email,
+                    'average_rating' => round($avgRating, 2),
+                    'rating_count' => $ratingCount,
+                    'is_terrible' => $avgRating < 2.0 && $ratingCount >= 3, // Terrible if avg < 2.0 and at least 3 ratings
+                ];
+            })
+            ->sortByDesc('average_rating')
+            ->values();
+
+        // Filter tutors with terrible ratings
+        $tutorsWithTerribleRatings = $tutorsWithRatings->filter(function ($tutor) {
+            return $tutor['is_terrible'];
+        })->values();
+
+        // Get all reviews with details
+        $allReviews = Review::with(['tutor', 'student', 'session'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('admin.ratings', compact(
+            'tutorsWithRatings', 
+            'tutorsWithTerribleRatings',
+            'allReviews'
+        ));
+    }
+
+    public function pendingTutors()
+    {
+        $pendingTutors = Tutor::where('registration_status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('admin.pending-tutors', compact('pendingTutors'));
+    }
+
+    public function approveTutor(Request $request, $id)
+    {
+        $tutor = Tutor::findOrFail($id);
+        
+        $tutor->update([
+            'registration_status' => 'approved'
+        ]);
+
+        return redirect()->route('admin.pending-tutors')
+            ->with('success', 'Tutor registration approved successfully!');
+    }
+
+    public function rejectTutor(Request $request, $id)
+    {
+        $tutor = Tutor::findOrFail($id);
+        
+        $tutor->update([
+            'registration_status' => 'rejected'
+        ]);
+
+        return redirect()->route('admin.pending-tutors')
+            ->with('success', 'Tutor registration rejected.');
     }
 }
 

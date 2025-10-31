@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment - MentorHub Wallet</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -61,7 +60,8 @@
             background: #f8f9fa;
             border-radius: 10px;
             padding: 1.5rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
         }
 
         .amount-label {
@@ -77,20 +77,31 @@
         }
 
         .qr-section {
-            margin-bottom: 2rem;
+            margin: 2rem 0;
+            text-align: center;
         }
 
         .qr-code {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 1rem;
-            background: #f8f9fa;
+            width: auto;
+            height: auto;
+            margin: 0 auto 1.5rem;
+            background: transparent;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid #eee;
+            border: none;
             position: relative;
+            padding: 1rem;
+        }
+
+        .qr-code img {
+            max-width: 300px;
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: block;
         }
 
         .qr-code canvas {
@@ -182,7 +193,7 @@
             border: 1px solid #ffeaa7;
             border-radius: 10px;
             color: #856404;
-            margin-bottom: 1rem;
+            margin: 0 0 2rem 0;
         }
 
         .status-indicator i {
@@ -313,8 +324,13 @@
             }
 
             .qr-code {
-                width: 150px;
-                height: 150px;
+                width: auto;
+                height: auto;
+                padding: 0.5rem;
+            }
+
+            .qr-code img {
+                max-width: 250px;
             }
 
             .amount-value {
@@ -350,12 +366,9 @@
 
             <div class="qr-section">
                 <div class="qr-code" id="qr-code">
-                    <i class="fas fa-qrcode qr-placeholder" id="qr-placeholder"></i>
-                    @if(isset($checkout_url) && $checkout_url)
-                        <img id="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ urlencode($checkout_url) }}" alt="QR Code" style="display: none; border-radius: 8px;">
-                    @endif
+                    <img src="{{ asset('images/QR-Code.png') }}" alt="GCash QR Code">
                 </div>
-                <p>Scan this QR code with your GCash app</p>
+                <p style="font-size: 1rem; color: #666; margin-bottom: 1rem;">Scan this QR code with your GCash app</p>
                 @if(isset($checkout_url) && $checkout_url)
                     <div style="margin-top: 1rem;">
                         <a href="{{ $checkout_url }}" target="_blank" class="btn btn-primary" style="display: inline-block; padding: 0.5rem 1rem; font-size: 0.9rem;">
@@ -444,7 +457,6 @@
         let timerInterval;
 
         document.addEventListener('DOMContentLoaded', function() {
-            generateQRCode();
             startCountdown();
             
             // Auto-refresh every 30 seconds
@@ -452,58 +464,6 @@
                 checkPaymentStatus();
             }, 30000);
         });
-
-        function generateQRCode() {
-            const qrCodeElement = document.getElementById('qr-code');
-            const qrPlaceholder = document.getElementById('qr-placeholder');
-            const qrImage = document.getElementById('qr-image');
-            
-            // Get the checkout URL from the data
-            const checkoutUrl = @json($checkout_url ?? '');
-            
-            if (checkoutUrl) {
-                // Try to generate QR code with JavaScript library first
-                if (typeof QRCode !== 'undefined') {
-                    // Hide the placeholder
-                    qrPlaceholder.style.display = 'none';
-                    
-                    // Generate QR code
-                    QRCode.toCanvas(qrCodeElement, checkoutUrl, {
-                        width: 200,
-                        height: 200,
-                        margin: 2,
-                        color: {
-                            dark: '#000000',
-                            light: '#FFFFFF'
-                        }
-                    }, function (error) {
-                        if (error) {
-                            console.error('QR Code generation failed:', error);
-                            // Fallback to image QR code
-                            showImageQRCode();
-                        }
-                    });
-                } else {
-                    // Fallback to image QR code
-                    showImageQRCode();
-                }
-            } else {
-                // Show error if no checkout URL
-                qrPlaceholder.innerHTML = '<i class="fas fa-exclamation-triangle"></i><br><small>No Payment URL</small>';
-            }
-        }
-
-        function showImageQRCode() {
-            const qrPlaceholder = document.getElementById('qr-placeholder');
-            const qrImage = document.getElementById('qr-image');
-            
-            if (qrImage) {
-                qrPlaceholder.style.display = 'none';
-                qrImage.style.display = 'block';
-            } else {
-                qrPlaceholder.innerHTML = '<i class="fas fa-exclamation-triangle"></i><br><small>QR Code Error</small>';
-            }
-        }
 
         function startCountdown() {
             timerInterval = setInterval(function() {

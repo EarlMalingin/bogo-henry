@@ -4,7 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use App\Models\Session; // Added this import
+use App\Models\Session;
+use App\Models\Review;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tutor extends Authenticatable
@@ -26,6 +27,7 @@ class Tutor extends Authenticatable
         'verification_code',
         'verification_code_expires_at',
         'is_verified',
+        'registration_status',
     ];
 
     protected $hidden = [
@@ -61,7 +63,21 @@ class Tutor extends Authenticatable
         return $this->hasMany(Activity::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
     // Helper methods
+    public function getAverageRating()
+    {
+        return $this->reviews()->avg('rating') ?: 0;
+    }
+
+    public function getRatingCount()
+    {
+        return $this->reviews()->count();
+    }
     public function getFullName()
     {
         return $this->first_name . ' ' . $this->last_name;

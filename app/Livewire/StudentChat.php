@@ -33,10 +33,21 @@ class StudentChat extends Component
 
     public function mount()
     {
-        $this->loadConversations();
+        // Check if tutor_id is provided in the URL query parameter before loading conversations
+        $tutorId = request()->query('tutor_id');
+        
+        $this->loadConversations($tutorId);
+        
+        // Select the tutor if provided
+        if ($tutorId) {
+            $tutor = Tutor::find($tutorId);
+            if ($tutor) {
+                $this->selectTutor($tutorId);
+            }
+        }
     }
 
-    public function loadConversations()
+    public function loadConversations($additionalTutorId = null)
     {
         $studentId = Auth::guard('student')->id();
         
@@ -50,6 +61,14 @@ class StudentChat extends Component
             $query->where('sender_id', $studentId)
                   ->where('sender_type', 'student');
         })->get();
+
+        // If a tutor ID is provided via query parameter, ensure it's included even if no conversation exists
+        if ($additionalTutorId) {
+            $additionalTutor = Tutor::find($additionalTutorId);
+            if ($additionalTutor && !$tutors->contains('id', $additionalTutorId)) {
+                $tutors->push($additionalTutor);
+            }
+        }
 
         $this->conversations = $tutors->map(function($tutor) use ($studentId) {
             $lastMessage = Message::betweenUsers($studentId, 'student', $tutor->id, 'tutor')

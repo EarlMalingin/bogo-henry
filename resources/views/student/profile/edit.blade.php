@@ -80,6 +80,136 @@
             margin-right: 0.5rem;
             height: 70px;
         }
+
+        .header-right-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .currency-display {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .currency-display:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .currency-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+            color: #ffd700;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .currency-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .currency-amount {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            line-height: 1;
+        }
+
+        .currency-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background-color: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Header Styles */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: block;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: linear-gradient(135deg, #4a90e2, #5637d9);
+                flex-direction: column;
+                padding: 1rem 0;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links a {
+                padding: 0.75rem 5%;
+                width: 100%;
+            }
+
+            .header-right-section {
+                gap: 0.5rem;
+            }
+
+            .currency-display {
+                padding: 0.4rem 0.8rem;
+            }
+
+            .currency-amount {
+                font-size: 1rem;
+            }
+
+            .currency-label {
+                font-size: 0.7rem;
+            }
+
+            .logo-img {
+                height: 50px;
+            }
+        }
         .profile-container {
             max-width: 800px;
             margin: 5rem auto 5rem auto;
@@ -363,32 +493,46 @@
             <nav class="nav-links" id="nav-links">
                 <a href="{{route('student.dashboard')}}">Dashboard</a>
                 <a href="{{route('student.book-session')}}">Book Session</a>
-                <a href="{{route('student.my-sessions')}}">Sessions</a>
-                
+                <a href="{{route('student.my-sessions')}}">Activities</a>
+                <a href="{{route('student.schedule')}}">Schedule</a>
             </nav>
-            <div class="profile-dropdown-container" style="position: relative;">
-                <div class="profile-icon" id="profile-icon">
-                    @auth('student')
-                        @if(Auth::guard('student')->user()->profile_picture)
-                            <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?v={{ file_exists(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) ? filemtime(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
+            <div class="header-right-section">
+                <!-- Currency Display -->
+                <div class="currency-display">
+                    <div class="currency-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="currency-info">
+                        <div class="currency-amount" id="currency-amount">₱0.00</div>
+                        <div class="currency-label">Balance</div>
+                    </div>
+                </div>
+                
+                <!-- Profile Dropdown -->
+                <div class="profile-dropdown-container" style="position: relative;">
+                    <div class="profile-icon" id="profile-icon">
+                        @auth('student')
+                            @if(Auth::guard('student')->user()->profile_picture)
+                                <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?v={{ file_exists(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) ? filemtime(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
+                            @else
+                                {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
+                            @endif
                         @else
-                            {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
-                        @endif
-                    @else
-                        <a href="{{ route('login.student') }}" class="login-link">Login</a>
+                            <a href="{{ route('login.student') }}" class="login-link">Login</a>
+                        @endauth
+                    </div>
+                    @auth('student')
+                    <div class="dropdown-menu" id="dropdown-menu">
+                        <a href="{{ route('student.profile.edit') }}">My Profile</a>
+                        <a href="#">Settings</a>
+                        <a href="#">Help Center</a>
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                        <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
+                            @csrf
+                        </form>
+                    </div>
                     @endauth
                 </div>
-                @auth('student')
-                <div class="dropdown-menu" id="dropdown-menu">
-                    <a href="{{ route('student.profile.edit') }}">My Profile</a>
-                    <a href="#">Settings</a>
-                    <a href="#">Help Center</a>
-                    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                    <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
-                        @csrf
-                    </form>
-                </div>
-                @endauth
             </div>
         </div>
     </header>
@@ -603,6 +747,10 @@
                 });
             }
 
+            // Initialize currency display
+            initializeCurrencyDisplay();
+            loadCurrencyData();
+
             // Preview profile picture when selected
             const profilePictureInput = document.getElementById('profile_picture_input');
             const profilePictureContainer = document.querySelector('.profile-picture-container');
@@ -631,6 +779,35 @@
                 }
             });
         });
+
+        function viewWallet() {
+            window.location.href = "{{ route('student.wallet') }}";
+        }
+
+        // Currency display functionality
+        function initializeCurrencyDisplay() {
+            const currencyDisplay = document.querySelector('.currency-display');
+            if (currencyDisplay) {
+                currencyDisplay.addEventListener('click', function() {
+                    viewWallet();
+                });
+            }
+        }
+
+        // Load currency data from API
+        function loadCurrencyData() {
+            fetch('{{ route("student.wallet.balance") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const currencyAmount = document.getElementById('currency-amount');
+                    if (currencyAmount) {
+                        currencyAmount.textContent = '₱' + parseFloat(data.balance).toFixed(2);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wallet balance:', error);
+                });
+        }
     </script>
 </body>
 </html>
