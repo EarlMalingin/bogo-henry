@@ -48,6 +48,7 @@
                 <a class="tab active" href="{{ route('admin.dashboard') }}">Dashboard</a>
                 <a class="tab" href="{{ route('admin.pending-tutors') }}">Pending Tutors</a>
                 <a class="tab" href="{{ route('admin.ratings') }}">Ratings</a>
+                <a class="tab" href="{{ route('admin.problem-reports.index') }}">Problem Reports</a>
             </div>
             <form method="POST" action="{{ route('admin.logout') }}">
                 @csrf
@@ -95,6 +96,16 @@
                 <div class="stat">
                     <div class="num">{{ number_format($pendingTutorRegistrations ?? 0) }}</div>
                     <div class="label">awaiting approval</div>
+                </div>
+            </div>
+            </a>
+            <a href="{{ route('admin.problem-reports.index') }}" style="text-decoration:none;color:inherit">
+            <div class="card">
+                <h4>Problem Reports</h4>
+                <p>Review and respond to student issues.</p>
+                <div class="stat">
+                    <div class="num">{{ number_format($pendingReports ?? 0) }}</div>
+                    <div class="label">pending reports</div>
                 </div>
             </div>
             </a>

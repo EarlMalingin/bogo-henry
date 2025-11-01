@@ -9,6 +9,7 @@ use App\Models\Tutor;
 use App\Models\Session;
 use App\Models\WalletTransaction;
 use App\Models\Review;
+use App\Models\ProblemReport;
 
 class AdminAuthController extends Controller
 {
@@ -58,6 +59,8 @@ class AdminAuthController extends Controller
             ->count();
 
         $pendingTutorRegistrations = Tutor::where('registration_status', 'pending')->count();
+        
+        $pendingReports = ProblemReport::where('status', 'pending')->count();
 
         $recentSessions = Session::with(['student', 'tutor'])
             ->orderBy('created_at', 'desc')
@@ -88,7 +91,7 @@ class AdminAuthController extends Controller
         $recentUsers = $recentStudents->merge($recentTutors)->sortByDesc('created_at')->values()->take(8);
 
         return view('admin.dashboard', compact(
-            'totalUsers', 'upcomingToday', 'pendingPayouts', 'pendingCashIns', 'recentSessions', 'recentWallet', 'recentUsers', 'pendingTutorRegistrations'
+            'totalUsers', 'upcomingToday', 'pendingPayouts', 'pendingCashIns', 'recentSessions', 'recentWallet', 'recentUsers', 'pendingTutorRegistrations', 'pendingReports'
         ));
     }
 

@@ -538,6 +538,154 @@
                 justify-content: center;
             }
         }
+
+        /* Rate Tutor Button */
+        .rate-tutor-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            border: none;
+            border-radius: 8px;
+            color: #333;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .rate-tutor-btn:hover {
+            background: linear-gradient(135deg, #ffed4e, #ffd700);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .rate-tutor-btn i {
+            margin-right: 0.5rem;
+        }
+
+        /* Rating Modal */
+        .rating-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s;
+        }
+
+        .rating-modal-overlay.active {
+            display: flex;
+        }
+
+        .rating-modal {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            position: relative;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .rating-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .rating-modal-header h3 {
+            color: #333;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .rating-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .rating-modal-close:hover {
+            color: #333;
+        }
+
+        .rating-stars {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .rating-star {
+            font-size: 3rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .rating-star:hover,
+        .rating-star.active {
+            color: #ffd700;
+            transform: scale(1.1);
+        }
+
+        .rating-comment {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            margin-bottom: 1.5rem;
+        }
+
+        .rating-comment:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        .rating-submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .rating-submit-btn:hover {
+            background: #3a7ccc;
+        }
+
+        .rating-submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -666,8 +814,8 @@
                 <h2>My Tutors</h2>
                 <div class="tutors-grid">
                     @forelse($tutors as $tutor)
-                        <div class="tutor-card" onclick="viewTutorActivities({{ $tutor->id }})">
-                            <div class="tutor-header">
+                        <div class="tutor-card">
+                            <div class="tutor-header" onclick="viewTutorActivities({{ $tutor->id }})" style="cursor: pointer;">
                                 <div class="tutor-avatar">
                                     @if($tutor->profile_picture)
                                         <img src="{{ asset('storage/' . $tutor->profile_picture) }}" alt="Tutor" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
@@ -680,7 +828,7 @@
                                     <div class="tutor-specialization">{{ $tutor->specialization ?? 'General Tutoring' }}</div>
                                 </div>
                             </div>
-                            <div class="tutor-stats">
+                            <div class="tutor-stats" onclick="viewTutorActivities({{ $tutor->id }})" style="cursor: pointer;">
                                 <div class="tutor-stat">
                                     <div class="tutor-stat-value">{{ $tutor->activities->count() }}</div>
                                     <div class="tutor-stat-label">Activities</div>
@@ -693,6 +841,11 @@
                                     <div class="tutor-stat-value">{{ $tutor->activities->where('status', 'graded')->count() }}</div>
                                     <div class="tutor-stat-label">Graded</div>
                                 </div>
+                            </div>
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                                <button class="rate-tutor-btn" onclick="openRatingModal({{ $tutor->id }}, '{{ $tutor->first_name }} {{ $tutor->last_name }}'); event.stopPropagation();">
+                                    <i class="fas fa-star"></i> Rate Tutor
+                                </button>
                             </div>
                         </div>
                     @empty
@@ -928,6 +1081,129 @@
             // Placeholder for showing feedback modal
             alert('Feedback feature will be implemented soon!');
         }
+
+        // Rating Modal Functions
+        let currentTutorId = null;
+        let currentRating = 0;
+
+        function openRatingModal(tutorId, tutorName) {
+            currentTutorId = tutorId;
+            currentRating = 0;
+            document.getElementById('rating-modal').classList.add('active');
+            document.getElementById('tutor-name-display').textContent = tutorName;
+            document.getElementById('rating-comment').value = '';
+            
+            // Reset stars
+            document.querySelectorAll('.rating-star').forEach(star => {
+                star.classList.remove('active');
+            });
+            
+            // Disable submit button
+            document.getElementById('rating-submit-btn').disabled = true;
+        }
+
+        function closeRatingModal() {
+            document.getElementById('rating-modal').classList.remove('active');
+            currentTutorId = null;
+            currentRating = 0;
+        }
+
+        function setRating(rating) {
+            currentRating = rating;
+            const stars = document.querySelectorAll('.rating-star');
+            
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+
+            // Enable submit button if rating is selected
+            document.getElementById('rating-submit-btn').disabled = false;
+        }
+
+        function submitRating() {
+            if (currentRating === 0) {
+                alert('Please select a rating');
+                return;
+            }
+
+            const comment = document.getElementById('rating-comment').value;
+            const submitBtn = document.getElementById('rating-submit-btn');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            // Submit via AJAX
+            fetch('{{ route("student.rate-tutor") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    tutor_id: currentTutorId,
+                    rating: currentRating,
+                    comment: comment
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Thank you for your rating!');
+                    closeRatingModal();
+                    location.reload();
+                } else {
+                    alert(data.message || 'Error submitting rating');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Rating';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting rating. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Rating';
+            });
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('rating-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeRatingModal();
+                }
+            });
+        });
     </script>
+
+    <!-- Rating Modal -->
+    <div id="rating-modal" class="rating-modal-overlay">
+        <div class="rating-modal">
+            <div class="rating-modal-header">
+                <h3>Rate <span id="tutor-name-display"></span></h3>
+                <button class="rating-modal-close" onclick="closeRatingModal()">&times;</button>
+            </div>
+            
+            <div class="rating-stars">
+                <i class="fas fa-star rating-star" onclick="setRating(1)"></i>
+                <i class="fas fa-star rating-star" onclick="setRating(2)"></i>
+                <i class="fas fa-star rating-star" onclick="setRating(3)"></i>
+                <i class="fas fa-star rating-star" onclick="setRating(4)"></i>
+                <i class="fas fa-star rating-star" onclick="setRating(5)"></i>
+            </div>
+            
+            <textarea 
+                id="rating-comment" 
+                class="rating-comment" 
+                placeholder="Share your experience with this tutor (optional)..."></textarea>
+            
+            <button id="rating-submit-btn" class="rating-submit-btn" onclick="submitRating()" disabled>
+                Submit Rating
+            </button>
+        </div>
+    </div>
 </body>
 </html>

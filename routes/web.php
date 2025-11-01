@@ -87,6 +87,11 @@ Route::middleware('web')->group(function () {
         Route::get('/admin/pending-tutors', [AdminAuthController::class, 'pendingTutors'])->name('admin.pending-tutors');
         Route::post('/admin/tutors/{id}/approve', [AdminAuthController::class, 'approveTutor'])->name('admin.tutors.approve');
         Route::post('/admin/tutors/{id}/reject', [AdminAuthController::class, 'rejectTutor'])->name('admin.tutors.reject');
+        
+        // Admin problem reports
+        Route::get('/admin/problem-reports', [App\Http\Controllers\ProblemReportController::class, 'adminIndex'])->name('admin.problem-reports.index');
+        Route::get('/admin/problem-reports/{id}', [App\Http\Controllers\ProblemReportController::class, 'adminShow'])->name('admin.problem-reports.show');
+        Route::post('/admin/problem-reports/{id}/update', [App\Http\Controllers\ProblemReportController::class, 'adminUpdate'])->name('admin.problem-reports.update');
     });
 });
 
@@ -162,6 +167,20 @@ Route::middleware(['auth:student'])->group(function () {
     Route::get('/student/assignments/{id}', [App\Http\Controllers\StudentAssignmentController::class, 'show'])->name('student.assignments.show');
     Route::post('/student/assignments/{id}/pay', [App\Http\Controllers\StudentAssignmentController::class, 'payAndView'])->name('student.assignments.pay');
     Route::get('/student/assignments/{id}/download', [App\Http\Controllers\StudentAssignmentController::class, 'downloadFile'])->name('student.assignments.download');
+    
+    // Student problem report routes
+    Route::get('/student/report-problem', function () {
+        return view('student.report-problem');
+    })->name('student.report-problem');
+    Route::post('/student/report-problem', [App\Http\Controllers\ProblemReportController::class, 'store'])->name('student.report-problem.store');
+    
+    // Student notifications route
+    Route::get('/student/notifications', function () {
+        return view('student.notifications');
+    })->name('student.notifications');
+    
+    // Student rate tutor route
+    Route::post('/student/rate-tutor', [App\Http\Controllers\StudentActivityController::class, 'rateTutor'])->name('student.rate-tutor');
 });
 
 // Protected tutor routes
@@ -224,6 +243,17 @@ Route::middleware(['auth:tutor'])->group(function () {
     Route::get('/tutor/assignments/my-answers', [App\Http\Controllers\TutorAssignmentController::class, 'myAnswers'])->name('tutor.assignments.my-answers');
     Route::get('/tutor/assignments/{id}/download', [App\Http\Controllers\TutorAssignmentController::class, 'downloadFile'])->name('tutor.assignments.download');
     Route::get('/tutor/assignments/answers/{id}/download', [App\Http\Controllers\TutorAssignmentController::class, 'downloadAnswerFile'])->name('tutor.assignments.answer.download');
+    
+    // Tutor problem report routes
+    Route::get('/tutor/report-problem', function () {
+        return view('tutor.report-problem');
+    })->name('tutor.report-problem');
+    Route::post('/tutor/report-problem', [App\Http\Controllers\ProblemReportController::class, 'storeTutor'])->name('tutor.report-problem.store');
+    
+    // Tutor notifications route
+    Route::get('/tutor/notifications', function () {
+        return view('tutor.notifications');
+    })->name('tutor.notifications');
 });
 
 // Test route to check sessions (remove in production)

@@ -73,7 +73,9 @@
             </a>
             <div class="tabs">
                 <a class="tab" href="{{ route('admin.dashboard') }}">Dashboard</a>
+                <a class="tab" href="{{ route('admin.pending-tutors') }}">Pending Tutors</a>
                 <a class="tab active" href="{{ route('admin.ratings') }}">Ratings</a>
+                <a class="tab" href="{{ route('admin.problem-reports.index') }}">Problem Reports</a>
             </div>
             <form method="POST" action="{{ route('admin.logout') }}">
                 @csrf

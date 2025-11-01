@@ -657,7 +657,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Report a Problem</a>
+                        <a href="{{ route('student.report-problem') }}">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
@@ -852,6 +852,10 @@
                         <div class="calendar-container">
                             <h4>Select Date</h4>
                             <input type="date" id="session-date" name="date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; width: 100%;">
+                            <div style="margin-top: 1rem; padding: 0.75rem; background-color: #f8f9fa; border-radius: 5px; border-left: 3px solid #4a90e2;">
+                                <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">Session End Date:</div>
+                                <div id="end-session-date-display" style="font-size: 1rem; font-weight: 600; color: #e74c3c;">{{ date('F j, Y', strtotime('+1 month')) }}</div>
+                            </div>
                         </div>
                         
                         <div class="notes-container">
@@ -870,8 +874,12 @@
                                 <span class="summary-value" id="summary-type">Online</span>
                             </div>
                             <div class="summary-item">
-                                <span class="summary-label">Date:</span>
+                                <span class="summary-label">Session Start Date:</span>
                                 <span class="summary-value" id="summary-date">{{ date('F j, Y') }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Session End Date:</span>
+                                <span class="summary-value" id="summary-end-date" style="color: #e74c3c; font-weight: 600;">{{ date('F j, Y', strtotime('+1 month')) }}</span>
                             </div>
                             <div class="summary-item">
                                 <span class="summary-label">Rate:</span>
@@ -883,6 +891,49 @@
                             <button type="button" class="btn-secondary" onclick="closeBookingModal()">Cancel</button>
                             <button type="submit" class="btn-primary" id="confirm-booking" disabled>Confirm Booking</button>
                         </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report a Problem Modal -->
+    <div class="modal-overlay" id="report-problem-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Report a Problem</div>
+                <button class="modal-close" onclick="closeReportProblemModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="report-problem-form" method="POST" action="{{ route('student.report-problem.store') }}">
+                    @csrf
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 0.5rem;">Problem Type</h4>
+                        <select name="problem_type" id="problem-type" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <option value="">Select a problem type...</option>
+                            <option value="technical">Technical Issue</option>
+                            <option value="payment">Payment Issue</option>
+                            <option value="tutor">Tutor Related</option>
+                            <option value="booking">Booking Issue</option>
+                            <option value="account">Account Issue</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 0.5rem;">Subject</h4>
+                        <input type="text" name="subject" id="problem-subject" required placeholder="Brief description of the problem" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 0.5rem;">Description</h4>
+                        <textarea name="description" id="problem-description" required placeholder="Please provide detailed information about the problem you're experiencing..." style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; resize: vertical; min-height: 150px;"></textarea>
+                    </div>
+                    
+                    <div class="booking-actions" style="margin-top: 1.5rem;">
+                        <button type="button" class="btn-secondary" onclick="closeReportProblemModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Submit Report</button>
                     </div>
                 </form>
             </div>
@@ -1057,6 +1108,13 @@
                     document.getElementById('summary-tutor').textContent = `${tutor.first_name} ${tutor.last_name}`;
                     document.getElementById('summary-rate').textContent = `₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/month`;
 
+                    // Initialize end session date display
+                    const currentDate = new Date(document.getElementById('session-date').value);
+                    const endDate = new Date(currentDate);
+                    endDate.setMonth(endDate.getMonth() + 1);
+                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                    document.getElementById('end-session-date-display').textContent = endDate.toLocaleDateString('en-US', options);
+
                     // Show modal
                     document.getElementById('booking-modal').classList.add('active');
                 })
@@ -1106,7 +1164,16 @@
                 const date = new Date(sessionDate.value);
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 document.getElementById('summary-date').textContent = date.toLocaleDateString('en-US', options);
+                
+                // Calculate end date (1 month from start date)
+                const endDate = new Date(date);
+                endDate.setMonth(endDate.getMonth() + 1);
+                document.getElementById('summary-end-date').textContent = endDate.toLocaleDateString('en-US', options);
+                
+                // Update the end session date display below the date field
+                document.getElementById('end-session-date-display').textContent = endDate.toLocaleDateString('en-US', options);
             }
+            
         }
         
         // Close modal when clicking outside
@@ -1202,6 +1269,28 @@
         function closeTutorDetailsModal() {
             document.getElementById('tutor-details-modal').classList.remove('active');
         }
+        
+        // Report Problem Modal Functions
+        function openReportProblemModal() {
+            document.getElementById('report-problem-modal').classList.add('active');
+            // Close the dropdown menu
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            if (dropdownMenu) {
+                dropdownMenu.classList.remove('active');
+            }
+        }
+        
+        function closeReportProblemModal() {
+            document.getElementById('report-problem-modal').classList.remove('active');
+            document.getElementById('report-problem-form').reset();
+        }
+        
+        // Close report problem modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === document.getElementById('report-problem-modal')) {
+                closeReportProblemModal();
+            }
+        });
     </script>
 </body>
 </html>

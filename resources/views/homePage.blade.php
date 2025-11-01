@@ -319,7 +319,7 @@
                         <p>Have questions about our platform, pricing, or how to get started? Reach out to our support team who are available 24/7 to assist you.</p>
                         
                         <div class="info-item">
-                            <i class="icon">📍</i>
+                            <div class="icon">&#128205;</div>
                             <div>
                                 <h4>Our Headquarters</h4>
                                 <p>Looc, Mandaue City</p>
@@ -327,17 +327,19 @@
                             </div>
                         </div>
                         <div class="info-item">
-                            <i class="icon">📞</i>
+                            <div class="icon">&#128222;</div>
                             <div>
                                 <h4>Phone Support</h4>
                                 <p>09958667092</p>
+                                <p style="font-size: 0.9rem; color: #666; margin-top: 0.3rem;">Call us during office hours for immediate assistance</p>
                             </div>
                         </div>
                         <div class="info-item">
-                            <i class="icon">✉️</i>
+                            <div class="icon">&#9993;</div>
                             <div>
                                 <h4>Email Us</h4>
                                 <p>MentorHub.Website@gmail.com</p>
+                                <p style="font-size: 0.9rem; color: #666; margin-top: 0.3rem;">We typically respond within 24 hours</p>
                             </div>
                         </div>
                         
@@ -348,34 +350,63 @@
                             <p>Sunday: Emergency Support Only</p>
                         </div>
                     </div>
-                    <div class="contact-form">
-                        <h3>Send Us a Message</h3>
-                        <form>
-                            <div class="form-group">
-                                <label for="name">Your Name</label>
-                                <input type="text" id="name" placeholder="Enter your name" required>
+                    
+                    <div class="contact-image">
+                        <div class="contact-card">
+                            <h3>Why Choose MentorHub?</h3>
+                            <div class="feature-list">
+                                <div class="feature-item">
+                                    <span class="checkmark">✓</span>
+                                    <span>Verified Expert Tutors</span>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="checkmark">✓</span>
+                                    <span>Flexible Scheduling</span>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="checkmark">✓</span>
+                                    <span>Affordable Pricing</span>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="checkmark">✓</span>
+                                    <span>24/7 Support</span>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="checkmark">✓</span>
+                                    <span>Progress Tracking</span>
+                                </div>
+                                <div class="feature-item">
+                                    <span class="checkmark">✓</span>
+                                    <span>Secure Payments</span>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="email">Email Address</label>
-                                <input type="email" id="email" placeholder="Enter your email" required>
+                            <div class="cta-section" style="margin-top: 2rem; text-align: center;">
+                                <p style="margin-bottom: 1rem; color: #555;">Ready to start your learning journey?</p>
+                                <button class="cta-btn" onclick="window.location.href='select-role'" style="padding: 12px 24px; font-size: 1rem;">Get Started Now</button>
                             </div>
-                            <div class="form-group">
-                                <label for="subject">Subject</label>
-                                <select id="subject" required>
-                                    <option value="">Select a subject</option>
-                                    <option value="general">General Inquiry</option>
-                                    <option value="technical">Technical Support</option>
-                                    <option value="billing">Billing Question</option>
-                                    <option value="tutoring">Tutoring Inquiry</option>
-                                    <option value="feedback">Feedback/Suggestions</option>
-                                </select>
+                        </div>
+                        
+                        <div class="stats-card" style="margin-top: 1.5rem;">
+                            <h4 style="color: #4a90e2; margin-bottom: 1rem; text-align: center;">Our Impact</h4>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                    <div style="font-size: 2rem; font-weight: bold; color: #4a90e2;">10,000+</div>
+                                    <div style="font-size: 0.9rem; color: #666;">Students Helped</div>
+                                </div>
+                                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                    <div style="font-size: 2rem; font-weight: bold; color: #4a90e2;">1,500+</div>
+                                    <div style="font-size: 0.9rem; color: #666;">Expert Tutors</div>
+                                </div>
+                                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                    <div style="font-size: 2rem; font-weight: bold; color: #4a90e2;">95%</div>
+                                    <div style="font-size: 0.9rem; color: #666;">Success Rate</div>
+                                </div>
+                                <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                    <div style="font-size: 2rem; font-weight: bold; color: #4a90e2;">50+</div>
+                                    <div style="font-size: 0.9rem; color: #666;">Subjects</div>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="message">Your Message</label>
-                                <textarea id="message" placeholder="How can we help you?" rows="5" required></textarea>
-                            </div>
-                            <button type="submit" class="cta-btn">Send Message</button>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>

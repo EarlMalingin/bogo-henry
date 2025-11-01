@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Activity;
 use App\Models\ActivitySubmission;
 use App\Models\Tutor;
+use App\Models\Session;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -23,12 +24,25 @@ class StudentActivityController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Get tutors who have sent activities to this student
-        $tutors = Tutor::whereHas('activities', function($query) use ($student) {
+        // Get tutors who have sessions with this student that haven't ended yet
+        // Sessions are considered "active" if they have at least one upcoming or recent session (within last month)
+        $tutors = Tutor::whereHas('sessions', function($query) use ($student) {
+            $query->where('student_id', $student->id)
+                  ->where('status', 'accepted')
+                  ->where(function($q) {
+                      // Show tutors with future sessions OR sessions within the last 30 days
+                      $q->where('date', '>=', now()->subDays(30));
+                  });
+        })
+        ->with(['activities' => function($query) use ($student) {
             $query->where('student_id', $student->id);
-        })->with(['activities' => function($query) use ($student) {
-            $query->where('student_id', $student->id);
-        }])->get();
+        }])
+        ->with(['sessions' => function($query) use ($student) {
+            $query->where('student_id', $student->id)
+                  ->where('status', 'accepted')
+                  ->orderBy('date', 'desc');
+        }])
+        ->get();
 
         return view('student.my-sessions', compact('activities', 'tutors', 'student'));
     }
@@ -286,5 +300,60 @@ class StudentActivityController extends Controller
         ];
 
         return response()->json($progress);
+    }
+
+    // Rate a tutor
+    public function rateTutor(Request $request)
+    {
+        $request->validate([
+            'tutor_id' => 'required|exists:tutors,id',
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $student = Auth::guard('student')->user();
+
+        // Check if student has a session with this tutor
+        $hasSession = \App\Models\Session::where('student_id', $student->id)
+            ->where('tutor_id', $request->tutor_id)
+            ->exists();
+
+        if (!$hasSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You can only rate tutors you have had sessions with.'
+            ], 403);
+        }
+
+        // Check if already rated
+        $existingReview = \App\Models\Review::where('student_id', $student->id)
+            ->where('tutor_id', $request->tutor_id)
+            ->first();
+
+        if ($existingReview) {
+            // Update existing review
+            $existingReview->update([
+                'rating' => $request->rating,
+                'comment' => $request->comment,
+            ]);
+        } else {
+            // Create new review (we'll use the first session_id as a reference)
+            $session = \App\Models\Session::where('student_id', $student->id)
+                ->where('tutor_id', $request->tutor_id)
+                ->first();
+
+            \App\Models\Review::create([
+                'session_id' => $session->id,
+                'student_id' => $student->id,
+                'tutor_id' => $request->tutor_id,
+                'rating' => $request->rating,
+                'comment' => $request->comment,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Thank you for your rating!'
+        ]);
     }
 }

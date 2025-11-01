@@ -889,6 +889,106 @@
                 grid-template-columns: 1fr;
             }
         }
+        
+        /* Modal Overlay Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-overlay .modal {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+        }
+        
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .booking-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid #ddd;
+            color: #333;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .btn-primary {
+            background-color: #4a90e2;
+            border: none;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a7ccc;
+        }
     </style>
 </head>
 <body>
@@ -930,7 +1030,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Report a Problem</a>
+                        <a href="{{ route('tutor.report-problem') }}">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
                             @csrf
@@ -957,7 +1057,7 @@
 
         <h2 class="section-title">Quick Actions</h2>
         <div class="quick-actions">
-            <div class="action-card" onclick="scrollToNotifications()">
+            <div class="action-card" onclick="window.location.href='{{ route('tutor.notifications') }}'">
                 <div class="action-icon"><i class="fas fa-bell"></i></div>
                 <div>Notifications</div>
             </div>
@@ -1048,6 +1148,49 @@
             </div>
         </div>
     </footer>
+
+    <!-- Report a Problem Modal -->
+    <div class="modal-overlay" id="report-problem-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Report a Problem</div>
+                <button class="modal-close" onclick="closeReportProblemModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="report-problem-form" method="POST" action="{{ route('tutor.report-problem.store') }}">
+                    @csrf
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 0.5rem;">Problem Type</h4>
+                        <select name="problem_type" id="problem-type" required style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <option value="">Select a problem type...</option>
+                            <option value="technical">Technical Issue</option>
+                            <option value="payment">Payment Issue</option>
+                            <option value="student">Student Related</option>
+                            <option value="booking">Booking Issue</option>
+                            <option value="account">Account Issue</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 0.5rem;">Subject</h4>
+                        <input type="text" name="subject" id="problem-subject" required placeholder="Brief description of the problem" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                    </div>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 0.5rem;">Description</h4>
+                        <textarea name="description" id="problem-description" required placeholder="Please provide detailed information about the problem you're experiencing..." style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; resize: vertical; min-height: 150px;"></textarea>
+                    </div>
+                    
+                    <div class="booking-actions" style="margin-top: 1.5rem;">
+                        <button type="button" class="btn-secondary" onclick="closeReportProblemModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Submit Report</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -1262,6 +1405,28 @@
                     console.error('Error loading wallet balance:', error);
                 });
         }
+        
+        // Report Problem Modal Functions
+        function openReportProblemModal() {
+            document.getElementById('report-problem-modal').classList.add('active');
+            // Close the dropdown menu
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            if (dropdownMenu) {
+                dropdownMenu.classList.remove('active');
+            }
+        }
+        
+        function closeReportProblemModal() {
+            document.getElementById('report-problem-modal').classList.remove('active');
+            document.getElementById('report-problem-form').reset();
+        }
+        
+        // Close report problem modal when clicking outside
+        window.addEventListener('click', function(e) {
+            if (e.target === document.getElementById('report-problem-modal')) {
+                closeReportProblemModal();
+            }
+        });
     </script>
 </body>
 </html>
