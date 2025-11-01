@@ -17,6 +17,7 @@ class Assignment extends Model
         'file_name',
         'status',
         'price',
+        'selected_answer_id',
     ];
 
     protected $casts = [
@@ -32,6 +33,11 @@ class Assignment extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(AssignmentAnswer::class);
+    }
+
+    public function selectedAnswer(): BelongsTo
+    {
+        return $this->belongsTo(AssignmentAnswer::class, 'selected_answer_id');
     }
 
     public function paidAnswer()

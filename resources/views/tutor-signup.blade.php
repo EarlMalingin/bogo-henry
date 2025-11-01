@@ -876,7 +876,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="rate">Rate (₱/hour) *</label>
+                            <label for="rate">Rate (₱/month) *</label>
                             <input type="number" id="rate" name="rate" value="{{ old('rate') }}" min="0" step="0.01" required>
                             @error('rate')
                                 <span class="error-message">{{ $message }}</span>

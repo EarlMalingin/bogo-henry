@@ -189,6 +189,7 @@ Route::middleware(['auth:tutor'])->group(function () {
     // API routes for dashboard
     Route::get('/tutor/sessions/today', [TutorSessionController::class, 'getTodaysSessions'])->name('tutor.sessions.today');
     Route::get('/tutor/sessions/upcoming', [TutorSessionController::class, 'getUpcomingSessions'])->name('tutor.sessions.upcoming');
+    Route::get('/tutor/notifications/pending', [TutorSessionController::class, 'getPendingBookings'])->name('tutor.notifications.pending');
     
     // Tutor messages route
     Route::get('/tutor/messages', [TutorSessionController::class, 'messages'])->name('tutor.messages');

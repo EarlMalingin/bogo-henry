@@ -64,6 +64,100 @@
             margin-bottom: 1rem;
         }
 
+        .answers-section {
+            margin-top: 2rem;
+        }
+
+        .answer-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #28a745;
+        }
+
+        .answer-card-top-rated {
+            border-left-color: #ffd700;
+            background: linear-gradient(to right, rgba(255, 215, 0, 0.05), white);
+        }
+
+        .answer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .tutor-info {
+            flex: 1;
+        }
+
+        .tutor-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .tutor-specialization {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .tutor-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .rating-badge {
+            background: #ffd700;
+            color: #856404;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .rating-count {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .top-rated-badge {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #856404;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .answer-preview {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .answer-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .answer-date {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
         .btn-pay {
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
@@ -370,7 +464,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Help Center</a>
+                        <a href="#">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
@@ -427,46 +521,85 @@
             @endif
         </div>
 
-        @if($answer)
+        @if($assignment->status === 'paid' && $answer)
             <div class="assignment-detail-card answer-section">
-                @if($assignment->status === 'paid')
-                    <h3 style="color: #28a745; margin-bottom: 1rem;">
-                        <i class="fas fa-unlock"></i> Answer (Purchased)
-                    </h3>
-                    <div style="color: #333; line-height: 1.8; white-space: pre-wrap;">{{ $answer->answer }}</div>
-                    
-                    @if($answer->file_name)
-                        <div style="margin-top: 1rem;">
-                            <a href="{{ asset('storage/' . $answer->file_path) }}" download style="color: #2d7dd2;">
-                                <i class="fas fa-download"></i> Download Answer File: {{ $answer->file_name }}
-                            </a>
-                        </div>
-                    @endif
-
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd; color: #666; font-size: 0.9rem;">
-                        <strong>Answered by:</strong> {{ $answer->tutor->first_name }} {{ $answer->tutor->last_name }}<br>
-                        <strong>Date:</strong> {{ $answer->created_at->format('M d, Y h:i A') }}
+                <h3 style="color: #28a745; margin-bottom: 1rem;">
+                    <i class="fas fa-unlock"></i> Purchased Answer
+                </h3>
+                <div style="color: #333; line-height: 1.8; white-space: pre-wrap;">{{ $answer->answer }}</div>
+                
+                @if($answer->file_name)
+                    <div style="margin-top: 1rem;">
+                        <a href="{{ asset('storage/' . $answer->file_path) }}" download style="color: #2d7dd2;">
+                            <i class="fas fa-download"></i> Download Answer File: {{ $answer->file_name }}
+                        </a>
                     </div>
-                @else
-                    <div class="answer-locked">
-                        <i class="fas fa-lock"></i>
-                        <h3>Answer Available</h3>
-                        <p>An answer has been provided for this assignment. Pay ₱{{ number_format($assignment->price, 2) }} to view it.</p>
-                        
-                        @if(!$canAfford)
-                            <div class="balance-warning">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                Insufficient balance. Current balance: ₱{{ number_format($wallet->balance, 2) }}. 
-                                <a href="{{ route('student.wallet.cash-in') }}" style="color: #856404; text-decoration: underline;">Add funds</a>
-                            </div>
-                        @endif
+                @endif
 
-                        <form action="{{ route('student.assignments.pay', $assignment->id) }}" method="POST" style="margin-top: 1.5rem;">
-                            @csrf
-                            <button type="submit" class="btn-pay" {{ !$canAfford ? 'disabled' : '' }}>
-                                <i class="fas fa-credit-card"></i> Pay ₱{{ number_format($assignment->price, 2) }} to View Answer
-                            </button>
-                        </form>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd; color: #666; font-size: 0.9rem;">
+                    <strong>Answered by:</strong> {{ $answer->tutor->first_name }} {{ $answer->tutor->last_name }}<br>
+                    <strong>Date:</strong> {{ $answer->created_at->format('M d, Y h:i A') }}
+                </div>
+            </div>
+        @elseif(isset($answers) && count($answers) > 0)
+            <div class="answers-section">
+                <h2 style="color: #2d7dd2; margin-bottom: 1.5rem;">
+                    <i class="fas fa-users"></i> Multiple Tutors Answered ({{ count($answers) }})
+                </h2>
+                <p style="color: #666; margin-bottom: 1.5rem;">Compare answers and choose the one you prefer. All answers cost ₱{{ number_format($assignment->price, 2) }}.</p>
+                
+                @foreach($answers as $index => $ans)
+                    <div class="answer-card {{ $index === 0 ? 'answer-card-top-rated' : '' }}">
+                        <div class="answer-header">
+                            <div class="tutor-info">
+                                <div class="tutor-name">{{ $ans['tutor_name'] }}</div>
+                                @if($ans['tutor_specialization'])
+                                    <div class="tutor-specialization">{{ $ans['tutor_specialization'] }}</div>
+                                @endif
+                                <div class="tutor-rating">
+                                    <span class="rating-badge">
+                                        <i class="fas fa-star"></i> {{ number_format($ans['rating'], 1) }}
+                                    </span>
+                                    <span class="rating-count">({{ $ans['rating_count'] }} reviews)</span>
+                                </div>
+                            </div>
+                            @if($index === 0)
+                                <span class="top-rated-badge">
+                                    <i class="fas fa-crown"></i> Highest Rated
+                                </span>
+                            @endif
+                        </div>
+                        
+                        <div class="answer-preview">
+                            {{ $ans['answer_preview'] }}
+                        </div>
+                        
+                        <div class="answer-actions">
+                            <div class="answer-date">
+                                <i class="far fa-clock"></i> {{ \Carbon\Carbon::parse($ans['created_at'])->diffForHumans() }}
+                            </div>
+                            @if(!$canAfford && $index === 0)
+                                <div style="color: #dc3545; font-size: 0.9rem;">
+                                    <i class="fas fa-exclamation-triangle"></i> Insufficient balance
+                                </div>
+                            @else
+                                <form action="{{ route('student.assignments.pay', $assignment->id) }}" method="POST" style="margin: 0;">
+                                    @csrf
+                                    <input type="hidden" name="answer_id" value="{{ $ans['id'] }}">
+                                    <button type="submit" class="btn-pay" {{ !$canAfford ? 'disabled' : '' }}>
+                                        <i class="fas fa-credit-card"></i> Pay ₱{{ number_format($assignment->price, 2) }}
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+
+                @if(!$canAfford)
+                    <div class="balance-warning" style="margin-top: 1rem;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Insufficient balance. Current balance: ₱{{ number_format($wallet->balance, 2) }}. 
+                        <a href="{{ route('student.wallet.cash-in') }}" style="color: #856404; text-decoration: underline;">Add funds</a>
                     </div>
                 @endif
             </div>

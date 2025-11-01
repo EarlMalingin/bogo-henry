@@ -99,15 +99,34 @@ class StudentAssignmentController extends Controller
         }
 
         $canAfford = $wallet->canAfford(70.00);
-        $answer = $assignment->answers()->latest()->first();
+        
+        // If assignment is paid, get the selected answer
+        $answer = null;
+        if ($assignment->status === 'paid' && $assignment->selected_answer_id) {
+            $answer = $assignment->selectedAnswer()->with('tutor')->first();
+        }
+        
+        $answers = $assignment->answers()->with('tutor')->get()->map(function($answerItem) {
+            $tutor = $answerItem->tutor;
+            return [
+                'id' => $answerItem->id,
+                'tutor_id' => $tutor->id,
+                'tutor_name' => $tutor->getFullName(),
+                'tutor_specialization' => $tutor->specialization,
+                'answer_preview' => substr($answerItem->answer, 0, 150) . '...',
+                'rating' => $tutor->getAverageRating(),
+                'rating_count' => $tutor->getRatingCount(),
+                'created_at' => $answerItem->created_at,
+            ];
+        })->sortByDesc('rating')->values(); // Sort by highest rating
 
-        return view('student.assignment-detail', compact('student', 'assignment', 'wallet', 'canAfford', 'answer'));
+        return view('student.assignment-detail', compact('student', 'assignment', 'wallet', 'canAfford', 'answer', 'answers'));
     }
 
     /**
      * Process payment to view answer
      */
-    public function payAndView($id)
+    public function payAndView($id, Request $request)
     {
         $student = Auth::guard('student')->user();
         $assignment = Assignment::where('student_id', $student->id)
@@ -131,7 +150,7 @@ class StudentAssignmentController extends Controller
         // Check if already paid
         if ($assignment->status === 'paid') {
             return redirect()->route('student.assignments.show', $assignment->id)
-                ->with('info', 'You have already purchased this answer.');
+                ->with('info', 'You have already purchased an answer for this assignment.');
         }
 
         // Check balance
@@ -140,8 +159,14 @@ class StudentAssignmentController extends Controller
                 ->with('error', 'Insufficient wallet balance. Please add funds to your wallet.');
         }
 
-        // Check if answer exists
-        $answer = $assignment->answers()->latest()->first();
+        // Get the specific answer if provided, otherwise get the latest
+        $answerId = $request->input('answer_id');
+        if ($answerId) {
+            $answer = $assignment->answers()->where('id', $answerId)->first();
+        } else {
+            $answer = $assignment->answers()->latest()->first();
+        }
+        
         if (!$answer) {
             return redirect()->route('student.assignments.show', $assignment->id)
                 ->with('error', 'No answer available for this assignment yet.');
@@ -164,8 +189,11 @@ class StudentAssignmentController extends Controller
                 throw new \Exception('Payment failed. Insufficient funds.');
             }
 
-            // Update assignment status
-            $assignment->update(['status' => 'paid']);
+            // Update assignment status and save selected answer
+            $assignment->update([
+                'status' => 'paid',
+                'selected_answer_id' => $answer->id
+            ]);
 
             // Credit tutor's wallet (70% to tutor, 30% platform fee)
             $tutorWallet = Wallet::where('user_id', $answer->tutor_id)

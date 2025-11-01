@@ -158,7 +158,7 @@
                     <div class="answer-meta">
                         <span><i class="far fa-user"></i> Student: {{ $answer->assignment->student->first_name }} {{ $answer->assignment->student->last_name }}</span>
                         <span><i class="far fa-calendar"></i> Answered: {{ $answer->created_at->format('M d, Y') }}</span>
-                        <span><i class="fas fa-money-bill-wave"></i> Potential Earnings: ₱{{ number_format($answer->assignment->price * 0.70, 2) }}</span>
+                        <span><i class="fas fa-money-bill-wave"></i> Potential Earnings: ₱{{ number_format($answer->assignment->price, 2) }}</span>
                     </div>
 
                     @if($answer->file_name)

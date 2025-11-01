@@ -467,24 +467,6 @@
             margin-bottom: 1.5rem;
         }
         
-        .time-input-container {
-            margin-bottom: 1.5rem;
-        }
-        
-        .time-input-fields {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        
-        .time-input-fields input {
-            flex: 1;
-            padding: 0.8rem;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
-        
         .duration-select {
             width: 100%;
             padding: 0.8rem;
@@ -626,10 +608,6 @@
             .tutor-modal-avatar {
                 margin-bottom: 1rem;
             }
-            
-            .time-input-fields {
-                flex-direction: column;
-            }
         }
         
     </style>
@@ -679,7 +657,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Help Center</a>
+                        <a href="#">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
@@ -768,7 +746,7 @@
                         <div class="tutor-body">
                             <div class="tutor-name">{{ $tutor->first_name }} {{ $tutor->last_name }}</div>
                             <div class="tutor-title">{{ $tutor->specialization ?? 'Tutor' }}</div>
-                            <div class="tutor-rate">₱{{ number_format($tutor->session_rate ?? 0, 2) }}/hour</div>
+                            <div class="tutor-rate">₱{{ number_format($tutor->session_rate ?? 0, 2) }}/month</div>
                             <div class="tutor-rating">
                                 <span class="star">&#9733;</span>
                                 <span class="star">&#9733;</span>
@@ -868,19 +846,12 @@
                             <button type="button" data-type="face_to_face">Face-to-Face</button>
                         </div>
                         <input type="hidden" id="session-type" name="session_type" value="online">
+                        <input type="hidden" name="start_time" value="00:00:00">
+                        <input type="hidden" name="end_time" value="23:59:59">
                         
                         <div class="calendar-container">
                             <h4>Select Date</h4>
                             <input type="date" id="session-date" name="date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; width: 100%;">
-                        </div>
-                        
-                        <div class="time-input-container">
-                            <h4>Select Time</h4>
-                            <div class="time-input-fields">
-                                <input type="time" id="start-time" name="start_time" placeholder="Start time" style="flex: 1;" required>
-                                <span style="display: flex; align-items: center;">to</span>
-                                <input type="time" id="end-time" name="end_time" placeholder="End time" style="flex: 1;" required>
-                            </div>
                         </div>
                         
                         <div class="notes-container">
@@ -901,14 +872,6 @@
                             <div class="summary-item">
                                 <span class="summary-label">Date:</span>
                                 <span class="summary-value" id="summary-date">{{ date('F j, Y') }}</span>
-                            </div>
-                            <div class="summary-item">
-                                <span class="summary-label">Time:</span>
-                                <span class="summary-value" id="summary-time">Not selected</span>
-                            </div>
-                            <div class="summary-item">
-                                <span class="summary-label">Duration:</span>
-                                <span class="summary-value" id="summary-duration">Not selected</span>
                             </div>
                             <div class="summary-item">
                                 <span class="summary-label">Rate:</span>
@@ -1089,10 +1052,10 @@
 
                     document.getElementById('modal-tutor-name').textContent = `${tutor.first_name} ${tutor.last_name}`;
                     document.getElementById('modal-tutor-title').textContent = tutor.specialization || 'Tutor';
-                    document.getElementById('modal-tutor-rate').textContent = `₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/hour`;
+                    document.getElementById('modal-tutor-rate').textContent = `₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/month`;
                     
                     document.getElementById('summary-tutor').textContent = `${tutor.first_name} ${tutor.last_name}`;
-                    document.getElementById('summary-rate').textContent = `₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/hour`;
+                    document.getElementById('summary-rate').textContent = `₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/month`;
 
                     // Show modal
                     document.getElementById('booking-modal').classList.add('active');
@@ -1112,8 +1075,6 @@
         function initializeBookingModal() {
             const sessionTypeButtons = document.querySelectorAll('.session-type-toggle button');
             const sessionDate = document.getElementById('session-date');
-            const startTime = document.getElementById('start-time');
-            const endTime = document.getElementById('end-time');
             const confirmBooking = document.getElementById('confirm-booking');
             
             // Session type toggle
@@ -1128,64 +1089,17 @@
                 });
             });
             
-            // Time input handlers
-            startTime.addEventListener('change', function() {
-                validateForm();
-                updateTimeSummary();
-            });
-            
-            endTime.addEventListener('change', function() {
-                validateForm();
-                updateTimeSummary();
-            });
-            
             // Date change handler
             sessionDate.addEventListener('change', function() {
                 updateSummaryDate();
                 validateForm();
             });
             
-            function updateTimeSummary() {
-                if (startTime.value && endTime.value) {
-                    const start = new Date(`2000-01-01T${startTime.value}`);
-                    const end = new Date(`2000-01-01T${endTime.value}`);
-                    
-                    if (end <= start) {
-                        document.getElementById('summary-time').textContent = 'Invalid time range';
-                        document.getElementById('summary-duration').textContent = 'Invalid duration';
-                        return;
-                    }
-                    
-                    // Format times for display
-                    const startFormatted = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-                    const endFormatted = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-                    
-                    document.getElementById('summary-time').textContent = `${startFormatted} to ${endFormatted}`;
-                    
-                    // Calculate and display duration
-                    const durationMinutes = (end - start) / 60000;
-                    if (durationMinutes > 0) {
-                        if (durationMinutes < 60) {
-                            document.getElementById('summary-duration').textContent = `${durationMinutes} minutes`;
-                        } else if (durationMinutes % 60 === 0) {
-                            document.getElementById('summary-duration').textContent = `${durationMinutes / 60} hours`;
-                        } else {
-                            const hours = Math.floor(durationMinutes / 60);
-                            const minutes = durationMinutes % 60;
-                            document.getElementById('summary-duration').textContent = `${hours}h ${minutes}m`;
-                        }
-                    }
-                }
-            }
-            
             function validateForm() {
                 const isSessionTypeSelected = document.querySelector('.session-type-toggle button.active') !== null;
                 const isDateSelected = sessionDate.value !== '';
-                const isTimeSelected = startTime.value !== '' && endTime.value !== '';
-                const isTimeValid = startTime.value && endTime.value && 
-                    new Date(`2000-01-01T${endTime.value}`) > new Date(`2000-01-01T${startTime.value}`);
                 
-                confirmBooking.disabled = !(isSessionTypeSelected && isDateSelected && isTimeSelected && isTimeValid);
+                confirmBooking.disabled = !(isSessionTypeSelected && isDateSelected);
             }
             
             function updateSummaryDate() {
@@ -1247,7 +1161,7 @@
                                     <span class="star">&#9733;</span>
                                     <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">(12 reviews)</span>
                                 </div>
-                                <div class="tutor-modal-rate" style="font-size: 1.1rem; font-weight: 600; color: #4a90e2;">₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/hour</div>
+                                <div class="tutor-modal-rate" style="font-size: 1.1rem; font-weight: 600; color: #4a90e2;">₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/month</div>
                             </div>
                         </div>
 
@@ -1267,9 +1181,7 @@
                             <div>
                                 <h4 style="font-size: 1.1rem; font-weight: 600; color: #333; margin-bottom: 0.75rem; border-left: 4px solid #4a90e2; padding-left: 1rem;">Contact Information</h4>
                                 <div style="font-size: 0.95rem; color: #555; line-height: 1.8; padding-left: 1.25rem;">
-                                    <div><strong>Email:</strong> <a href="mailto:${tutor.email}" style="color: #4a90e2; text-decoration: none;">${tutor.email}</a></div>
                                     <div><strong>Tutor ID:</strong> ${tutor.tutor_id}</div>
-                                    <div><strong>Phone:</strong> ${tutor.phone || 'Not provided'}</div>
                                 </div>
                             </div>
                         </div>

@@ -347,7 +347,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Help Center</a>
+                        <a href="#">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
@@ -385,7 +385,7 @@
         <div class="price-info">
             <i class="fas fa-info-circle"></i>
             <div class="price-info-text">
-                <strong>How it works:</strong> Post your assignment question. Tutors will provide answers. When an answer is available, you can pay <strong>₱70.00</strong> to view it.
+                <strong>How it works:</strong> Post your assignment question. Multiple tutors will provide answers. You can compare answers and choose based on ratings. Pay <strong>₱70.00</strong> to view your selected answer.
             </div>
         </div>
 

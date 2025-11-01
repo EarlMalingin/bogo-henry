@@ -19,7 +19,7 @@
             color: #333;
             background:
                 linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
-                url('../images/Uc-background.jpg');
+                url('{{ asset("images/Uc-background.jpg") }}');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -350,6 +350,7 @@
                 <a href="{{ route('tutor.bookings.index') }}">My Bookings</a>
                 <a href="{{ route('tutor.students') }}">Students</a>
                 <a href="{{ route('tutor.schedule') }}">Schedule</a>
+                
             </nav>
             <div class="header-right-section">
                 <!-- Currency Display -->
@@ -375,7 +376,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Help Center</a>
+                        <a href="#">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
                             @csrf
@@ -388,8 +389,8 @@
 
     <div class="assignments-container">
         <div class="page-header">
-            <h1 class="page-title">Pending Assignments</h1>
-            <p style="color: #666;">Help students by answering their assignment questions. Earn ₱49 per answer!</p>
+            <h1 class="page-title">Available Assignments</h1>
+            <p style="color: #666;">Help students by answering their assignment questions. Multiple tutors can answer each assignment!</p>
         </div>
 
         @if(session('success'))
@@ -418,6 +419,9 @@
                         @if($assignment->file_name)
                             <span><i class="fas fa-paperclip"></i> Has attachment</span>
                         @endif
+                        @if($assignment->answers->count() > 0)
+                            <span style="color: #ffc107;"><i class="fas fa-users"></i> {{ $assignment->answers->count() }} tutor(s) answered</span>
+                        @endif
                     </div>
 
                     <a href="{{ route('tutor.assignments.show', $assignment->id) }}" class="btn-answer">
@@ -432,8 +436,8 @@
         @else
             <div class="empty-state">
                 <i class="fas fa-file-alt"></i>
-                <h3>No pending assignments</h3>
-                <p>All assignments have been answered. Check back later for new questions!</p>
+            <h3>No available assignments</h3>
+            <p>Check back later for new questions!</p>
             </div>
         @endif
     </div>

@@ -44,7 +44,7 @@
                 @else
                     <div class="row"><div class="label">Tutor ID</div><div class="value">{{ $user->tutor_id }}</div></div>
                     <div class="row"><div class="label">Specialization</div><div class="value">{{ $user->specialization }}</div></div>
-                    <div class="row"><div class="label">Rate</div><div class="value">₱{{ number_format((float)($user->session_rate ?? 0),2) }}/hour</div></div>
+                    <div class="row"><div class="label">Rate</div><div class="value">₱{{ number_format((float)($user->session_rate ?? 0),2) }}/month</div></div>
                 @endif
                 <div class="row"><div class="label">Phone</div><div class="value">{{ $user->phone ?? '—' }}</div></div>
                 <div class="row"><div class="label">Status</div><div class="value"><span class="badge {{ ($user->is_active ?? true) ? 'green':'red' }}">{{ ($user->is_active ?? true) ? 'Active':'Deactivated' }}</span></div></div>

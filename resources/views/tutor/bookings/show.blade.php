@@ -477,7 +477,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Help Center</a>
+                        <a href="#">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
                             @csrf
@@ -526,7 +526,7 @@
                 </div>
                 <div class="detail-item">
                     <strong>Session Rate:</strong>
-                    <span>${{ number_format($booking->rate, 2) }}/hour</span>
+                    <span>₱{{ number_format($booking->rate, 2) }}/month</span>
                 </div>
 
             </div>

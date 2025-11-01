@@ -284,7 +284,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Help Center</a>
+                        <a href="#">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
@@ -323,9 +323,9 @@
         <!-- Quick Links -->
         <h2 class="section-title">Quick Links</h2>
         <div class="quick-links">
-            <a href="#" class="quick-link">
-                <div class="quick-link-icon"><i class="fas fa-folder-open"></i></div>
-                <div>Resources</div>
+            <a href="#" class="quick-link" onclick="alert('Notifications functionality coming soon!'); return false;">
+                <div class="quick-link-icon"><i class="fas fa-bell"></i></div>
+                <div>Notifications</div>
             </a>
             <a href="{{ route('student.messages') }}" class="quick-link">
                 <div class="quick-link-icon"><i class="fas fa-comments"></i></div>

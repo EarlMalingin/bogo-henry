@@ -164,6 +164,41 @@ class TutorSessionController extends Controller
         return response()->json($sessions);
     }
 
+    // Get pending bookings for notifications
+    public function getPendingBookings()
+    {
+        try {
+            $tutorId = Auth::guard('tutor')->id();
+            
+            if (!$tutorId) {
+                return response()->json(['error' => 'Tutor not authenticated'], 401);
+            }
+
+            $bookings = Session::where('tutor_id', $tutorId)
+                ->where('status', 'pending')
+                ->with('student')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get()
+                ->map(function($booking) {
+                    return [
+                        'id' => $booking->id,
+                        'student_name' => $booking->student->first_name . ' ' . $booking->student->last_name,
+                        'subject' => $booking->notes ? substr($booking->notes, 0, 50) : 'Session Request',
+                        'date' => $booking->date->format('Y-m-d'),
+                        'start_time' => $booking->start_time,
+                        'session_type' => $booking->session_type,
+                        'created_at' => $booking->created_at->diffForHumans(),
+                    ];
+                });
+
+            return response()->json($bookings);
+        } catch (\Exception $e) {
+            \Log::error('Error in getPendingBookings: ' . $e->getMessage());
+            return response()->json(['error' => 'An error occurred while loading notifications.'], 500);
+        }
+    }
+
     public function messages()
     {
         return view('tutor.messages');

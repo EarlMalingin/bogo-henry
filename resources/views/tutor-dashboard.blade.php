@@ -505,8 +505,8 @@
             transform: translateY(-2px);
         }
 
-        /* Students Overview */
-        .students-container {
+        /* Notifications Overview */
+        .notifications-container {
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
@@ -514,66 +514,84 @@
             margin-bottom: 2rem;
         }
 
-        .student-card {
+        .notification-card {
             display: flex;
             padding: 1rem;
             border-bottom: 1px solid #eee;
             align-items: center;
             transition: all 0.3s;
+            cursor: pointer;
         }
 
-        .student-card:hover {
+        .notification-card:hover {
             background-color: #f9f9f9;
             transform: translateY(-2px);
         }
 
-        .student-card:last-child {
+        .notification-card:last-child {
             border-bottom: none;
         }
 
-        .student-avatar {
-            background-color: #ff7f50;
+        .notification-icon {
             width: 45px;
             height: 45px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: white;
+            font-size: 1.2rem;
             margin-right: 1rem;
             transition: transform 0.3s;
         }
 
-        .student-card:hover .student-avatar {
+        .notification-icon.booking-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .notification-icon.booking-accepted {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .notification-icon.booking-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .notification-icon.message {
+            background-color: #e2d4f0;
+            color: #4a148c;
+        }
+
+        .notification-card:hover .notification-icon {
             transform: scale(1.1);
         }
 
-        .student-info {
+        .notification-info {
             flex: 1;
         }
 
-        .student-name {
+        .notification-title {
             font-weight: 600;
             margin-bottom: 0.2rem;
+            color: #333;
         }
 
-        .student-subject {
+        .notification-message {
             font-size: 0.9rem;
             color: #666;
         }
 
-        .student-progress {
+        .notification-time {
             text-align: right;
-        }
-
-        .progress-score {
-            font-weight: bold;
-            color: #28a745;
-        }
-
-        .progress-sessions {
             font-size: 0.8rem;
+            color: #999;
+        }
+
+        .no-notifications {
+            padding: 2rem;
+            text-align: center;
             color: #666;
         }
 
@@ -912,7 +930,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Help Center</a>
+                        <a href="#">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
                             @csrf
@@ -939,6 +957,14 @@
 
         <h2 class="section-title">Quick Actions</h2>
         <div class="quick-actions">
+            <div class="action-card" onclick="scrollToNotifications()">
+                <div class="action-icon"><i class="fas fa-bell"></i></div>
+                <div>Notifications</div>
+            </div>
+            <div class="action-card" onclick="viewMessages()">
+                <div class="action-icon"><i class="fas fa-comments"></i></div>
+                <div>Messages</div>
+            </div>
             <div class="action-card" onclick="viewMySessions()">
                 <div class="action-icon"><i class="fas fa-chalkboard-teacher"></i></div>
                 <div>My Sessions</div>
@@ -947,57 +973,15 @@
                 <div class="action-icon"><i class="fas fa-tasks"></i></div>
                 <div>See Assignments</div>
             </a>
-            <div class="action-card" onclick="uploadResources()">
-                <div class="action-icon"><i class="fas fa-folder-open"></i></div>
-                <div>Resources</div>
-            </div>
-            <div class="action-card" onclick="viewMessages()">
-                <div class="action-icon"><i class="fas fa-comments"></i></div>
-                <div>Messages</div>
-            </div>
             <div class="action-card" onclick="viewWallet()">
                 <div class="action-icon"><i class="fas fa-wallet"></i></div>
                 <div>Wallet</div>
             </div>
         </div>
 
-        <h2 class="section-title">Recent Students</h2>
-        <div class="students-container">
-            <div class="student-card">
-                <div class="student-avatar">MG</div>
-                <div class="student-info">
-                    <div class="student-name">Maria Garcia</div>
-                    <div class="student-subject">Mathematics - Calculus</div>
-                </div>
-                <div class="student-progress">
-                    <div class="progress-score">92%</div>
-                    <div class="progress-sessions">8 sessions</div>
-                </div>
-            </div>
-
-            <div class="student-card">
-                <div class="student-avatar">JW</div>
-                <div class="student-info">
-                    <div class="student-name">James Wilson</div>
-                    <div class="student-subject">Physics - Quantum Mechanics</div>
-                </div>
-                <div class="student-progress">
-                    <div class="progress-score">88%</div>
-                    <div class="progress-sessions">6 sessions</div>
-                </div>
-            </div>
-
-            <div class="student-card">
-                <div class="student-avatar">SJ</div>
-                <div class="student-info">
-                    <div class="student-name">Sarah Johnson</div>
-                    <div class="student-subject">Computer Science - Python</div>
-                </div>
-                <div class="student-progress">
-                    <div class="progress-score">95%</div>
-                    <div class="progress-sessions">12 sessions</div>
-                </div>
-            </div>
+        <h2 class="section-title">Notifications</h2>
+        <div class="notifications-container" id="notifications-container">
+            <!-- Notifications will be loaded here dynamically -->
         </div>
 
         <h2 class="section-title">Weekly Schedule</h2>
@@ -1102,6 +1086,9 @@
             // Load and display today's sessions
             loadTodaysSessions();
             
+            // Load notifications
+            loadNotifications();
+            
             // Initialize currency display
             initializeCurrencyDisplay();
             loadCurrencyData();
@@ -1169,12 +1156,74 @@
                 });
         }
 
+        function loadNotifications() {
+            fetch('{{ route("tutor.notifications.pending") }}')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(notifications => {
+                    const notificationsContainer = document.getElementById('notifications-container');
+                    notificationsContainer.innerHTML = ''; // Clear existing content
+
+                    if (notifications.length > 0) {
+                        notifications.forEach(notification => {
+                            const timeString = new Date('1970-01-01T' + notification.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            const sessionType = notification.session_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                            
+                            // Format the date nicely
+                            const dateObj = new Date(notification.date);
+                            const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                            
+                            const notificationCard = `
+                                <div class="notification-card" onclick="window.location.href='/tutor/bookings/${notification.id}'">
+                                    <div class="notification-icon booking-pending">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <div class="notification-info">
+                                        <div class="notification-title">New Booking Request from ${notification.student_name}</div>
+                                        <div class="notification-message">${sessionType} - ${formattedDate} at ${timeString}</div>
+                                    </div>
+                                    <div class="notification-time">
+                                        <i class="fas fa-clock"></i> ${notification.created_at}
+                                    </div>
+                                </div>
+                            `;
+                            notificationsContainer.innerHTML += notificationCard;
+                        });
+                    } else {
+                        notificationsContainer.innerHTML = `
+                            <div class="no-notifications">
+                                <i class="fas fa-bell-slash" style="font-size: 2rem; color: #ccc; margin-bottom: 0.5rem;"></i>
+                                <p>No new notifications</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                    const notificationsContainer = document.getElementById('notifications-container');
+                    notificationsContainer.innerHTML = `
+                        <div class="no-notifications">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 0.5rem;"></i>
+                            <p>Error loading notifications</p>
+                        </div>
+                    `;
+                });
+        }
+
         function viewMySessions() {
             window.location.href = "{{ route('tutor.my-sessions') }}";
         }
 
         function viewAssignments() {
             window.location.href = "{{ route('tutor.my-sessions') }}";
+        }
+
+        function scrollToNotifications() {
+            document.querySelector('.notifications-container').scrollIntoView({ behavior: 'smooth' });
         }
 
         function uploadResources() {

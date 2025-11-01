@@ -12,13 +12,18 @@ use Illuminate\Support\Str;
 class TutorAssignmentController extends Controller
 {
     /**
-     * Show all pending assignments that need answers
+     * Show all assignments that can be answered
      */
     public function index()
     {
         $tutor = Auth::guard('tutor')->user();
 
-        $assignments = Assignment::where('status', 'pending')
+        // Show assignments that are pending or answered (multiple tutors can still answer)
+        // But exclude those this tutor has already answered
+        $assignments = Assignment::whereIn('status', ['pending', 'answered'])
+            ->whereDoesntHave('answers', function($query) use ($tutor) {
+                $query->where('tutor_id', $tutor->id);
+            })
             ->with(['student', 'answers'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -56,12 +61,7 @@ class TutorAssignmentController extends Controller
         $tutor = Auth::guard('tutor')->user();
         $assignment = Assignment::findOrFail($id);
 
-        // Check if assignment is still pending
-        if ($assignment->status !== 'pending') {
-            return back()->with('error', 'This assignment has already been answered.');
-        }
-
-        // Check if tutor already answered
+        // Check if tutor already answered this assignment
         $hasAnswered = $assignment->answers()
             ->where('tutor_id', $tutor->id)
             ->exists();
@@ -87,11 +87,13 @@ class TutorAssignmentController extends Controller
             'file_name' => $fileName,
         ]);
 
-        // Update assignment status to answered
-        $assignment->update(['status' => 'answered']);
+        // Only update status to 'answered' if this is the first answer
+        if ($assignment->status === 'pending') {
+            $assignment->update(['status' => 'answered']);
+        }
 
         return redirect()->route('tutor.assignments.index')
-            ->with('success', 'Answer submitted successfully! The student can now purchase your answer.');
+            ->with('success', 'Answer submitted successfully! The student will be notified.');
     }
 
     /**

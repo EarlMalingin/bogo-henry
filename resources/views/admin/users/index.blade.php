@@ -133,7 +133,7 @@
                             ` : `
                                 <div style=\"margin:6px 0\"><strong>Tutor ID:</strong> ${data.extra.tutor_id ?? '—'}</div>
                                 <div style=\"margin:6px 0\"><strong>Specialization:</strong> ${data.extra.specialization ?? '—'}</div>
-                                <div style=\"margin:6px 0\"><strong>Rate:</strong> ₱${Number(data.extra.session_rate ?? 0).toFixed(2)}/hour</div>
+                                <div style=\"margin:6px 0\"><strong>Rate:</strong> ₱${Number(data.extra.session_rate ?? 0).toFixed(2)}/month</div>
                             `}
                         </div>
                     </div>

@@ -100,7 +100,7 @@
                             </td>
                             <td>{{ $tutor->tutor_id }}</td>
                             <td>{{ Str::limit($tutor->specialization, 50) }}</td>
-                            <td>₱{{ number_format($tutor->session_rate, 2) }}/hour</td>
+                            <td>₱{{ number_format($tutor->session_rate, 2) }}/month</td>
                             <td>{{ $tutor->created_at->format('M d, Y') }}</td>
                             <td>
                                 <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -190,8 +190,8 @@
                     <p>${specialization}</p>
                 </div>
                 <div class="info-section">
-                    <strong>Hourly Rate:</strong>
-                    <p>₱${parseFloat(rate).toFixed(2)}/hour</p>
+                    <strong>Monthly Rate:</strong>
+                    <p>₱${parseFloat(rate).toFixed(2)}/month</p>
                 </div>
                 <div class="info-section">
                     <strong>Bio:</strong>
