@@ -572,81 +572,41 @@
             </div>
 
             <div id="notifications-list">
-                <!-- Sample Notifications - Replace with actual data from backend -->
-                <div class="notification-card unread">
-                    <div class="notification-icon booking">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">New Booking Request</div>
-                        <div class="notification-message">
-                            Michaela Malingin has requested to book a session with you for December 20, 2025.
+                @forelse($notifications as $notification)
+                    <div class="notification-card {{ !$notification->is_read ? 'unread' : '' }}">
+                        <div class="notification-icon alert">
+                            @if($notification->type === 'problem_report_response')
+                                <i class="fas fa-exclamation-circle"></i>
+                            @elseif($notification->type === 'booking_request')
+                                <i class="fas fa-calendar-check"></i>
+                            @elseif($notification->type === 'assignment_submitted')
+                                <i class="fas fa-tasks"></i>
+                            @elseif($notification->type === 'payment_received')
+                                <i class="fas fa-money-bill-wave"></i>
+                            @elseif($notification->type === 'new_message')
+                                <i class="fas fa-envelope"></i>
+                            @elseif($notification->type === 'new_review')
+                                <i class="fas fa-star"></i>
+                            @else
+                                <i class="fas fa-bell"></i>
+                            @endif
                         </div>
-                        <div class="notification-time">
-                            <i class="fas fa-clock"></i> 1 hour ago
-                        </div>
-                    </div>
-                </div>
-
-                <div class="notification-card unread">
-                    <div class="notification-icon payment">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">Payment Received</div>
-                        <div class="notification-message">
-                            You received ₱300.00 for your session with John Doe.
-                        </div>
-                        <div class="notification-time">
-                            <i class="fas fa-clock"></i> 3 hours ago
-                        </div>
-                    </div>
-                </div>
-
-                <div class="notification-card">
-                    <div class="notification-icon activity">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">Assignment Submitted</div>
-                        <div class="notification-message">
-                            Michaela Malingin has submitted "Mathematics Problem Set 4"
-                        </div>
-                        <div class="notification-time">
-                            <i class="fas fa-clock"></i> 5 hours ago
+                        <div class="notification-content">
+                            <div class="notification-title">{{ $notification->title }}</div>
+                            <div class="notification-message">
+                                {{ $notification->message }}
+                            </div>
+                            <div class="notification-time">
+                                <i class="fas fa-clock"></i> {{ $notification->created_at->diffForHumans() }}
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="notification-card">
-                    <div class="notification-icon message">
-                        <i class="fas fa-envelope"></i>
+                @empty
+                    <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                        <i class="fas fa-bell-slash" style="font-size: 4rem; color: #ddd; margin-bottom: 1rem;"></i>
+                        <p style="color: #666; font-size: 1.1rem;">No notifications yet</p>
                     </div>
-                    <div class="notification-content">
-                        <div class="notification-title">New Message</div>
-                        <div class="notification-message">
-                            You have a new message from Michaela Malingin
-                        </div>
-                        <div class="notification-time">
-                            <i class="fas fa-clock"></i> 1 day ago
-                        </div>
-                    </div>
-                </div>
-
-                <div class="notification-card">
-                    <div class="notification-icon alert">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">New Review</div>
-                        <div class="notification-message">
-                            You received a 5-star review from John Doe
-                        </div>
-                        <div class="notification-time">
-                            <i class="fas fa-clock"></i> 2 days ago
-                        </div>
-                    </div>
-                </div>
+                @endforelse
             </div>
         </div>
     </main>

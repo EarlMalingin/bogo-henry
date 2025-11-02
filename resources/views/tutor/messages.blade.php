@@ -567,5 +567,6 @@
                 });
         }
     </script>
+    @include('layouts.footer-js')
 </body>
 </html> 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile - MentorHub</title>
-    <link rel="stylesheet" href="{{ asset('style/Dashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('style/dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('style/session-modal.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -525,7 +525,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Report a Problem</a>
+                        <a href="{{ route('student.report-problem') }}">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
@@ -708,16 +708,18 @@
     <footer>
         <div class="footer-content">
             <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">FAQ</a>
-                <a href="#">Contact</a>
+                <a href="#" id="footer-privacy-link">Privacy Policy</a>
+                <a href="#" id="footer-terms-link">Terms of Service</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
             </div>
             <div class="copyright">
                 &copy; 2025 MentorHub. All rights reserved.
             </div>
         </div>
     </footer>
+    
+    @include('layouts.footer-modals')
 
     <script>
         // Toggle mobile menu
@@ -810,5 +812,7 @@
                 });
         }
     </script>
+    
+    @include('layouts.footer-js')
 </body>
 </html>

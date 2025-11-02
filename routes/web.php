@@ -175,9 +175,7 @@ Route::middleware(['auth:student'])->group(function () {
     Route::post('/student/report-problem', [App\Http\Controllers\ProblemReportController::class, 'store'])->name('student.report-problem.store');
     
     // Student notifications route
-    Route::get('/student/notifications', function () {
-        return view('student.notifications');
-    })->name('student.notifications');
+    Route::get('/student/notifications', [App\Http\Controllers\StudentNotificationController::class, 'index'])->name('student.notifications');
     
     // Student rate tutor route
     Route::post('/student/rate-tutor', [App\Http\Controllers\StudentActivityController::class, 'rateTutor'])->name('student.rate-tutor');
@@ -251,9 +249,7 @@ Route::middleware(['auth:tutor'])->group(function () {
     Route::post('/tutor/report-problem', [App\Http\Controllers\ProblemReportController::class, 'storeTutor'])->name('tutor.report-problem.store');
     
     // Tutor notifications route
-    Route::get('/tutor/notifications', function () {
-        return view('tutor.notifications');
-    })->name('tutor.notifications');
+    Route::get('/tutor/notifications', [App\Http\Controllers\TutorNotificationController::class, 'index'])->name('tutor.notifications');
 });
 
 // Test route to check sessions (remove in production)

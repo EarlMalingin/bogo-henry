@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{asset('style/Dashboard.css')}}">
+    <link rel="stylesheet" href="{{asset('style/dashboard.css')}}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <title>Assignment Details | MentorHub</title>
     <style>
@@ -636,6 +636,23 @@
         @endif
     </div>
 
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#" id="footer-privacy-link">Privacy Policy</a>
+                <a href="#" id="footer-terms-link">Terms of Service</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 MentorHub. All rights reserved.
+            </div>
+        </div>
+    </footer>
+    
+    @include('layouts.footer-modals')
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Mobile menu toggle
@@ -700,6 +717,8 @@
                 });
         }
     </script>
+    
+    @include('layouts.footer-js')
 </body>
 </html>
 

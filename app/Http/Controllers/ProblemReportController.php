@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProblemReport;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -95,6 +96,20 @@ class ProblemReportController extends Controller
         }
 
         $report->save();
+
+        // Create notification for the user if admin response is provided
+        if (isset($validated['admin_response']) && $validated['admin_response']) {
+            $userId = $report->student_id ?? $report->tutor_id;
+            $userType = $report->student_id ? 'student' : 'tutor';
+            
+            Notification::create([
+                'user_id' => $userId,
+                'user_type' => $userType,
+                'type' => 'problem_report_response',
+                'title' => 'Response to Your Problem Report',
+                'message' => 'Admin response: ' . $validated['admin_response'],
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Problem report updated successfully.');
     }

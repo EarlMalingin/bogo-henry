@@ -8,9 +8,10 @@
         :root{--primary:#4a90e2;--secondary:#5637d9}
         *{box-sizing:border-box}
         body{margin:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.92)),url('{{ asset('images/Uc-background.jpg') }}') no-repeat center/cover fixed;min-height:100vh}
-        .topbar{background:linear-gradient(90deg,var(--primary),var(--secondary));color:#fff}
-        .nav{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:12px 16px}
-        .nav a{color:#eaf2ff;text-decoration:none}
+        .topbar{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+        .nav{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:20px;padding:16px 20px}
+        .nav a{color:#fff;text-decoration:none;font-weight:500;transition:all 0.3s;padding:8px 16px;border-radius:8px}
+        .nav a:hover{background:rgba(255,255,255,0.15)}
         main{max-width:1100px;margin:24px auto;padding:0 16px}
         .card{background:#fff;border-radius:14px;box-shadow:0 12px 32px rgba(20,33,61,.07);padding:18px}
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}

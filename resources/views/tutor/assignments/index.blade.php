@@ -252,26 +252,35 @@
 
         .page-header {
             margin-bottom: 2rem;
+            text-align: center;
         }
 
         .page-title {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #2d7dd2;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            line-height: 1.6;
         }
 
         .assignment-card {
-            background: white;
+            background-color: white;
             border-radius: 12px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            transition: transform 0.3s;
+            border: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
         }
 
         .assignment-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
         }
 
         .assignment-header {
@@ -284,15 +293,34 @@
         }
 
         .assignment-subject {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
-            color: #2d7dd2;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .assignment-price {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+        }
+
+        .assignment-price i {
+            font-size: 1rem;
         }
 
         .assignment-question {
-            color: #333;
+            color: #555;
             margin-bottom: 1rem;
             line-height: 1.6;
+            font-size: 1rem;
         }
 
         .assignment-meta {
@@ -300,8 +328,19 @@
             gap: 1.5rem;
             font-size: 0.9rem;
             color: #666;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             flex-wrap: wrap;
+        }
+
+        .assignment-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .assignment-meta i {
+            color: #4a90e2;
+            font-size: 0.9rem;
         }
 
         .btn-answer {
@@ -311,14 +350,20 @@
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            transition: transform 0.3s;
+            transition: all 0.3s;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
         }
 
         .btn-answer:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-answer i {
+            font-size: 1rem;
         }
 
         .empty-state {
@@ -326,13 +371,48 @@
             padding: 4rem 2rem;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f0f0;
         }
 
         .empty-state i {
-            font-size: 4rem;
-            color: #ccc;
-            margin-bottom: 1rem;
+            font-size: 5rem;
+            color: #ddd;
+            margin-bottom: 1.5rem;
+            opacity: 0.7;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .assignment-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .badge-answered {
+            background: linear-gradient(135deg, #ffc107, #ffd700);
+            color: #333;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+        }
+
+        .badge-answered i {
+            font-size: 0.9rem;
         }
 
         /* Footer Styles */
@@ -381,6 +461,116 @@
             text-align: center;
             width: 100%;
             margin-top: 0.5rem;
+        }
+
+        /* Footer Modal Styles */
+        .footer-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .footer-modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .footer-modal.show .footer-modal-content {
+            transform: translateY(0);
+        }
+
+        .footer-modal-header {
+            background: linear-gradient(135deg, #4a90e2, #5637d9);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .footer-modal-body {
+            padding: 2rem;
+            max-height: 60vh;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .footer-modal-body h3 {
+            color: #2c3e50;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .footer-modal-body p {
+            margin-bottom: 1rem;
+            color: #555;
+        }
+
+        .footer-modal-body ul {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .footer-modal-body li {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .footer-modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .footer-modal-close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-modal-body a {
+            color: #4a90e2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-modal-body a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -438,7 +628,7 @@
     <div class="assignments-container">
         <div class="page-header">
             <h1 class="page-title">Available Assignments</h1>
-            <p style="color: #666;">Help students by answering their assignment questions. Multiple tutors can answer each assignment!</p>
+            <p class="page-subtitle">Help students by answering their assignment questions. Multiple tutors can answer each assignment!</p>
         </div>
 
         @if(session('success'))
@@ -452,7 +642,7 @@
                 <div class="assignment-card">
                     <div class="assignment-header">
                         <div class="assignment-subject">{{ $assignment->subject }}</div>
-                        <span style="color: #666; font-size: 0.9rem;">
+                        <span class="assignment-price">
                             <i class="fas fa-money-bill-wave"></i> ₱{{ number_format($assignment->price, 2) }}
                         </span>
                     </div>
@@ -468,7 +658,7 @@
                             <span><i class="fas fa-paperclip"></i> Has attachment</span>
                         @endif
                         @if($assignment->answers->count() > 0)
-                            <span style="color: #ffc107;"><i class="fas fa-users"></i> {{ $assignment->answers->count() }} tutor(s) answered</span>
+                            <span class="assignment-badge badge-answered"><i class="fas fa-users"></i> {{ $assignment->answers->count() }} tutor(s) answered</span>
                         @endif
                     </div>
 
@@ -551,6 +741,9 @@
                 });
         }
     </script>
+    @include('layouts.footer-js')
+
+    @include('layouts.footer-modals')
 
     <!-- Footer -->
     <footer>

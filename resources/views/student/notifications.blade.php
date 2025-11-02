@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{asset('style/Dashboard.css')}}">
+    <link rel="stylesheet" href="{{asset('style/dashboard.css')}}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <title>Notifications | MentorHub</title>
     <style>
@@ -317,66 +317,39 @@
             </div>
 
             <div id="notifications-list">
-                <!-- Sample Notifications - Replace with actual data from backend -->
-                <div class="notification-card unread">
-                    <div class="notification-icon booking">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">Session Confirmed</div>
-                        <div class="notification-message">
-                            Your booking with Earl Malingin for December 15, 2025 has been confirmed.
+                @forelse($notifications as $notification)
+                    <div class="notification-card {{ !$notification->is_read ? 'unread' : '' }}">
+                        <div class="notification-icon alert">
+                            @if($notification->type === 'problem_report_response')
+                                <i class="fas fa-exclamation-circle"></i>
+                            @elseif($notification->type === 'booking_confirmed')
+                                <i class="fas fa-calendar-check"></i>
+                            @elseif($notification->type === 'activity_posted')
+                                <i class="fas fa-tasks"></i>
+                            @elseif($notification->type === 'payment_received')
+                                <i class="fas fa-money-bill-wave"></i>
+                            @elseif($notification->type === 'new_message')
+                                <i class="fas fa-envelope"></i>
+                            @else
+                                <i class="fas fa-bell"></i>
+                            @endif
                         </div>
-                        <div class="notification-time">
-                            <i class="fas fa-clock"></i> 2 hours ago
-                        </div>
-                    </div>
-                </div>
-
-                <div class="notification-card">
-                    <div class="notification-icon activity">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">New Activity Posted</div>
-                        <div class="notification-message">
-                            Your tutor has posted a new activity: "Mathematics Problem Set 5"
-                        </div>
-                        <div class="notification-time">
-                            <i class="fas fa-clock"></i> 5 hours ago
+                        <div class="notification-content">
+                            <div class="notification-title">{{ $notification->title }}</div>
+                            <div class="notification-message">
+                                {{ $notification->message }}
+                            </div>
+                            <div class="notification-time">
+                                <i class="fas fa-clock"></i> {{ $notification->created_at->diffForHumans() }}
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="notification-card">
-                    <div class="notification-icon payment">
-                        <i class="fas fa-money-bill-wave"></i>
+                @empty
+                    <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                        <i class="fas fa-bell-slash" style="font-size: 4rem; color: #ddd; margin-bottom: 1rem;"></i>
+                        <p style="color: #666; font-size: 1.1rem;">No notifications yet</p>
                     </div>
-                    <div class="notification-content">
-                        <div class="notification-title">Payment Received</div>
-                        <div class="notification-message">
-                            Your cash-in request of ₱500.00 has been approved.
-                        </div>
-                        <div class="notification-time">
-                            <i class="fas fa-clock"></i> 1 day ago
-                        </div>
-                    </div>
-                </div>
-
-                <div class="notification-card">
-                    <div class="notification-icon message">
-                        <i class="fas fa-envelope"></i>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">New Message</div>
-                        <div class="notification-message">
-                            You have a new message from Earl Malingin
-                        </div>
-                        <div class="notification-time">
-                            <i class="fas fa-clock"></i> 2 days ago
-                        </div>
-                    </div>
-                </div>
+                @endforelse
             </div>
         </div>
     </main>
@@ -385,16 +358,18 @@
     <footer>
         <div class="footer-content">
             <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">FAQ</a>
-                <a href="#">Contact</a>
+                <a href="#" id="footer-privacy-link">Privacy Policy</a>
+                <a href="#" id="footer-terms-link">Terms of Service</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
             </div>
             <div class="copyright">
                 &copy; 2025 MentorHub. All rights reserved.
             </div>
         </div>
     </footer>
+    
+    @include('layouts.footer-modals')
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -448,6 +423,8 @@
             // fetch('/student/notifications/mark-all-read', { method: 'POST' })
         }
     </script>
+    
+    @include('layouts.footer-js')
 </body>
 </html>
 

@@ -783,16 +783,18 @@
     <footer>
         <div class="footer-content">
             <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">FAQ</a>
-                <a href="#">Contact</a>
+                <a href="#" id="footer-privacy-link">Privacy Policy</a>
+                <a href="#" id="footer-terms-link">Terms of Service</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
             </div>
             <div class="copyright">
                 &copy; 2025 MentorHub. All rights reserved.
             </div>
         </div>
     </footer>
+    
+    @include('layouts.footer-modals')
     
     <!-- Tutor Details Modal -->
     <div class="modal-overlay" id="tutor-details-modal">
@@ -885,6 +887,23 @@
                                 <span class="summary-label">Rate:</span>
                                 <span class="summary-value" id="summary-rate">$0.00</span>
                             </div>
+                        </div>
+                        
+                        <div class="terms-container" style="margin-top: 1.5rem; padding: 1rem; background-color: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <h4 style="margin: 0 0 0.75rem 0; color: #856404; font-size: 1rem;">Terms and Conditions</h4>
+                            <div style="font-size: 0.9rem; color: #856404; margin-bottom: 1rem; line-height: 1.6;">
+                                By confirming this booking, you agree to the following terms:
+                                <ul style="margin: 0.5rem 0 0 1.5rem; padding-left: 1rem;">
+                                    <li>Payment is required upon booking confirmation</li>
+                                    <li>If you are absent or fail to attend the session, you will still be charged the full session rate</li>
+                                    <li>Rescheduling must be done at least 24 hours before the session</li>
+                                    <li>Refunds are only available for cancellations made at least 48 hours in advance</li>
+                                </ul>
+                            </div>
+                            <label style="display: flex; align-items: flex-start; cursor: pointer; margin-top: 0.5rem;">
+                                <input type="checkbox" id="terms-checkbox" style="margin-right: 0.75rem; margin-top: 0.25rem; cursor: pointer; width: 18px; height: 18px;">
+                                <span style="font-size: 0.95rem; color: #856404;">I have read and agree to the terms and conditions</span>
+                            </label>
                         </div>
                         
                         <div class="booking-actions">
@@ -1156,8 +1175,15 @@
             function validateForm() {
                 const isSessionTypeSelected = document.querySelector('.session-type-toggle button.active') !== null;
                 const isDateSelected = sessionDate.value !== '';
+                const isTermsAccepted = document.getElementById('terms-checkbox').checked;
                 
-                confirmBooking.disabled = !(isSessionTypeSelected && isDateSelected);
+                confirmBooking.disabled = !(isSessionTypeSelected && isDateSelected && isTermsAccepted);
+            }
+            
+            // Add event listener to terms checkbox
+            const termsCheckbox = document.getElementById('terms-checkbox');
+            if (termsCheckbox) {
+                termsCheckbox.addEventListener('change', validateForm);
             }
             
             function updateSummaryDate() {
@@ -1292,5 +1318,7 @@
             }
         });
     </script>
+    
+    @include('layouts.footer-js')
 </body>
 </html>

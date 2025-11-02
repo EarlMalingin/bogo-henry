@@ -8,13 +8,16 @@
         :root{--primary:#4a90e2;--secondary:#5637d9}
         *{box-sizing:border-box}
         body{margin:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.92)),url('{{ asset('images/Uc-background.jpg') }}') no-repeat center/cover fixed;min-height:100vh}
-        .topbar{background:linear-gradient(90deg,var(--primary),var(--secondary));color:#fff}
-        .nav{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:14px 16px}
-        .logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
-        .logo-img{height:70px}
-        .tabs{display:flex;gap:8px;margin-left:auto}
-        .tab{color:#eaf2ff;text-decoration:none;padding:8px 14px;border-radius:999px}
-        .tab.active{background:rgba(255,255,255,.22)}
+        .topbar{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+        .nav{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:20px;padding:16px 20px}
+        .logo{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none;transition:transform 0.3s}
+        .logo:hover{transform:scale(1.05)}
+        .logo-img{height:70px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2))}
+        .tabs{display:flex;gap:4px;margin-left:auto;margin-right:16px;background:rgba(255,255,255,0.1);padding:4px;border-radius:10px;backdrop-filter:blur(10px)}
+        .tab{color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:500;transition:all 0.3s;position:relative}
+        .tab:hover{background:rgba(255,255,255,0.15);transform:translateY(-2px)}
+        .tab.active{background:rgba(255,255,255,0.25);font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+        .tab.active::before{content:'';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:80%;height:3px;background:#fff;border-radius:2px}
         main{max-width:1200px;margin:24px auto;padding:0 16px}
         h2{margin:0 0 14px;color:#1f2d3d}
         .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px}

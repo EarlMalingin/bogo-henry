@@ -686,7 +686,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Report a Problem</a>
+                        <a href="{{ route('student.report-problem') }}">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
@@ -845,6 +845,23 @@
             </div>
         </div>
     </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#" id="footer-privacy-link">Privacy Policy</a>
+                <a href="#" id="footer-terms-link">Terms of Service</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 MentorHub. All rights reserved.
+            </div>
+        </div>
+    </footer>
+    
+    @include('layouts.footer-modals')
 
     <!-- Session Details Modal -->
     <div id="session-details-modal" class="session-details-modal">
@@ -1053,5 +1070,7 @@
             }
         });
     </script>
+    
+    @include('layouts.footer-js')
 </body>
 </html>

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Tutor;
 use App\Models\Session;
+use App\Models\Wallet;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Message;
 
 class StudentSessionController extends Controller
@@ -23,6 +25,7 @@ class StudentSessionController extends Controller
     // Handle booking submission
     public function store(Request $request)
     {
+        DB::beginTransaction();
         try {
             $request->validate([
                 'tutor_id' => 'required|exists:tutors,id',
@@ -63,6 +66,44 @@ class StudentSessionController extends Controller
                     ->withErrors(['error' => 'This tutor is currently inactive.']);
             }
 
+            // Get or create student's wallet
+            $wallet = Wallet::where('user_id', $studentId)
+                ->where('user_type', 'student')
+                ->first();
+
+            if (!$wallet) {
+                $wallet = Wallet::create([
+                    'user_id' => $studentId,
+                    'user_type' => 'student',
+                    'balance' => 0.00,
+                    'currency' => 'PHP'
+                ]);
+            }
+
+            // Check if student has sufficient balance
+            if (!$wallet->canAfford($tutor->session_rate)) {
+                DB::rollBack();
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['error' => 'Insufficient balance. Please add funds to your wallet first.']);
+            }
+
+            // Deduct payment from wallet
+            $transaction = $wallet->deductFunds($tutor->session_rate, 'session_booking', [
+                'tutor_id' => $tutor->id,
+                'tutor_name' => $tutor->first_name . ' ' . $tutor->last_name,
+                'session_type' => $request->session_type,
+                'date' => $request->date,
+            ]);
+
+            if (!$transaction) {
+                DB::rollBack();
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['error' => 'Failed to process payment. Please try again.']);
+            }
+
+            // Create session booking
             $session = Session::create([
                 'student_id' => $studentId,
                 'tutor_id' => $request->tutor_id,
@@ -75,8 +116,10 @@ class StudentSessionController extends Controller
                 'status' => 'pending',
             ]);
 
-            return redirect()->route('student.book-session')->with('success', 'Session booking request sent successfully! The tutor will review and respond to your request.');
+            DB::commit();
+            return redirect()->route('student.book-session')->with('success', 'Session booking request sent successfully! Payment of ₱' . number_format($tutor->session_rate, 2) . ' has been deducted from your wallet.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['error' => 'An error occurred while creating your booking. Please try again.']);
