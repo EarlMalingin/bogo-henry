@@ -18,7 +18,16 @@ class StudentAssignmentController extends Controller
      */
     public function create()
     {
-        return view('student.post-assignment');
+        $student = Auth::guard('student')->user();
+        
+        // Get recent assignments posted by the student
+        $recentAssignments = Assignment::where('student_id', $student->id)
+            ->with(['answers.tutor'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        return view('student.post-assignment', compact('recentAssignments'));
     }
 
     /**
@@ -55,7 +64,7 @@ class StudentAssignmentController extends Controller
             'price' => 70.00,
         ]);
 
-        return redirect()->route('student.assignments.my-assignments')
+        return redirect()->route('student.assignments.post')
             ->with('success', 'Assignment posted successfully! Wait for tutors to answer.');
     }
 
@@ -113,7 +122,7 @@ class StudentAssignmentController extends Controller
                 'tutor_id' => $tutor->id,
                 'tutor_name' => $tutor->getFullName(),
                 'tutor_specialization' => $tutor->specialization,
-                'answer_preview' => substr($answerItem->answer, 0, 150) . '...',
+                'answer_preview' => 'This answer is locked. Pay to view the full solution.',
                 'rating' => $tutor->getAverageRating(),
                 'rating_count' => $tutor->getRatingCount(),
                 'created_at' => $answerItem->created_at,

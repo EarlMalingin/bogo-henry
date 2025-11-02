@@ -224,52 +224,117 @@
             margin: 2rem auto;
             padding: 2rem;
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
         }
         .details-header {
-            border-bottom: 1px solid #eee;
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
         .student-info {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
         }
         .student-avatar {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
-            background-color: #4a90e2;
+            background: linear-gradient(135deg, #4a90e2, #3a7cdd);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+            border: 3px solid white;
         }
         .student-name {
             font-size: 1.5rem;
             font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+        }
+        .details-body h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
         }
         .details-body .detail-item {
             display: flex;
             justify-content: space-between;
-            padding: 0.8rem 0;
+            padding: 1rem;
             border-bottom: 1px solid #f5f5f5;
+            transition: background-color 0.2s;
+        }
+        .details-body .detail-item:hover {
+            background-color: #f8f9fa;
+            border-radius: 8px;
         }
         .detail-item strong {
-            color: #333;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .detail-item strong i {
+            color: #4a90e2;
+            width: 20px;
         }
         .detail-item span {
             color: #666;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4em 0.8em;
+            font-size: 0.9em;
+            font-weight: 600;
+            border-radius: 20px;
+            gap: 0.3em;
+        }
+
+        .status-badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge-accepted {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-badge-completed {
+            background-color: #d1ecf1;
+            color: #0c5460;
         }
         .student-notes {
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            padding: 1rem;
-            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            border-left: 4px solid #4a90e2;
+        }
+        .student-notes strong {
+            color: #2d3748;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .student-notes p {
+            color: #4a5568;
+            line-height: 1.6;
         }
         .actions {
             margin-top: 2rem;
@@ -278,10 +343,12 @@
             gap: 1rem;
             flex-wrap: nowrap;
             align-items: center;
+            padding-top: 2rem;
+            border-top: 2px solid #e5e7eb;
         }
         .btn {
             padding: 0.8rem 1.5rem;
-            border-radius: 50px;
+            border-radius: 8px;
             text-decoration: none;
             font-size: 1rem;
             font-weight: 600;
@@ -291,11 +358,30 @@
             flex-shrink: 0;
             text-align: center;
             white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .btn-success { background-color: #28a745; color: white; }
-        .btn-danger { background-color: #dc3545; color: white; }
-        .btn-secondary { background-color: #6c757d; color: white; }
-        .btn-primary { background-color: #4a90e2; color: white; }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-success { 
+            background: linear-gradient(135deg, #28a745, #218838); 
+            color: white; 
+        }
+        .btn-danger { 
+            background: linear-gradient(135deg, #dc3545, #c82333); 
+            color: white; 
+        }
+        .btn-secondary { 
+            background: linear-gradient(135deg, #6c757d, #5a6268); 
+            color: white; 
+        }
+        .btn-primary { 
+            background: linear-gradient(135deg, #4a90e2, #3a7cdd); 
+            color: white; 
+        }
 
         /* Modal Styles */
         .modal {
@@ -307,17 +393,44 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.4);
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
         }
 
         .modal-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
+            background-color: white;
+            margin: 10% auto;
+            padding: 2rem;
+            border: none;
+            width: 90%;
             max-width: 500px;
-            border-radius: 8px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .modal-content p {
+            color: #666;
+            margin-bottom: 1rem;
+            line-height: 1.6;
         }
 
         .close-button {
@@ -325,11 +438,12 @@
             float: right;
             font-size: 28px;
             font-weight: bold;
+            transition: color 0.2s;
         }
 
         .close-button:hover,
         .close-button:focus {
-            color: black;
+            color: #333;
             text-decoration: none;
             cursor: pointer;
         }
@@ -338,16 +452,23 @@
             display: flex;
             justify-content: flex-end;
             gap: 1rem;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
         }
 
         textarea {
             width: 100%;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
             margin-top: 1rem;
             resize: vertical;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4a90e2;
         }
 
         /* Footer */
@@ -361,7 +482,8 @@
 
         .footer-content {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
             max-width: 1200px;
             margin: 0 auto;
@@ -436,6 +558,125 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .student-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .details-container {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Footer Modal Styles */
+        .footer-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .footer-modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .footer-modal.show .footer-modal-content {
+            transform: translateY(0);
+        }
+
+        .footer-modal-header {
+            background: linear-gradient(135deg, #4a90e2, #5637d9);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .footer-modal-body {
+            padding: 2rem;
+            max-height: 60vh;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .footer-modal-body h3 {
+            color: #2c3e50;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .footer-modal-body p {
+            margin-bottom: 1rem;
+            color: #555;
+        }
+
+        .footer-modal-body ul {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .footer-modal-body li {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .footer-modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .footer-modal-close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-modal-body a {
+            color: #4a90e2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-modal-body a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -477,7 +718,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Report a Problem</a>
+                        <a href="{{ route('tutor.report-problem') }}">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
                             @csrf
@@ -509,23 +750,23 @@
             <div class="details-body">
                 <h3>Session Details</h3>
                 <div class="detail-item">
-                    <strong>Status:</strong>
-                    <span>{{ ucfirst($booking->status) }}</span>
+                    <strong><i class="fas fa-info-circle"></i> Status:</strong>
+                    <span class="status-badge status-badge-{{ strtolower($booking->status) }}">{{ ucfirst($booking->status) }}</span>
                 </div>
                 <div class="detail-item">
-                    <strong>Date:</strong>
+                    <strong><i class="fas fa-calendar-alt"></i> Date:</strong>
                     <span>{{ $booking->formatted_date }}</span>
                 </div>
                 <div class="detail-item">
-                    <strong>Time:</strong>
+                    <strong><i class="fas fa-clock"></i> Time:</strong>
                     <span>{{ $booking->formatted_start_time }} - {{ $booking->formatted_end_time }} ({{ $booking->duration }})</span>
                 </div>
                 <div class="detail-item">
-                    <strong>Session Type:</strong>
+                    <strong><i class="fas fa-video"></i> Session Type:</strong>
                     <span>{{ ucwords(str_replace('_', ' ', $booking->session_type)) }}</span>
                 </div>
                 <div class="detail-item">
-                    <strong>Session Rate:</strong>
+                    <strong><i class="fas fa-money-bill-wave"></i> Session Rate:</strong>
                     <span>₱{{ number_format($booking->rate, 2) }}/month</span>
                 </div>
 
@@ -540,11 +781,19 @@
 
             <div class="actions">
                 @if($booking->status == 'pending')
-                    <button type="button" class="btn btn-success" onclick="document.getElementById('acceptModal').style.display='block'">Accept</button>
-                    <button type="button" class="btn btn-danger" onclick="document.getElementById('rejectModal').style.display='block'">Reject</button>
+                    <button type="button" class="btn btn-success" onclick="document.getElementById('acceptModal').style.display='block'">
+                        <i class="fas fa-check-circle"></i>
+                        Accept
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="document.getElementById('rejectModal').style.display='block'">
+                        <i class="fas fa-times-circle"></i>
+                        Reject
+                    </button>
                 @endif
-                <a href="mailto:{{ $booking->student->email }}" class="btn btn-primary">Message</a>
-                <a href="{{ route('tutor.bookings.index') }}" class="btn btn-secondary">Back to Bookings</a>
+                <a href="{{ route('tutor.bookings.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Bookings
+                </a>
             </div>
         </div>
     </main>
@@ -583,13 +832,15 @@
         </div>
     </div>
 
+    @include('layouts.footer-modals')
+    
     <footer>
         <div class="footer-content">
             <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">FAQ</a>
-                <a href="#">Contact</a>
+                <a href="#" id="footer-privacy-link">Privacy Policy</a>
+                <a href="#" id="footer-terms-link">Terms of Service</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
             </div>
             <div class="copyright">
                 &copy; 2025 MentorHub. All rights reserved.
@@ -664,5 +915,6 @@
             window.location.href = "{{ route('tutor.wallet') }}";
         }
     </script>
+    @include('layouts.footer-js')
 </body>
 </html> 

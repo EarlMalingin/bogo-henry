@@ -301,6 +301,43 @@
                 font-size: 1.5rem;
             }
         }
+
+        /* Tab Styles */
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border: 2px solid #ddd;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            background: #f8f9fa;
+            color: #2d7dd2;
+        }
+
+        .tab-btn.active {
+            background: #2d7dd2;
+            color: white;
+            border-color: #2d7dd2;
+        }
+
+        .assignment-card {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+
+        .assignment-card:hover {
+            background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body>
@@ -347,7 +384,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Report a Problem</a>
+                        <a href="{{ route('student.report-problem') }}">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
@@ -389,7 +426,15 @@
             </div>
         </div>
 
-        <form action="{{ route('student.assignments.store') }}" method="POST" enctype="multipart/form-data" class="assignment-form">
+        <!-- Tabs for Post New and My Assignments -->
+        <div style="margin-bottom: 2rem;">
+            <button class="tab-btn active" onclick="showTab('post')">Post New Assignment</button>
+            <button class="tab-btn" onclick="showTab('my-assignments')">My Assignments</button>
+        </div>
+
+        <!-- Post New Assignment Tab -->
+        <div id="post-tab">
+        <form action="{{ route('student.assignments.store') }}" method="POST" enctype="multipart/form-data" class="assignment-form" style="background: white; border-radius: 12px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); padding: 2rem;">
             @csrf
 
             <div class="form-group">
@@ -419,6 +464,51 @@
                 <i class="fas fa-paper-plane"></i> Post Assignment
             </button>
         </form>
+        </div>
+
+        <!-- My Assignments Tab -->
+        <div id="my-assignments-tab" style="display: none;">
+            <div class="assignment-form">
+                <h2 style="margin-bottom: 1.5rem; color: #2d7dd2;">My Recent Assignments</h2>
+                
+                @forelse($recentAssignments ?? [] as $assignment)
+                    <div style="padding: 1.5rem; border-bottom: 1px solid #eee; transition: background-color 0.3s; cursor: pointer;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='white'" onclick="window.location.href='{{ route('student.assignments.show', $assignment->id) }}'">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                            <h3 style="margin: 0; color: #333;">{{ $assignment->subject }}</h3>
+                            <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+                                @if($assignment->status === 'pending') background: #fff3cd; color: #856404;
+                                @elseif($assignment->status === 'answered') background: #d1ecf1; color: #0c5460;
+                                @elseif($assignment->status === 'paid') background: #d4edda; color: #155724;
+                                @endif">
+                                {{ ucfirst($assignment->status) }}
+                            </span>
+                        </div>
+                        <p style="margin: 0.5rem 0; color: #666; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ $assignment->question }}
+                        </p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; font-size: 0.9rem; color: #999;">
+                            <span><i class="fas fa-clock"></i> {{ $assignment->created_at->diffForHumans() }}</span>
+                            @if($assignment->answers->count() > 0)
+                                <span><i class="fas fa-users"></i> {{ $assignment->answers->count() }} {{ Str::plural('answer', $assignment->answers->count()) }}</span>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div style="text-align: center; padding: 3rem;">
+                        <i class="fas fa-inbox" style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;"></i>
+                        <p style="color: #666;">You haven't posted any assignments yet</p>
+                    </div>
+                @endforelse
+
+                @if(($recentAssignments ?? collect())->count() >= 5)
+                <div style="text-align: center; margin-top: 2rem;">
+                    <a href="{{ route('student.assignments.my-assignments') }}" style="display: inline-block; padding: 0.75rem 1.5rem; background: #2d7dd2; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                        View All Assignments
+                    </a>
+                </div>
+                @endif
+            </div>
+        </div>
     </div>
 
     <script>
@@ -450,6 +540,19 @@
             // Initialize currency display
             initializeCurrencyDisplay();
             loadCurrencyData();
+            
+            // Check if there's a success message and switch to My Assignments tab
+            @if(session('success'))
+                // Switch to My Assignments tab after posting
+                document.getElementById('post-tab').style.display = 'none';
+                document.getElementById('my-assignments-tab').style.display = 'block';
+                
+                // Update button states
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            @endif
         });
 
         function viewWallet() {
@@ -479,6 +582,27 @@
                 .catch(error => {
                     console.error('Error loading wallet balance:', error);
                 });
+        }
+        
+        // Tab switching function
+        function showTab(tabName) {
+            // Hide all tabs
+            document.getElementById('post-tab').style.display = 'none';
+            document.getElementById('my-assignments-tab').style.display = 'none';
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            if (tabName === 'post') {
+                document.getElementById('post-tab').style.display = 'block';
+                event.target.classList.add('active');
+            } else if (tabName === 'my-assignments') {
+                document.getElementById('my-assignments-tab').style.display = 'block';
+                event.target.classList.add('active');
+            }
         }
     </script>
 </body>

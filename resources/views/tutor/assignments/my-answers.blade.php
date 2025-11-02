@@ -222,6 +222,8 @@
                 })
                 .catch(error => console.error('Error:', error));
         });
+
+    @include('layouts.footer-js')
     </script>
 </body>
 </html>

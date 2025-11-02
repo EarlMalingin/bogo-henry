@@ -21,6 +21,14 @@ class LoginController extends Controller
         if (Auth::guard('student')->attempt($credentials)) {
             $student = Auth::guard('student')->user();
             
+            // Check if account is active
+            if (!$student->is_active) {
+                Auth::guard('student')->logout();
+                return back()->withErrors([
+                    'email' => 'Your account has been deactivated. Please contact support for assistance.',
+                ])->withInput($request->only('email'));
+            }
+            
             // Check if email is verified
             if (!$student->is_verified) {
                 Auth::guard('student')->logout();
@@ -58,23 +66,19 @@ class LoginController extends Controller
         if (Auth::guard('tutor')->attempt($credentials)) {
             $tutor = Auth::guard('tutor')->user();
             
+            // Check if account is active
+            if (!$tutor->is_active) {
+                Auth::guard('tutor')->logout();
+                return back()->withErrors([
+                    'email' => 'Your account has been deactivated. Please contact support for assistance.',
+                ])->withInput($request->only('email'));
+            }
+            
             // Check if email is verified
             if (!$tutor->is_verified) {
                 Auth::guard('tutor')->logout();
                 return back()->withErrors([
                     'email' => 'Please verify your email address before logging in. Check your email for the verification code.',
-                ])->withInput($request->only('email'));
-            }
-            
-            // Check if registration is approved
-            if ($tutor->registration_status !== 'approved') {
-                Auth::guard('tutor')->logout();
-                $statusMessage = $tutor->registration_status === 'pending' 
-                    ? 'Your registration is pending admin approval. Please wait for approval before logging in.'
-                    : 'Your registration has been rejected. Please contact support for assistance.';
-                
-                return back()->withErrors([
-                    'email' => $statusMessage,
                 ])->withInput($request->only('email'));
             }
             

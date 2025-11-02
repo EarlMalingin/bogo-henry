@@ -1011,7 +1011,7 @@
                 <p>We reserve the right to modify these terms at any time. Users will be notified of significant changes, and continued use of the platform constitutes acceptance of updated terms.</p>
                 
                 <h3>13. Contact Information</h3>
-                <p>For questions about these Terms and Conditions, please contact us at legal@MentorHub.com or through our support channels.</p>
+                <p>For questions about these Terms and Conditions, please contact us at MentorHub.Website@gmail.com or through our support channels.</p>
             </div>
         </div>
     </div>
@@ -1095,7 +1095,7 @@
                 <h3>12. Contact Us</h3>
                 <p>For questions about this Privacy Policy or to exercise your rights, contact us at:</p>
                 <ul>
-                    <li>Email: privacy@MentorHub.com</li>
+                    <li>Email: MentorHub.Website@gmail.com</li>
                     <li>Phone: +63958667092</li>
                     <li>Address: University of Cebu, Cebu City, Philippines</li>
                 </ul>

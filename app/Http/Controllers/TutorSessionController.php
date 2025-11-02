@@ -55,6 +55,14 @@ class TutorSessionController extends Controller
     // Accept booking
     public function accept(Request $request, $id)
     {
+        $tutor = Auth::guard('tutor')->user();
+        
+        // Check if tutor is approved
+        if ($tutor->registration_status !== 'approved') {
+            return redirect()->route('tutor.bookings.index')
+                ->with('error', 'Your account must be approved by an admin before you can accept bookings.');
+        }
+
         $booking = Session::where('tutor_id', Auth::guard('tutor')->id())
             ->where('id', $id)
             ->where('status', 'pending')

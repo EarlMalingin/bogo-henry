@@ -640,11 +640,12 @@
                     <label for="year_level">Year Level</label>
                     <select id="year_level" name="year_level" class="form-control" required>
                         <option value="">Select Year Level</option>
-                        <option value="1st Year" {{ old('year_level', $student->year_level) == '1st Year' ? 'selected' : '' }}>1st Year</option>
-                        <option value="2nd Year" {{ old('year_level', $student->year_level) == '2nd Year' ? 'selected' : '' }}>2nd Year</option>
-                        <option value="3rd Year" {{ old('year_level', $student->year_level) == '3rd Year' ? 'selected' : '' }}>3rd Year</option>
-                        <option value="4th Year" {{ old('year_level', $student->year_level) == '4th Year' ? 'selected' : '' }}>4th Year</option>
-                        <option value="5th Year" {{ old('year_level', $student->year_level) == '5th Year' ? 'selected' : '' }}>5th Year</option>
+                        <option value="Pre-school" {{ old('year_level', $student->year_level) == 'Pre-school' ? 'selected' : '' }}>Pre-school</option>
+                        <option value="Kindergarten" {{ old('year_level', $student->year_level) == 'Kindergarten' ? 'selected' : '' }}>Kindergarten</option>
+                        <option value="Elementary" {{ old('year_level', $student->year_level) == 'Elementary' ? 'selected' : '' }}>Elementary</option>
+                        <option value="Highschool" {{ old('year_level', $student->year_level) == 'Highschool' ? 'selected' : '' }}>Highschool</option>
+                        <option value="Senior Highschool" {{ old('year_level', $student->year_level) == 'Senior Highschool' ? 'selected' : '' }}>Senior Highschool</option>
+                        <option value="College" {{ old('year_level', $student->year_level) == 'College' ? 'selected' : '' }}>College</option>
                     </select>
                     @error('year_level')
                         <span class="text-danger">{{ $message }}</span>

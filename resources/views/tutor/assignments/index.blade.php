@@ -334,6 +334,54 @@
             color: #ccc;
             margin-bottom: 1rem;
         }
+
+        /* Footer Styles */
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: auto;
+            width: 100%;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+            padding: 0.3rem 0;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .copyright {
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: center;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -376,7 +424,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Report a Problem</a>
+                        <a href="{{ route('tutor.report-problem') }}">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
                             @csrf
@@ -503,6 +551,21 @@
                 });
         }
     </script>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#" id="footer-privacy-link">Privacy Policy</a>
+                <a href="#" id="footer-terms-link">Terms of Service</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 MentorHub. All rights reserved.
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
 

@@ -135,7 +135,7 @@
             
             <p>If you didn't create an account with MentorHub, please ignore this email.</p>
             
-            <p>Need help? Contact our support team at <a href="mailto:support@mentorhub.com">support@mentorhub.com</a></p>
+            <p>Need help? Contact our support team at <a href="mailto:MentorHub.Website@gmail.com">MentorHub.Website@gmail.com</a></p>
         </div>
         
         <div class="footer">

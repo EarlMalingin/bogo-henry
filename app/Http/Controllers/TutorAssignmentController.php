@@ -61,6 +61,11 @@ class TutorAssignmentController extends Controller
         $tutor = Auth::guard('tutor')->user();
         $assignment = Assignment::findOrFail($id);
 
+        // Check if tutor is approved
+        if ($tutor->registration_status !== 'approved') {
+            return back()->with('error', 'Your account must be approved by an admin before you can answer assignments.');
+        }
+
         // Check if tutor already answered this assignment
         $hasAnswered = $assignment->answers()
             ->where('tutor_id', $tutor->id)

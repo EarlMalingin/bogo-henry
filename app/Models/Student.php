@@ -25,6 +25,7 @@ class Student extends Authenticatable
         'verification_code',
         'verification_code_expires_at',
         'is_verified',
+        'is_active',
     ];
 
     protected $hidden = [

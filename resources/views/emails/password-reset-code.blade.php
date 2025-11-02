@@ -135,7 +135,7 @@
             
             <p>If you didn't request a password reset, please ignore this email and your account will remain secure.</p>
             
-            <p>Need help? Contact our support team at <a href="mailto:support@mentorhub.com">support@mentorhub.com</a></p>
+            <p>Need help? Contact our support team at <a href="mailto:MentorHub.Website@gmail.com">MentorHub.Website@gmail.com</a></p>
         </div>
         
         <div class="footer">

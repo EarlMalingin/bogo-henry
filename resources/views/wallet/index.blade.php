@@ -630,6 +630,54 @@
                 display: none;
             }
         }
+
+        /* Footer Styles */
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: auto;
+            width: 100%;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+            padding: 0.3rem 0;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .copyright {
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: center;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -975,6 +1023,116 @@
         .btn-success:hover {
             background: #45a049;
         }
+
+        /* Footer Modal Styles */
+        .footer-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .footer-modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .footer-modal.show .footer-modal-content {
+            transform: translateY(0);
+        }
+
+        .footer-modal-header {
+            background: linear-gradient(135deg, #4a90e2, #5637d9);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .footer-modal-body {
+            padding: 2rem;
+            max-height: 60vh;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .footer-modal-body h3 {
+            color: #2c3e50;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-size: 1.2rem;
+        }
+
+        .footer-modal-body p {
+            margin-bottom: 1rem;
+            color: #555;
+        }
+
+        .footer-modal-body ul {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        .footer-modal-body li {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .footer-modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+
+        .footer-modal-close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-modal-body a {
+            color: #4a90e2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-modal-body a:hover {
+            text-decoration: underline;
+        }
     </style>
 
     <script>
@@ -1082,5 +1240,23 @@
             }
         });
     </script>
+    @include('layouts.footer-js')
+
+    @include('layouts.footer-modals')
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#" id="footer-privacy-link">Privacy Policy</a>
+                <a href="#" id="footer-terms-link">Terms of Service</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 MentorHub. All rights reserved.
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

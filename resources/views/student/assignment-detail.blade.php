@@ -145,6 +145,17 @@
             font-size: 0.95rem;
         }
 
+        .answer-preview .fa-lock,
+        .answer-preview .fas.fa-lock {
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            display: inline-block;
+            font-style: normal;
+            font-variant: normal;
+            text-rendering: auto;
+            line-height: 1;
+        }
+
         .answer-actions {
             display: flex;
             justify-content: space-between;
@@ -464,7 +475,7 @@
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
                         <a href="#">Settings</a>
-                        <a href="#">Report a Problem</a>
+                        <a href="{{ route('student.report-problem') }}">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
                             @csrf
@@ -477,7 +488,7 @@
     </header>
 
     <div class="detail-container">
-        <a href="{{ route('student.assignments.my-assignments') }}" style="color: #2d7dd2; text-decoration: none; margin-bottom: 1rem; display: inline-block;">
+        <a href="{{ route('student.assignments.post') }}" style="color: #2d7dd2; text-decoration: none; margin-bottom: 1rem; display: inline-block;">
             <i class="fas fa-arrow-left"></i> Back to Assignments
         </a>
 
@@ -570,8 +581,19 @@
                             @endif
                         </div>
                         
-                        <div class="answer-preview">
-                            {{ $ans['answer_preview'] }}
+                        <div class="answer-preview" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; position: relative; overflow: hidden; min-height: 150px;">
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.95); display: flex; align-items: center; justify-content: center; z-index: 10;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 4rem; color: #999; margin-bottom: 1rem; line-height: 1; width: 80px; height: 80px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-lock" style="display: inline-block; font-size: 4rem; color: #999 !important;"></i>
+                                    </div>
+                                    <p style="color: #666; font-weight: 600; margin: 0; font-size: 1.1rem;">Answer Locked</p>
+                                    <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">Pay to view this answer</p>
+                                </div>
+                            </div>
+                            <div style="filter: blur(8px); opacity: 0.2; pointer-events: none;">
+                                {{ $ans['answer_preview'] }}
+                            </div>
                         </div>
                         
                         <div class="answer-actions">

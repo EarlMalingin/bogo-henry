@@ -13,7 +13,10 @@ class StudentSessionController extends Controller
     // Show all tutors and booking form
     public function index()
     {
-        $tutors = Tutor::all();
+        // Only show approved tutors that are active
+        $tutors = Tutor::where('registration_status', 'approved')
+            ->where('is_active', true)
+            ->get();
         return view('student.book-session', compact('tutors'));
     }
 
@@ -45,6 +48,19 @@ class StudentSessionController extends Controller
 
             if (!$studentId) {
                 return redirect()->route('login.student')->with('error', 'Please log in to book a session.');
+            }
+
+            // Check if tutor is approved and active
+            if ($tutor->registration_status !== 'approved') {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['error' => 'This tutor is not yet available for booking.']);
+            }
+
+            if (!$tutor->is_active) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['error' => 'This tutor is currently inactive.']);
             }
 
             $session = Session::create([

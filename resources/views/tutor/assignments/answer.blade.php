@@ -329,6 +329,12 @@
             transform: translateY(-2px);
         }
 
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .alert {
             padding: 1rem;
             border-radius: 8px;
@@ -398,6 +404,12 @@
             <i class="fas fa-arrow-left" style="margin-right: 0.5rem;"></i> Back to Assignments
         </a>
 
+        @if(session('error'))
+            <div style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #f5c6cb;">
+                <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
+            </div>
+        @endif
+
         @if($hasAnswered)
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle"></i> You have already submitted an answer for this assignment.
@@ -411,6 +423,12 @@
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
+            </div>
+        @endif
+
+        @if($tutor->registration_status !== 'approved')
+            <div style="background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <i class="fas fa-clock"></i> <strong>Pending Approval:</strong> Your registration is still being reviewed. You can view assignments but cannot submit answers until your account is approved by an admin.
             </div>
         @endif
 
@@ -446,10 +464,12 @@
         </div>
 
         @if(!$hasAnswered)
+            @if($tutor->registration_status === 'approved')
             <div class="earnings-info">
                 <i class="fas fa-money-bill-wave" style="font-size: 1.5rem; color: #28a745;"></i><br>
                 <strong>You'll earn ₱{{ number_format($assignment->price, 2) }}</strong> when the student purchases your answer!
             </div>
+            @endif
 
             <div class="answer-form-card">
                 <h2 style="margin-bottom: 1.5rem; color: #333;">Your Answer</h2>
@@ -468,7 +488,7 @@
                         <small style="color: #666;">Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB)</small>
                     </div>
 
-                    <button type="submit" class="btn-submit" {{ $hasAnswered ? 'disabled' : '' }}>
+                    <button type="submit" class="btn-submit" {{ ($hasAnswered || $tutor->registration_status !== 'approved') ? 'disabled' : '' }}>
                         <i class="fas fa-paper-plane"></i> Submit Answer
                     </button>
                 </form>
@@ -535,6 +555,8 @@
                     console.error('Error loading wallet balance:', error);
                 });
         }
+
+    @include('layouts.footer-js')
     </script>
 </body>
 </html>

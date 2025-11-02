@@ -170,11 +170,12 @@
                                 <label for="year_level">Year Level *</label>
                                 <select id="year_level" name="year_level" required>
                                     <option value="">Select Year Level</option>
-                                    <option value="1st Year" {{ old('year_level') == '1st Year' ? 'selected' : '' }}>1st Year</option>
-                                    <option value="2nd Year" {{ old('year_level') == '2nd Year' ? 'selected' : '' }}>2nd Year</option>
-                                    <option value="3rd Year" {{ old('year_level') == '3rd Year' ? 'selected' : '' }}>3rd Year</option>
-                                    <option value="4th Year" {{ old('year_level') == '4th Year' ? 'selected' : '' }}>4th Year</option>
-                                    <option value="Graduate" {{ old('year_level') == 'Graduate' ? 'selected' : '' }}>Graduate</option>
+                                    <option value="Pre-school" {{ old('year_level') == 'Pre-school' ? 'selected' : '' }}>Pre-school</option>
+                                    <option value="Kindergarten" {{ old('year_level') == 'Kindergarten' ? 'selected' : '' }}>Kindergarten</option>
+                                    <option value="Elementary" {{ old('year_level') == 'Elementary' ? 'selected' : '' }}>Elementary</option>
+                                    <option value="Highschool" {{ old('year_level') == 'Highschool' ? 'selected' : '' }}>Highschool</option>
+                                    <option value="Senior Highschool" {{ old('year_level') == 'Senior Highschool' ? 'selected' : '' }}>Senior Highschool</option>
+                                    <option value="College" {{ old('year_level') == 'College' ? 'selected' : '' }}>College</option>
                                 </select>
                                 @error('year_level')
                                     <span class="error-message">{{ $message }}</span>
@@ -288,7 +289,7 @@
                 <p>We reserve the right to modify these terms at any time. Users will be notified of significant changes, and continued use of the platform constitutes acceptance of updated terms.</p>
                 
                 <h3>12. Contact Information</h3>
-                <p>For questions about these Terms and Conditions, please contact us at legal@MentorHub.com or through our support channels.</p>
+                <p>For questions about these Terms and Conditions, please contact us at MentorHub.Website@gmail.com or through our support channels.</p>
             </div>
         </div>
     </div>
@@ -372,7 +373,7 @@
                 <h3>12. Contact Us</h3>
                 <p>For questions about this Privacy Policy or to exercise your rights, contact us at:</p>
                 <ul>
-                    <li>Email: privacy@MentorHub.com</li>
+                    <li>Email: MentorHub.Website@gmail.com</li>
                     <li>Phone: +63958667092</li>
                     <li>Address: University of Cebu, Cebu City, Philippines</li>
                 </ul>
