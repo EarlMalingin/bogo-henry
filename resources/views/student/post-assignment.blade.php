@@ -471,34 +471,39 @@
             <div class="assignment-form">
                 <h2 style="margin-bottom: 1.5rem; color: #2d7dd2;">My Recent Assignments</h2>
                 
-                @forelse($recentAssignments ?? [] as $assignment)
-                    <div style="padding: 1.5rem; border-bottom: 1px solid #eee; transition: background-color 0.3s; cursor: pointer;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='white'" onclick="window.location.href='{{ route('student.assignments.show', $assignment->id) }}'">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
-                            <h3 style="margin: 0; color: #333;">{{ $assignment->subject }}</h3>
-                            <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
-                                @if($assignment->status === 'pending') background: #fff3cd; color: #856404;
-                                @elseif($assignment->status === 'answered') background: #d1ecf1; color: #0c5460;
-                                @elseif($assignment->status === 'paid') background: #d4edda; color: #155724;
-                                @endif">
-                                {{ ucfirst($assignment->status) }}
-                            </span>
+                @php
+                    $assignments = $recentAssignments ?? collect();
+                @endphp
+                @if($assignments->count() > 0)
+                    @foreach($assignments as $assignment)
+                        <div style="padding: 1.5rem; border-bottom: 1px solid #eee; transition: background-color 0.3s; cursor: pointer;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor='white'" onclick="window.location.href='{{ route('student.assignments.show', $assignment->id) }}'">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                                <h3 style="margin: 0; color: #333;">{{ $assignment->subject }}</h3>
+                                <span style="padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+                                    @if($assignment->status === 'pending') background: #fff3cd; color: #856404;
+                                    @elseif($assignment->status === 'answered') background: #d1ecf1; color: #0c5460;
+                                    @elseif($assignment->status === 'paid') background: #d4edda; color: #155724;
+                                    @endif">
+                                    {{ ucfirst($assignment->status) }}
+                                </span>
+                            </div>
+                            <p style="margin: 0.5rem 0; color: #666; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ $assignment->question }}
+                            </p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; font-size: 0.9rem; color: #999;">
+                                <span><i class="fas fa-clock"></i> {{ $assignment->created_at->diffForHumans() }}</span>
+                                @if($assignment->answers->count() > 0)
+                                    <span><i class="fas fa-users"></i> {{ $assignment->answers->count() }} {{ Str::plural('answer', $assignment->answers->count()) }}</span>
+                                @endif
+                            </div>
                         </div>
-                        <p style="margin: 0.5rem 0; color: #666; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                            {{ $assignment->question }}
-                        </p>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; font-size: 0.9rem; color: #999;">
-                            <span><i class="fas fa-clock"></i> {{ $assignment->created_at->diffForHumans() }}</span>
-                            @if($assignment->answers->count() > 0)
-                                <span><i class="fas fa-users"></i> {{ $assignment->answers->count() }} {{ Str::plural('answer', $assignment->answers->count()) }}</span>
-                            @endif
-                        </div>
-                    </div>
-                @empty
+                    @endforeach
+                @else
                     <div style="text-align: center; padding: 3rem;">
                         <i class="fas fa-inbox" style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;"></i>
                         <p style="color: #666;">You haven't posted any assignments yet</p>
                     </div>
-                @endforelse
+                @endif
 
                 @if(($recentAssignments ?? collect())->count() >= 5)
                 <div style="text-align: center; margin-top: 2rem;">
