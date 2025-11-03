@@ -176,6 +176,7 @@ Route::middleware(['auth:student'])->group(function () {
     
     // Student notifications route
     Route::get('/student/notifications', [App\Http\Controllers\StudentNotificationController::class, 'index'])->name('student.notifications');
+    Route::delete('/student/notifications/{id}', [App\Http\Controllers\StudentNotificationController::class, 'destroy'])->name('student.notifications.destroy');
     
     // Student rate tutor route
     Route::post('/student/rate-tutor', [App\Http\Controllers\StudentActivityController::class, 'rateTutor'])->name('student.rate-tutor');
@@ -250,6 +251,7 @@ Route::middleware(['auth:tutor'])->group(function () {
     
     // Tutor notifications route
     Route::get('/tutor/notifications', [App\Http\Controllers\TutorNotificationController::class, 'index'])->name('tutor.notifications');
+    Route::delete('/tutor/notifications/{id}', [App\Http\Controllers\TutorNotificationController::class, 'destroy'])->name('tutor.notifications.destroy');
 });
 
 // Test route to check sessions (remove in production)

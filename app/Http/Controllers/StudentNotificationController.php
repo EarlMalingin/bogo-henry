@@ -17,4 +17,16 @@ class StudentNotificationController extends Controller
 
         return view('student.notifications', compact('notifications'));
     }
+
+    public function destroy($id)
+    {
+        $notification = Notification::where('id', $id)
+            ->where('user_id', Auth::guard('student')->id())
+            ->where('user_type', 'student')
+            ->firstOrFail();
+
+        $notification->delete();
+
+        return response()->json(['success' => true]);
+    }
 }

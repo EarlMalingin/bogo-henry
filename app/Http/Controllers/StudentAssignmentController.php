@@ -6,6 +6,7 @@ use App\Models\Assignment;
 use App\Models\AssignmentAnswer;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -218,7 +219,7 @@ class StudentAssignmentController extends Controller
                 ]);
             }
 
-            $tutorEarnings = (float)$assignment->price * 0.70; // 70% to tutor
+            $tutorEarnings = (float)$assignment->price; // 100% to tutor
             $tutorWallet->addFunds(
                 $tutorEarnings,
                 'assignment_earnings',
@@ -229,6 +230,15 @@ class StudentAssignmentController extends Controller
                     'description' => 'Earnings from assignment answer',
                 ]
             );
+
+            // Create notification for tutor
+            Notification::create([
+                'user_id' => $answer->tutor_id,
+                'user_type' => 'tutor',
+                'type' => 'payment_received',
+                'title' => 'Payment Received',
+                'message' => 'You received ₱' . number_format($tutorEarnings, 2) . ' for your assignment answer.',
+            ]);
 
             DB::commit();
 

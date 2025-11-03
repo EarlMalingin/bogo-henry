@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Session;
+use App\Models\Wallet;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Message;
 
 class TutorSessionController extends Controller
@@ -68,12 +71,50 @@ class TutorSessionController extends Controller
             ->where('status', 'pending')
             ->firstOrFail();
 
-        $booking->update([
-            'status' => 'accepted',
-            'notes' => $request->input('notes', $booking->notes)
-        ]);
+        DB::beginTransaction();
+        try {
+            // Update booking status
+            $booking->update([
+                'status' => 'accepted',
+                'notes' => $request->input('notes', $booking->notes)
+            ]);
 
-        return redirect()->route('tutor.bookings.index')->with('success', 'Booking accepted successfully!');
+            // Credit the tutor's wallet (70% of session rate)
+            $tutorWallet = Wallet::where('user_id', $tutor->id)
+                ->where('user_type', 'tutor')
+                ->first();
+
+            if (!$tutorWallet) {
+                $tutorWallet = Wallet::create([
+                    'user_id' => $tutor->id,
+                    'user_type' => 'tutor',
+                    'balance' => 0.00,
+                    'currency' => 'PHP'
+                ]);
+            }
+
+            $tutorEarnings = $booking->rate; // 100% to tutor
+            $tutorWallet->addFunds($tutorEarnings, 'session_earnings', [
+                'session_id' => $booking->id,
+                'student_id' => $booking->student_id,
+                'description' => 'Session booking accepted - Earnings',
+            ]);
+
+            // Create notification for tutor
+            Notification::create([
+                'user_id' => $tutor->id,
+                'user_type' => 'tutor',
+                'type' => 'payment_received',
+                'title' => 'Payment Received',
+                'message' => 'You received ₱' . number_format($tutorEarnings, 2) . ' for the accepted session booking.',
+            ]);
+
+            DB::commit();
+            return redirect()->route('tutor.bookings.index')->with('success', 'Booking accepted successfully! Earnings of ₱' . number_format($tutorEarnings, 2) . ' have been added to your wallet.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('tutor.bookings.index')->with('error', 'Failed to accept booking: ' . $e->getMessage());
+        }
     }
 
     // Reject booking

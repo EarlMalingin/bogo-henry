@@ -254,6 +254,7 @@
             display: flex;
             gap: 1rem;
             transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
         }
 
         .notification-card:hover {
@@ -264,6 +265,29 @@
         .notification-card.unread {
             border-left: 4px solid #4a90e2;
             background-color: #f8fbff;
+        }
+
+        .notification-delete {
+            background: transparent;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.5rem;
+            transition: all 0.2s;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .notification-delete:hover {
+            background: #fee;
+            color: #d32f2f;
+            transform: scale(1.1);
         }
 
         .notification-icon {
@@ -573,7 +597,7 @@
 
             <div id="notifications-list">
                 @forelse($notifications as $notification)
-                    <div class="notification-card {{ !$notification->is_read ? 'unread' : '' }}">
+                    <div class="notification-card {{ !$notification->is_read ? 'unread' : '' }}" data-id="{{ $notification->id }}">
                         <div class="notification-icon alert">
                             @if($notification->type === 'problem_report_response')
                                 <i class="fas fa-exclamation-circle"></i>
@@ -600,6 +624,9 @@
                                 <i class="fas fa-clock"></i> {{ $notification->created_at->diffForHumans() }}
                             </div>
                         </div>
+                        <button class="notification-delete" onclick="deleteNotification({{ $notification->id }})" title="Delete notification">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 @empty
                     <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
@@ -678,6 +705,50 @@
             
             // Optional: Send AJAX request to backend to mark as read
             // fetch('/tutor/notifications/mark-all-read', { method: 'POST' })
+        }
+
+        function deleteNotification(id) {
+            if (!confirm('Are you sure you want to delete this notification?')) {
+                return;
+            }
+
+            fetch(`/tutor/notifications/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const card = document.querySelector(`[data-id="${id}"]`);
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s';
+                        card.style.opacity = '0';
+                        setTimeout(() => {
+                            card.remove();
+                            
+                            // Check if no more notifications
+                            const notificationsList = document.getElementById('notifications-list');
+                            if (!notificationsList.querySelector('.notification-card')) {
+                                notificationsList.innerHTML = `
+                                    <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                                        <i class="fas fa-bell-slash" style="font-size: 4rem; color: #ddd; margin-bottom: 1rem;"></i>
+                                        <p style="color: #666; font-size: 1.1rem;">No notifications yet</p>
+                                    </div>
+                                `;
+                            }
+                        }, 300);
+                    }
+                } else {
+                    alert('Failed to delete notification');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the notification');
+            });
         }
     </script>
     @include('layouts.footer-js')
