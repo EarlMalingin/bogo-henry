@@ -383,7 +383,7 @@
                     @auth('student')
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
-                        <a href="#">Settings</a>
+                        <a href="{{ route('student.settings') }}">Achievements</a>
                         <a href="{{ route('student.report-problem') }}">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
@@ -920,14 +920,40 @@
         });
 
         // Footer Modal Functions
+        function getScrollbarWidth() {
+            // Create a temporary div to measure scrollbar width
+            const outer = document.createElement('div');
+            outer.style.visibility = 'hidden';
+            outer.style.overflow = 'scroll';
+            outer.style.msOverflowStyle = 'scrollbar';
+            document.body.appendChild(outer);
+            
+            const inner = document.createElement('div');
+            outer.appendChild(inner);
+            
+            const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+            outer.parentNode.removeChild(outer);
+            
+            return scrollbarWidth;
+        }
+
         function openFooterModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) {
+                // Calculate scrollbar width before hiding it
+                const scrollbarWidth = getScrollbarWidth();
+                
+                // Store original padding-right if it exists
+                const originalPaddingRight = document.body.style.paddingRight || '';
+                
+                // Add padding to prevent layout shift
+                document.body.style.paddingRight = scrollbarWidth + 'px';
+                document.body.style.overflow = 'hidden';
+                
                 modal.style.display = 'flex';
                 // Force reflow to ensure display is set before adding class
                 void modal.offsetWidth;
                 modal.classList.add('show');
-                document.body.style.overflow = 'hidden';
             }
         }
 
@@ -935,8 +961,11 @@
             const modal = document.getElementById(modalId);
             if (modal) {
                 modal.classList.remove('show');
-                document.body.style.overflow = 'auto';
+                
+                // Wait for animation to complete before restoring scrollbar
                 setTimeout(() => {
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
                     modal.style.display = 'none';
                 }, 300);
             }

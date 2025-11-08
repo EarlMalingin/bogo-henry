@@ -10,14 +10,20 @@
     <!-- Header -->
     <header>
         <div class="navbar">
-            <a href="{{route('home')}}" class="logo">
-                <img src="{{asset('images/MentorHub.png')}}" alt="MentorHub Logo" class="logo-img">
+            <a href="{{ route('home') }}" class="logo">
+                <img src="{{ asset('images/MentorHub.png') }}" alt="MentorHub Logo" class="logo-img">
+                <div class="brand-text">
+                    <span class="brand-title">MentorHub</span>
+                    <span class="brand-subtitle">Expert Tutoring Platform</span>
+                </div>
             </a>
+            <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
             <nav class="nav-links" id="nav-links">
-                <a href="{{route('home')}}">Home</a>
-                <a href="{{route('home')}}#features">About</a>
-                <a href="{{route('home')}}#subjects">Subjects</a>
-                <a href="{{route('home')}}#contact">Contact</a>
+                <a href="{{ route('home') }}">Home</a>
+                <a href="{{ route('home') }}#features">Features</a>
+                <a href="{{ route('home') }}#subjects">Subjects</a>
+                <a href="{{ route('home') }}#contact">Contact</a>
+                <a href="{{ route('select-role') }}" class="cta-link">Get Started</a>
             </nav>
         </div>
     </header>
@@ -91,8 +97,16 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Mobile menu functionality removed
-            
+            const menuToggle = document.getElementById('menu-toggle');
+            const navLinks = document.getElementById('nav-links');
+
+            if (menuToggle && navLinks) {
+                menuToggle.addEventListener('click', function() {
+                    const isOpen = navLinks.classList.toggle('active');
+                    menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                });
+            }
+
             // Auto-hide alerts after 5 seconds
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {

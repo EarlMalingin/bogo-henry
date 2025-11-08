@@ -565,6 +565,8 @@ footer {
     background-color: rgba(0, 0, 0, 0.5);
     opacity: 0;
     transition: opacity 0.3s ease;
+    align-items: center;
+    justify-content: center;
 }
 
 .footer-modal.show {

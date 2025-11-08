@@ -125,6 +125,8 @@ Route::middleware(['auth:student'])->group(function () {
     Route::get('/student/profile/edit', [StudentProfileController::class, 'edit'])->name('student.profile.edit');
 
     Route::put('/student/profile/update', [StudentProfileController::class, 'update'])->name('student.profile.update');
+    
+    Route::get('/student/settings', [App\Http\Controllers\StudentSettingsController::class, 'index'])->name('student.settings');
 
     Route::post('/student/logout', [LoginController::class, 'studentLogout'])->name('student.logout');
 
@@ -192,6 +194,8 @@ Route::middleware(['auth:tutor'])->group(function () {
 
     Route::get('/tutor/profile/edit', [App\Http\Controllers\TutorProfileController::class, 'edit'])->name('tutor.profile.edit');
     Route::put('/tutor/profile/update', [App\Http\Controllers\TutorProfileController::class, 'update'])->name('tutor.profile.update');
+    
+    Route::get('/tutor/settings', [App\Http\Controllers\TutorSettingsController::class, 'index'])->name('tutor.settings');
 
     // Tutor booking management routes
     Route::get('/tutor/bookings', [TutorSessionController::class, 'index'])->name('tutor.bookings.index');

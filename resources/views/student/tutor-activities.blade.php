@@ -312,7 +312,7 @@
                     @endif
                     <div class="dropdown-menu" id="dropdown-menu">
                         <a href="{{ route('student.profile.edit') }}">My Profile</a>
-                        <a href="#">Settings</a>
+                        <a href="{{ route('student.settings') }}">Achievements</a>
                         <a href="#">Report a Problem</a>
                         <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                         <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
@@ -433,16 +433,18 @@
     <footer>
         <div class="footer-content">
             <div class="footer-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-                <a href="#">FAQ</a>
-                <a href="#">Contact</a>
+                <a href="#" id="footer-privacy-link">Privacy Policy</a>
+                <a href="#" id="footer-terms-link">Terms of Service</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
             </div>
             <div class="copyright">
                 &copy; 2025 MentorHub. All rights reserved.
             </div>
         </div>
     </footer>
+    
+    @include('layouts.footer-modals')
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -491,5 +493,7 @@
             alert('Feedback feature will be implemented soon!');
         }
     </script>
+    
+    @include('layouts.footer-js')
 </body>
 </html>

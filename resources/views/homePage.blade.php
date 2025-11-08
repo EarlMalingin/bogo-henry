@@ -420,55 +420,36 @@
                 <div class="footer-column">
                     <h3>For Students</h3>
                     <ul>
-                        <li><a href="#find-tutors">Find Tutors</a></li>
+                        <li><a href="{{ route('signup', ['role' => 'student']) }}">Student Signup</a></li>
+                        <li><a href="{{ route('login.student') }}">Student Login</a></li>
                         <li><a href="#subjects">Browse Subjects</a></li>
-                        <li><a href="#assignments">Assignment Help</a></li>
-                        <li><a href="#progress">Track Progress</a></li>
-                        <li><a href="#student-resources">Learning Resources</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h3>For Tutors</h3>
-                    <ul>
-                        <li><a href="#become-tutor">Become a Tutor</a></li>
-                        <li><a href="#tutor-dashboard">Tutor Dashboard</a></li>
-                        <li><a href="#earnings">Earnings</a></li>
-                        <li><a href="#resources">Teaching Resources</a></li>
-                        <li><a href="#tutor-certification">Tutor Certification</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h3>Platform</h3>
-                    <ul>
-                        <li><a href="#features">Features</a></li>
-                        <li><a href="#pricing">Pricing</a></li>
-                        <li><a href="#mobile-app">Mobile App</a></li>
-                        <li><a href="#api">API</a></li>
-                        <li><a href="#security">Security</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-column">
-                    <h3>Company</h3>
+                    <h3>For Tutors</h3>
                     <ul>
-                        <li><a href="#about">About Us</a></li>
-                        <li><a href="#careers">Careers</a></li>
-                        <li><a href="#blog">Blog</a></li>
-                        <li><a href="#press">Press</a></li>
-                        <li><a href="#partners">Partners</a></li>
+                        <li><a href="{{ route('signup', ['role' => 'tutor']) }}">Tutor Signup</a></li>
+                        <li><a href="{{ route('login.tutor') }}">Tutor Login</a></li>
+                        <li><a href="{{ route('select-role') }}">Choose Your Role</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h3>Platform</h3>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#about">About MentorHub</a></li>
+                        <li><a href="#subjects">Subjects</a></li>
+                        <li><a href="#contact">Contact</a></li>
                     </ul>
                 </div>
 
                 <div class="footer-column">
                     <h3>Support</h3>
                     <ul>
-                        <li><a href="#help">Help Center</a></li>
-                        <li><a href="#contact">Contact Us</a></li>
-                        <li><a href="#community">Community</a></li>
-                        <li><a href="#status">System Status</a></li>
-                        <li><a href="#faq">FAQs</a></li>
+                        <li><a href="#contact">Contact Support</a></li>
+                        <li><a href="mailto:MentorHub.Website@gmail.com">Email Us</a></li>
                     </ul>
                 </div>
             </div>
