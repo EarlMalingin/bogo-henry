@@ -30,7 +30,7 @@ class TutorActivityController extends Controller
     }
 
     // Show create activity form
-    public function create()
+    public function create(Request $request)
     {
         $tutor = Auth::guard('tutor')->user();
         
@@ -38,12 +38,26 @@ class TutorActivityController extends Controller
             $query->where('tutor_id', $tutor->id);
         })->get();
 
+        // Get selected student ID from query parameter
+        $selectedStudentId = $request->query('student_id');
+        
+        // If student_id is provided, verify the student has sessions with this tutor
+        if ($selectedStudentId) {
+            $hasSessions = Session::where('tutor_id', $tutor->id)
+                ->where('student_id', $selectedStudentId)
+                ->exists();
+            
+            if (!$hasSessions) {
+                $selectedStudentId = null; // Reset if invalid
+            }
+        }
+
         $sessions = Session::where('tutor_id', $tutor->id)
             ->where('status', 'accepted')
             ->with('student')
             ->get();
 
-        return view('tutor.activities.create', compact('students', 'sessions', 'tutor'));
+        return view('tutor.activities.create', compact('students', 'sessions', 'tutor', 'selectedStudentId'));
     }
 
     // Store new activity
@@ -102,6 +116,10 @@ class TutorActivityController extends Controller
             'total_points' => $request->total_points,
             'time_limit' => $request->time_limit,
         ]);
+
+        // Check achievements for tutor
+        $achievementService = new \App\Services\AchievementNotificationService();
+        $achievementService->checkAndNotifyProgress($tutor, 'tutor', 'activities_created');
 
         return redirect()->route('tutor.my-sessions')->with('success', 'Activity sent successfully!');
     }
@@ -171,19 +189,80 @@ class TutorActivityController extends Controller
     {
         $tutor = Auth::guard('tutor')->user();
         
+        // Get the student
+        $student = Student::findOrFail($studentId);
+        
+        // Verify the student has sessions with this tutor
+        $hasSessions = Session::where('tutor_id', $tutor->id)
+            ->where('student_id', $studentId)
+            ->exists();
+        
+        if (!$hasSessions) {
+            abort(403, 'You do not have access to this student\'s progress.');
+        }
+        
+        // Get all activities for this student
         $activities = Activity::where('tutor_id', $tutor->id)
             ->where('student_id', $studentId)
+            ->with(['submissions' => function($query) use ($studentId) {
+                $query->where('student_id', $studentId);
+            }])
+            ->orderBy('created_at', 'desc')
             ->get();
+        
+        // Calculate statistics
+        $totalActivities = $activities->count();
+        $submittedActivities = $activities->filter(function($activity) use ($studentId) {
+            $submission = $activity->studentSubmission($studentId);
+            return $submission && $submission->status === 'submitted';
+        })->count();
+        
+        $gradedActivities = $activities->filter(function($activity) use ($studentId) {
+            $submission = $activity->studentSubmission($studentId);
+            return $submission && $submission->status === 'graded';
+        });
+        
+        $gradedCount = $gradedActivities->count();
+        
+        // Calculate average score from submissions
+        $averageScore = $gradedActivities->avg(function($activity) use ($studentId) {
+            $submission = $activity->studentSubmission($studentId);
+            if ($submission && $submission->score && $activity->total_points) {
+                return ($submission->score / $activity->total_points) * 100;
+            }
+            return 0;
+        }) ?? 0;
+        
+        $totalPoints = $gradedActivities->sum(function($activity) use ($studentId) {
+            $submission = $activity->studentSubmission($studentId);
+            return $submission ? $submission->score : 0;
+        });
+        
+        $maxPoints = $gradedActivities->sum('total_points');
+        
+        // Get sessions count
+        $sessionsCount = Session::where('tutor_id', $tutor->id)
+            ->where('student_id', $studentId)
+            ->count();
+        
+        $completedSessions = Session::where('tutor_id', $tutor->id)
+            ->where('student_id', $studentId)
+            ->where('status', 'completed')
+            ->count();
 
-        $progress = [
-            'total_activities' => $activities->count(),
-            'completed' => $activities->whereIn('status', ['completed', 'graded'])->count(),
-            'average_score' => $activities->where('status', 'graded')->avg('score') ?? 0,
-            'total_points' => $activities->where('status', 'graded')->sum('score') ?? 0,
-            'max_points' => $activities->where('status', 'graded')->sum('total_points') ?? 0,
-        ];
-
-        return response()->json($progress);
+        return view('tutor.students.progress', compact(
+            'student',
+            'tutor',
+            'activities',
+            'totalActivities',
+            'submittedActivities',
+            'gradedCount',
+            'averageScore',
+            'totalPoints',
+            'maxPoints',
+            'sessionsCount',
+            'completedSessions'
+        ));
     }
 
     // Show all students for the tutor

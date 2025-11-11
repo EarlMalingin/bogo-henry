@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MentorHub Tutor Dashboard</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="{{asset('style/dashboard.css')}}">
+    <link rel="stylesheet" href="{{asset('style/session-modal.css')}}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -1371,6 +1373,28 @@
         </div>
     </footer>
 
+    <!-- Session Details Modal -->
+    <div id="session-modal" class="session-modal">
+        <div class="session-modal-content">
+            <span class="session-modal-close-btn">&times;</span>
+            <h2>Session Details</h2>
+            <div class="session-modal-body">
+                <!-- Session details will be populated here -->
+            </div>
+            <div class="session-modal-footer" id="modal-footer">
+                <button id="modal-message-btn">
+                    <i class="fas fa-comments"></i> Message
+                </button>
+                <button id="modal-view-booking-btn">
+                    <i class="fas fa-calendar-check"></i> View Booking
+                </button>
+                <button id="modal-close-btn">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Report a Problem Modal -->
     <div class="modal-overlay" id="report-problem-modal">
         <div class="modal">
@@ -1496,7 +1520,7 @@
                                         <div class="session-student">Type: ${session.session_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</div>
                                     </div>
                                     <div class="session-actions">
-                                        <a href="/tutor/bookings/${session.id}" class="btn btn-primary" style="padding: 8px 16px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; cursor: pointer; border: none; transition: all 0.3s; color: white;">View</a>
+                                        <button onclick='showSessionModal(${JSON.stringify(session)})' class="btn btn-primary" style="padding: 8px 16px; border-radius: 50px; text-decoration: none; font-size: 0.9rem; cursor: pointer; border: none; transition: all 0.3s; color: white; background-color: #28a745;">View</button>
                                     </div>
                                 </div>
                             `;
@@ -1738,6 +1762,87 @@
                 }
             });
         });
+
+        // Session Modal Functions
+        function showSessionModal(session) {
+            const modal = document.getElementById('session-modal');
+            const modalBody = modal.querySelector('.session-modal-body');
+
+            if (!modal || !modalBody) return;
+
+            const sessionDate = new Date(session.date);
+            const formattedDate = !isNaN(sessionDate) ? sessionDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Invalid Date';
+            
+            const startTime = new Date(`1970-01-01T${session.start_time}`);
+            const formattedStartTime = !isNaN(startTime) ? startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Invalid Time';
+
+            const endTime = new Date(`1970-01-01T${session.end_time}`);
+            const formattedEndTime = !isNaN(endTime) ? endTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Invalid Time';
+
+            const statusClass = session.status ? session.status.toLowerCase() : '';
+            const sessionType = session.session_type ? session.session_type.replace(/_/g, ' ') : 'N/A';
+            const formattedSessionType = sessionType.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+            let studentProfilePicHtml = '';
+            if (session.student && session.student.profile_picture) {
+                const profilePicUrl = `{{ asset('storage') }}/${session.student.profile_picture}`;
+                studentProfilePicHtml = `
+                    <div class="tutor-profile-pic-container" style="text-align: center; margin-bottom: 1rem;">
+                        <img src="${profilePicUrl}" alt="Student Profile Picture" class="tutor-profile-pic" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto;">
+                    </div>
+                `;
+            } else if (session.student) {
+                const initials = (session.student.first_name ? session.student.first_name.charAt(0) : '') + (session.student.last_name ? session.student.last_name.charAt(0) : '');
+                studentProfilePicHtml = `
+                    <div class="tutor-profile-pic-container" style="text-align: center; margin-bottom: 1rem;">
+                        <div class="profile-icon" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto; display: flex; align-items: center; justify-content: center; background-color: #4a90e2; color: white; border-radius: 50%;">
+                            ${initials}
+                        </div>
+                    </div>
+                `;
+            }
+
+            modalBody.innerHTML = `
+                ${studentProfilePicHtml}
+                <p><strong>Student:</strong> ${session.student ? `${session.student.first_name} ${session.student.last_name}` : 'N/A'}</p>
+                <p><strong>Email:</strong> ${session.student && session.student.email ? session.student.email : 'N/A'}</p>
+                <p><strong>Date:</strong> ${formattedDate}</p>
+                <p><strong>Time:</strong> ${formattedStartTime} - ${formattedEndTime}</p>
+                <p><strong>Type:</strong> ${formattedSessionType}</p>
+                <p><strong>Status:</strong> <span class="status-badge ${statusClass}">${session.status}</span></p>
+                ${session.notes ? `<p><strong>Notes:</strong> ${session.notes}</p>` : ''}
+            `;
+
+            modal.style.display = 'flex';
+
+            const closeBtn = modal.querySelector('.session-modal-close-btn');
+            const closeFooterBtn = modal.querySelector('#modal-close-btn');
+            const messageBtn = modal.querySelector('#modal-message-btn');
+            const viewBookingBtn = modal.querySelector('#modal-view-booking-btn');
+
+            if(closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
+            if(closeFooterBtn) closeFooterBtn.onclick = () => modal.style.display = 'none';
+            
+            if(messageBtn && session.student) {
+                messageBtn.onclick = () => {
+                    window.location.href = `{{ route('tutor.messages') }}?student_id=${session.student.id}`;
+                };
+            } else if(messageBtn) {
+                messageBtn.style.display = 'none';
+            }
+
+            if(viewBookingBtn) {
+                viewBookingBtn.onclick = () => {
+                    window.location.href = `/tutor/bookings/${session.id}`;
+                };
+            }
+            
+            window.onclick = (event) => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            };
+        }
     </script>
 </body>
 </html>

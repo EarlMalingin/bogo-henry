@@ -9,6 +9,7 @@ use App\Models\Wallet;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Message;
+use App\Services\AchievementNotificationService;
 
 class StudentSessionController extends Controller
 {
@@ -115,6 +116,11 @@ class StudentSessionController extends Controller
                 'rate' => $tutor->session_rate,
                 'status' => 'pending',
             ]);
+
+            // Check achievements for student
+            $achievementService = new AchievementNotificationService();
+            $student = Auth::guard('student')->user();
+            $achievementService->checkAndNotifyProgress($student, 'student', 'sessions_booked');
 
             DB::commit();
             return redirect()->route('student.book-session')->with('success', 'Session booking request sent successfully! Payment of ₱' . number_format($tutor->session_rate, 2) . ' has been deducted from your wallet.');

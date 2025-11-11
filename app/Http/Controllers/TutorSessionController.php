@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\Session;
 use App\Models\Wallet;
 use App\Models\Notification;
+use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Message;
+use App\Services\AchievementNotificationService;
 
 class TutorSessionController extends Controller
 {
@@ -143,9 +145,23 @@ class TutorSessionController extends Controller
         $booking = Session::where('tutor_id', Auth::guard('tutor')->id())
             ->where('id', $id)
             ->where('status', 'accepted')
+            ->with('student')
             ->firstOrFail();
 
         $booking->update(['status' => 'completed']);
+
+        // Check achievements for both tutor and student
+        $achievementService = new AchievementNotificationService();
+        $tutor = Auth::guard('tutor')->user();
+        $student = $booking->student;
+        
+        // Check tutor achievements
+        $achievementService->checkAndNotifyProgress($tutor, 'tutor', 'sessions_completed');
+        
+        // Check student achievements
+        if ($student) {
+            $achievementService->checkAndNotifyProgress($student, 'student', 'sessions_completed');
+        }
 
         return redirect()->route('tutor.bookings.index')->with('success', 'Session marked as completed!');
     }

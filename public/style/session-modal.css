@@ -70,21 +70,68 @@
 }
 
 .session-modal-footer {
-    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
     margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
 }
 
 .session-modal-footer button {
-    background-color: #f0f0f0;
-    border: 1px solid #ddd;
-    padding: 8px 20px;
-    border-radius: 5px;
+    padding: 10px 20px;
+    border-radius: 6px;
     cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.session-modal-footer button i {
     font-size: 14px;
 }
 
-.session-modal-footer button:hover {
-    background-color: #e0e0e0;
+#modal-message-btn {
+    background-color: #2d7dd2;
+    color: white;
+}
+
+#modal-message-btn:hover {
+    background-color: #1e5bb8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(45, 125, 210, 0.3);
+}
+
+#modal-view-booking-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+#modal-view-booking-btn:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+#modal-close-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+#modal-close-btn:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.session-modal-footer button:active {
+    transform: translateY(0);
 }
 
 .status-badge {

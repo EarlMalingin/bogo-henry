@@ -735,15 +735,15 @@
 
             <!-- Tabs -->
             <div class="tabs">
-                <div class="tab active" onclick="showTab('current')">
+                <div class="tab active" data-tab="current">
                     <i class="fas fa-users"></i> Current Students
                     <span class="section-count">{{ $currentStudents->count() }}</span>
                 </div>
-                <div class="tab" onclick="showTab('past')">
+                <div class="tab" data-tab="past">
                     <i class="fas fa-user-graduate"></i> Past Students
                     <span class="section-count">{{ $pastStudents->count() }}</span>
                 </div>
-                <div class="tab" onclick="showTab('rejected')">
+                <div class="tab" data-tab="rejected">
                     <i class="fas fa-user-times"></i> Rejected Students
                     <span class="section-count">{{ $rejectedStudents->count() }}</span>
                 </div>
@@ -825,10 +825,10 @@
                                         <a href="{{ route('tutor.students.progress', $student->id) }}" class="btn btn-primary">
                                             <i class="fas fa-chart-line"></i> Progress
                                         </a>
-                                        <a href="#" class="btn btn-secondary">
+                                        <a href="{{ route('tutor.messages') }}?student_id={{ $student->id }}" class="btn btn-secondary">
                                             <i class="fas fa-comments"></i> Message
                                         </a>
-                                        <a href="#" class="btn btn-success">
+                                        <a href="{{ route('tutor.activities.create') }}?student_id={{ $student->id }}" class="btn btn-success">
                                             <i class="fas fa-plus"></i> Activity
                                         </a>
                                     </div>
@@ -921,10 +921,10 @@
                                         <a href="{{ route('tutor.students.progress', $student->id) }}" class="btn btn-primary">
                                             <i class="fas fa-chart-line"></i> Progress
                                         </a>
-                                        <a href="#" class="btn btn-secondary">
+                                        <a href="{{ route('tutor.messages') }}?student_id={{ $student->id }}" class="btn btn-secondary">
                                             <i class="fas fa-comments"></i> Message
                                         </a>
-                                        <a href="#" class="btn btn-success">
+                                        <a href="{{ route('tutor.activities.create') }}?student_id={{ $student->id }}" class="btn btn-success">
                                             <i class="fas fa-plus"></i> Activity
                                         </a>
                                     </div>
@@ -1087,6 +1087,32 @@
             // Initialize currency display
             initializeCurrencyDisplay();
             loadCurrencyData();
+
+            // Tab switching functionality
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Hide all tab contents
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Remove active class from all tabs
+                    document.querySelectorAll('.tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    
+                    // Show selected tab content
+                    const selectedTabContent = document.getElementById(tabName + '-tab');
+                    if (selectedTabContent) {
+                        selectedTabContent.classList.add('active');
+                    }
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                });
+            });
         });
 
         function initializeCurrencyDisplay() {
@@ -1119,24 +1145,6 @@
 
         function viewWallet() {
             window.location.href = "{{ route('tutor.wallet') }}";
-        }
-
-        function showTab(tabName) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected tab content
-            document.getElementById(tabName + '-tab').classList.add('active');
-            
-            // Add active class to clicked tab
-            event.target.classList.add('active');
         }
     </script>
     @include('layouts.footer-js')

@@ -553,10 +553,22 @@
             font-size: 0.95rem;
         }
 
-        .rate-tutor-btn:hover {
+        .rate-tutor-btn:hover:not(:disabled) {
             background: linear-gradient(135deg, #ffed4e, #ffd700);
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        .rate-tutor-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #95a5a6 !important;
+            background: #95a5a6 !important;
+        }
+
+        .rate-tutor-btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
         }
 
         .rate-tutor-btn i {
@@ -843,9 +855,15 @@
                                 </div>
                             </div>
                             <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
-                                <button class="rate-tutor-btn" onclick="openRatingModal({{ $tutor->id }}, '{{ $tutor->first_name }} {{ $tutor->last_name }}'); event.stopPropagation();">
-                                    <i class="fas fa-star"></i> Rate Tutor
-                                </button>
+                                @if(in_array($tutor->id, $ratedTutorIds ?? []))
+                                    <button class="rate-tutor-btn" disabled>
+                                        <i class="fas fa-check-circle"></i> Already Rated
+                                    </button>
+                                @else
+                                    <button class="rate-tutor-btn" onclick="openRatingModal({{ $tutor->id }}, '{{ $tutor->first_name }} {{ $tutor->last_name }}'); event.stopPropagation();">
+                                        <i class="fas fa-star"></i> Rate Tutor
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     @empty
@@ -1151,7 +1169,14 @@
                     comment: comment
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                return response.json().then(data => {
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Error submitting rating');
+                    }
+                    return data;
+                });
+            })
             .then(data => {
                 if (data.success) {
                     alert('Thank you for your rating!');
@@ -1165,7 +1190,7 @@
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Error submitting rating. Please try again.');
+                alert(error.message || 'Error submitting rating. Please try again.');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Submit Rating';
             });

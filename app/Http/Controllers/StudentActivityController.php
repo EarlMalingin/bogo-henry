@@ -44,7 +44,12 @@ class StudentActivityController extends Controller
         }])
         ->get();
 
-        return view('student.my-sessions', compact('activities', 'tutors', 'student'));
+        // Get all tutor IDs that the student has already rated
+        $ratedTutorIds = \App\Models\Review::where('student_id', $student->id)
+            ->pluck('tutor_id')
+            ->toArray();
+
+        return view('student.my-sessions', compact('activities', 'tutors', 'student', 'ratedTutorIds'));
     }
 
     // Show activities from a specific tutor
@@ -243,6 +248,11 @@ class StudentActivityController extends Controller
         // Update activity status
         $activity->update(['status' => 'completed']);
 
+        // Check achievements for student
+        $achievementService = new \App\Services\AchievementNotificationService();
+        $student = Auth::guard('student')->user();
+        $achievementService->checkAndNotifyProgress($student, 'student', 'activities_submitted');
+
         return response()->json(['success' => true, 'message' => 'Activity submitted successfully!']);
     }
 
@@ -325,30 +335,51 @@ class StudentActivityController extends Controller
             ], 403);
         }
 
-        // Check if already rated
+        // Check if already rated - prevent re-rating
         $existingReview = \App\Models\Review::where('student_id', $student->id)
             ->where('tutor_id', $request->tutor_id)
             ->first();
 
         if ($existingReview) {
-            // Update existing review
-            $existingReview->update([
-                'rating' => $request->rating,
-                'comment' => $request->comment,
-            ]);
-        } else {
-            // Create new review (we'll use the first session_id as a reference)
-            $session = \App\Models\Session::where('student_id', $student->id)
-                ->where('tutor_id', $request->tutor_id)
-                ->first();
+            // Student has already rated this tutor - prevent re-rating
+            return response()->json([
+                'success' => false,
+                'message' => 'You have already rated this tutor. You can only rate once.'
+            ], 403);
+        }
 
-            \App\Models\Review::create([
-                'session_id' => $session->id,
-                'student_id' => $student->id,
-                'tutor_id' => $request->tutor_id,
-                'rating' => $request->rating,
-                'comment' => $request->comment,
-            ]);
+        // Create new review (we'll use the first session_id as a reference)
+        $session = \App\Models\Session::where('student_id', $student->id)
+            ->where('tutor_id', $request->tutor_id)
+            ->first();
+
+        if (!$session) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No session found for this tutor.'
+            ], 404);
+        }
+
+        \App\Models\Review::create([
+            'session_id' => $session->id,
+            'student_id' => $student->id,
+            'tutor_id' => $request->tutor_id,
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+        ]);
+
+        // Check achievements for both student and tutor when rating is 5 stars
+        if ($request->rating == 5) {
+            $achievementService = new \App\Services\AchievementNotificationService();
+            $tutor = \App\Models\Tutor::find($request->tutor_id);
+            
+            // Check student achievements (for giving perfect ratings)
+            $achievementService->checkAndNotifyProgress($student, 'student', 'perfect_ratings');
+            
+            // Check tutor achievements (for receiving perfect ratings)
+            if ($tutor) {
+                $achievementService->checkAndNotifyProgress($tutor, 'tutor', 'perfect_ratings');
+            }
         }
 
         return response()->json([

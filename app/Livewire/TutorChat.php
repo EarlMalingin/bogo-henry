@@ -33,12 +33,19 @@ class TutorChat extends Component
 
     public function mount()
     {
+        // Check if student_id is provided in the URL query parameter
+        $studentId = request()->query('student_id');
+        
         $this->loadConversations();
         
-        // Set default student selection if conversations exist
-        if (!empty($this->conversations)) {
-            $this->selectedStudentId = $this->conversations[0]['id'];
-            $this->loadMessages();
+        // Select the student if provided, otherwise use first conversation
+        if ($studentId) {
+            $student = Student::find($studentId);
+            if ($student) {
+                $this->selectStudent($studentId);
+            }
+        } elseif (!empty($this->conversations)) {
+            $this->selectStudent($this->conversations[0]['id']);
         }
     }
 

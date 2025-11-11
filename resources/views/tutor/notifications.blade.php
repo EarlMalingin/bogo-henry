@@ -607,6 +607,10 @@
                                 <i class="fas fa-tasks"></i>
                             @elseif($notification->type === 'payment_received')
                                 <i class="fas fa-money-bill-wave"></i>
+                            @elseif($notification->type === 'achievement_unlocked')
+                                <i class="fas fa-trophy" style="color: #FFD700;"></i>
+                            @elseif($notification->type === 'achievement_progress')
+                                <i class="fas fa-chart-line" style="color: #4a90e2;"></i>
                             @elseif($notification->type === 'new_message')
                                 <i class="fas fa-envelope"></i>
                             @elseif($notification->type === 'new_review')
