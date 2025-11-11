@@ -23,7 +23,6 @@
                 <a href="{{ route('home') }}#features">Features</a>
                 <a href="{{ route('home') }}#subjects">Subjects</a>
                 <a href="{{ route('home') }}#contact">Contact</a>
-                <a href="{{ route('select-role') }}" class="cta-link">Become a Tutor</a>
             </nav>
         </div>
     </header>

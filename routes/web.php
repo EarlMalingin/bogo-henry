@@ -111,7 +111,12 @@ Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::cl
 // Protected student routes
 Route::middleware(['auth:student'])->group(function () {
     Route::get('/student/dashboard', function () {
-        return view('student-dashboard');
+        $notifications = \App\Models\Notification::where('user_id', Auth::guard('student')->id())
+            ->where('user_type', 'student')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        return view('student-dashboard', compact('notifications'));
     })->name('student.dashboard');
 
     Route::get('/student/find-tutor', function () {
@@ -179,6 +184,7 @@ Route::middleware(['auth:student'])->group(function () {
     // Student notifications route
     Route::get('/student/notifications', [App\Http\Controllers\StudentNotificationController::class, 'index'])->name('student.notifications');
     Route::delete('/student/notifications/{id}', [App\Http\Controllers\StudentNotificationController::class, 'destroy'])->name('student.notifications.destroy');
+    Route::post('/student/notifications/{id}/mark-read', [App\Http\Controllers\StudentNotificationController::class, 'markAsRead'])->name('student.notifications.mark-read');
     
     // Student rate tutor route
     Route::post('/student/rate-tutor', [App\Http\Controllers\StudentActivityController::class, 'rateTutor'])->name('student.rate-tutor');
@@ -258,41 +264,11 @@ Route::middleware(['auth:tutor'])->group(function () {
     Route::delete('/tutor/notifications/{id}', [App\Http\Controllers\TutorNotificationController::class, 'destroy'])->name('tutor.notifications.destroy');
 });
 
-// Test route to check sessions (remove in production)
-Route::get('/test/sessions', function() {
-    $sessions = \App\Models\Session::with(['student', 'tutor'])->get();
-    return response()->json($sessions);
-})->name('test.sessions');
-
-// Debug route for messages (remove in production)
-Route::get('/test/messages', function() {
-    try {
-        $tutorId = 1; // Assuming tutor ID 1 exists
-        $students = \App\Models\Student::whereHas('sessions', function($query) use ($tutorId) {
-            $query->where('tutor_id', $tutorId);
-        })->get();
-        
-        $messages = \App\Models\Message::where('sender_id', $tutorId)
-            ->orWhere('receiver_id', $tutorId)
-            ->get();
-            
-        return response()->json([
-            'students' => $students,
-            'messages' => $messages,
-            'tutor_id' => $tutorId
-        ]);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-})->name('test.messages');
-
 // Payment callback routes (no auth required)
-// Payment callback routes (no auth required for webhooks)
 Route::get('/wallet/payment/success', [App\Http\Controllers\SecureWalletController::class, 'paymentSuccess'])->name('wallet.payment.success');
 Route::get('/wallet/payment/failed', [App\Http\Controllers\SecureWalletController::class, 'paymentFailed'])->name('wallet.payment.failed');
 
 // Webhook routes (no auth required)
 Route::post('/webhooks/paymongo', [App\Http\Controllers\WebhookController::class, 'handlePayMongoWebhook'])->name('webhooks.paymongo');
-Route::get('/webhooks/test', [App\Http\Controllers\WebhookController::class, 'testWebhook'])->name('webhooks.test');
 
 

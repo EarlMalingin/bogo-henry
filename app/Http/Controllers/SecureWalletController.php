@@ -107,7 +107,8 @@ class SecureWalletController extends Controller
     }
 
     /**
-     * Process internal cash in (direct balance addition) - for testing/demo purposes
+     * Process internal cash in (direct balance addition)
+     * Note: This should be restricted to admin users only in production
      */
     public function internalCashIn(Request $request)
     {
@@ -802,15 +803,15 @@ class SecureWalletController extends Controller
      */
     public function auditDuplicateWallets()
     {
-        $studentWallets = \App\Models\Wallet::where('user_type', 'student')->pluck('user_id')->toArray();
-        $tutorWallets = \App\Models\Wallet::where('user_type', 'tutor')->pluck('user_id')->toArray();
+        $studentWallets = Wallet::where('user_type', 'student')->pluck('user_id')->toArray();
+        $tutorWallets = Wallet::where('user_type', 'tutor')->pluck('user_id')->toArray();
         $duplicateIds = array_intersect($studentWallets, $tutorWallets);
         $results = [];
         foreach ($duplicateIds as $uid) {
             $results[] = [
                 'user_id' => $uid,
-                'student_wallet' => \App\Models\Wallet::where('user_id', $uid)->where('user_type', 'student')->first(),
-                'tutor_wallet' => \App\Models\Wallet::where('user_id', $uid)->where('user_type', 'tutor')->first(),
+                'student_wallet' => Wallet::where('user_id', $uid)->where('user_type', 'student')->first(),
+                'tutor_wallet' => Wallet::where('user_id', $uid)->where('user_type', 'tutor')->first(),
             ];
         }
         return response()->json($results);

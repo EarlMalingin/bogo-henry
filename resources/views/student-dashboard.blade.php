@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{asset('style/dashboard.css')}}">
     <link rel="stylesheet" href="{{asset('style/session-modal.css')}}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -338,6 +339,32 @@
         .btn-primary:hover {
             background-color: #3a7ccc;
         }
+        
+        /* Unread notification styling */
+        .activity-item.unread {
+            background-color: #f0f7ff;
+            border-left: 3px solid #4a90e2;
+        }
+        
+        .activity-item.unread .activity-text {
+            font-weight: 600;
+        }
+        
+        .activity-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .activity-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .activity-message {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -445,40 +472,51 @@
             </a>
         </div>
         
-        <!-- Recent Activity -->
-        <h2 class="section-title">Recent Activity</h2>
+        <!-- Notifications -->
+        <h2 class="section-title">Notifications</h2>
         <div class="activity-container">
-            <div class="activity-item">
-                <div class="activity-icon"><i class="fas fa-graduation-cap"></i></div>
-                <div class="activity-content">
-                    <div class="activity-text">You completed a Calculus session with Ms. Sarah Johnson</div>
-                    <div class="activity-time">Today, 11:30 AM</div>
+            @forelse($notifications ?? [] as $notification)
+                <div class="activity-item {{ !$notification->is_read ? 'unread' : '' }}" data-id="{{ $notification->id }}">
+                    <div class="activity-icon">
+                        @if($notification->type === 'problem_report_response')
+                            <i class="fas fa-exclamation-circle"></i>
+                        @elseif($notification->type === 'booking_confirmed')
+                            <i class="fas fa-calendar-check"></i>
+                        @elseif($notification->type === 'activity_posted')
+                            <i class="fas fa-tasks"></i>
+                        @elseif($notification->type === 'payment_received')
+                            <i class="fas fa-money-bill-wave"></i>
+                        @elseif($notification->type === 'new_message')
+                            <i class="fas fa-envelope"></i>
+                        @elseif($notification->type === 'achievement_unlocked')
+                            <i class="fas fa-trophy"></i>
+                        @elseif($notification->type === 'achievement_progress')
+                            <i class="fas fa-chart-line"></i>
+                        @else
+                            <i class="fas fa-bell"></i>
+                        @endif
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">{{ $notification->title }}</div>
+                        <div class="activity-message" style="color: #666; font-size: 0.9rem; margin-top: 0.25rem;">{{ $notification->message }}</div>
+                        <div class="activity-time">{{ $notification->created_at->diffForHumans() }}</div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="activity-item">
-                <div class="activity-icon"><i class="fas fa-file-upload"></i></div>
-                <div class="activity-content">
-                    <div class="activity-text">Submitted Physics assignment: "Motion and Forces"</div>
-                    <div class="activity-time">Yesterday, 3:15 PM</div>
+            @empty
+                <div class="activity-item" style="text-align: center; padding: 2rem;">
+                    <div class="activity-icon"><i class="fas fa-bell-slash"></i></div>
+                    <div class="activity-content">
+                        <div class="activity-text" style="color: #666;">No notifications yet</div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="activity-item">
-                <div class="activity-icon"><i class="fas fa-bell"></i></div>
-                <div class="activity-content">
-                    <div class="activity-text">Reminder: Chemistry quiz scheduled for Friday</div>
-                    <div class="activity-time">May 11, 2025</div>
+            @endforelse
+            @if(isset($notifications) && $notifications->count() > 0)
+                <div style="text-align: center; margin-top: 1rem;">
+                    <a href="{{ route('student.notifications') }}" style="color: #4a90e2; text-decoration: none; font-weight: 600;">
+                        View All Notifications <i class="fas fa-arrow-right"></i>
+                    </a>
                 </div>
-            </div>
-            
-            <a href="#" class="activity-item">
-                <div class="activity-icon"><i class="fas fa-star"></i></div>
-                <div class="activity-content">
-                    <div class="activity-text">You rated your Computer Science session 5 stars</div>
-                    <div class="activity-time">May 10, 2025</div>
-                </div>
-            </a>
+            @endif
         </div>
     </main>
 
@@ -1007,6 +1045,36 @@
             modal.addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeFooterModal(this.id);
+                }
+            });
+        });
+        
+        // Mark notification as read when clicked
+        document.querySelectorAll('.activity-item[data-id]').forEach(item => {
+            item.addEventListener('click', function() {
+                const notificationId = this.getAttribute('data-id');
+                if (notificationId && this.classList.contains('unread')) {
+                    // Mark as read via AJAX
+                    fetch(`/student/notifications/${notificationId}/mark-read`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.classList.remove('unread');
+                            const activityText = this.querySelector('.activity-text');
+                            if (activityText) {
+                                activityText.style.fontWeight = 'normal';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error marking notification as read:', error);
+                    });
                 }
             });
         });

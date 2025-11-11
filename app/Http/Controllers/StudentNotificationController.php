@@ -29,4 +29,16 @@ class StudentNotificationController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function markAsRead($id)
+    {
+        $notification = Notification::where('id', $id)
+            ->where('user_id', Auth::guard('student')->id())
+            ->where('user_type', 'student')
+            ->firstOrFail();
+
+        $notification->update(['is_read' => true]);
+
+        return response()->json(['success' => true]);
+    }
 }

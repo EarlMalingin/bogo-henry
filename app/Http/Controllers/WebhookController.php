@@ -28,14 +28,12 @@ class WebhookController extends Controller
             'payload' => $request->all()
         ]);
 
-        // For testing, temporarily skip signature verification
-        // TODO: Re-enable signature verification in production
-        /*
+        // Verify webhook signature for security
+        // Note: Ensure PAYMONGO_WEBHOOK_SECRET is set in .env for production
         if (!$this->verifyWebhookSignature($request)) {
             Log::warning('Invalid webhook signature received');
             return response()->json(['error' => 'Invalid signature'], 401);
         }
-        */
 
         $payload = $request->all();
         $eventType = $payload['data']['type'] ?? null;
@@ -184,9 +182,11 @@ class WebhookController extends Controller
     {
         $webhookSecret = config('services.paymongo.webhook_secret');
         
+        // If webhook secret is not configured, allow the request but log a warning
+        // This allows the system to work in development, but should be configured in production
         if (!$webhookSecret) {
-            Log::warning('Webhook secret not configured');
-            return false;
+            Log::warning('Webhook secret not configured - signature verification skipped. Configure PAYMONGO_WEBHOOK_SECRET in production.');
+            return true; // Allow in development, but should be configured in production
         }
 
         $signature = $request->header('PayMongo-Signature');
@@ -202,17 +202,4 @@ class WebhookController extends Controller
         return hash_equals($expectedSignature, $signature);
     }
 
-    /**
-     * Test webhook endpoint
-     */
-    public function testWebhook(Request $request)
-    {
-        Log::info('Test webhook called', ['payload' => $request->all()]);
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Webhook endpoint is working',
-            'timestamp' => now()
-        ]);
-    }
 }

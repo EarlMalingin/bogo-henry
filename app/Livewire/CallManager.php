@@ -182,9 +182,6 @@ class CallManager extends Component
         
         \Log::info('CallManager::handleInitiateCall - Data being dispatched:', $dispatchData);
         
-        // Test: Dispatch a simple event first to verify event system works
-        $this->dispatch('testEvent', ['message' => 'Test event working']);
-        
         // Dispatch to JavaScript to send through socket
         // Ensure all data is properly serialized for JavaScript
         $this->dispatch('sendCallToReceiver', $dispatchData);

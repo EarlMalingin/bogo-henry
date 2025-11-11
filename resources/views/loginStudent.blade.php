@@ -23,7 +23,6 @@
                 <a href="{{ route('home') }}#features">Features</a>
                 <a href="{{ route('home') }}#subjects">Subjects</a>
                 <a href="{{ route('home') }}#contact">Contact</a>
-                <a href="{{ route('select-role') }}" class="cta-link">Get Started</a>
             </nav>
         </div>
     </header>
@@ -278,49 +277,6 @@
                 submitBtn.innerHTML = 'Logging in...';
                 submitBtn.disabled = true;
             });
-
-            // Hidden admin login trigger (triple click on the logo)
-            const logo = document.querySelector('.logo');
-            let clickCount = 0;
-            
-            logo.addEventListener('click', function() {
-                clickCount++;
-                if (clickCount === 3) {
-                    document.getElementById('adminModal').style.display = 'block';
-                    clickCount = 0;
-                }
-                setTimeout(() => { clickCount = 0; }, 1000);
-            });
-
-            // Admin modal functionality (if needed)
-            const modal = document.getElementById('adminModal');
-            if (modal) {
-                const closeBtn = document.querySelector('.close');
-                
-                closeBtn.addEventListener('click', function() {
-                    modal.style.display = 'none';
-                });
-                
-                window.addEventListener('click', function(event) {
-                    if (event.target === modal) {
-                        modal.style.display = 'none';
-                    }
-                });
-                
-                // Admin login form submission (static for demo)
-                document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const password = document.getElementById('adminPassword').value;
-                    
-                    // Static password for demo (in real app, use proper authentication)
-                    if (password === 'admin123') {
-                        // Redirect to admin dashboard
-                        
-                    } else {
-                        alert('Incorrect admin password');
-                    }
-                });
-            }
 
             // Footer Modal Functions
             function openFooterModal(modalId) {

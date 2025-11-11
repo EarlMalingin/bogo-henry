@@ -300,6 +300,7 @@
                     Important Notice
                 </div>
                 <div class="warning-text">
+                    <strong>Processing Fee:</strong> A 10% deduction will be applied to every cash out request.<br>
                     Cash out requests are processed within 24 hours. Please ensure your GCash account details are correct.
                 </div>
             </div>

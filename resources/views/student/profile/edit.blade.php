@@ -568,8 +568,7 @@
                                     $cacheBuster = $fileExists ? filemtime($fullPath) : time();
                                 @endphp
                                 <img src="{{ asset($imagePath) }}?v={{ $cacheBuster }}" alt="Profile Picture" class="profile-picture" 
-                                     onerror="console.log('Image failed to load: {{ asset($imagePath) }}?v={{ $cacheBuster }}'); this.style.display='none'; this.nextElementSibling.style.display='flex';"
-                                     onload="console.log('Image loaded successfully: {{ asset($imagePath) }}?v={{ $cacheBuster }}');">
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                 @if(!$fileExists)
                                     <div style="background-color: #ff6b6b; color: white; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; font-size: 0.8rem; text-align: center; padding: 10px;">
                                         Image file not found<br>Path: {{ $student->profile_picture }}

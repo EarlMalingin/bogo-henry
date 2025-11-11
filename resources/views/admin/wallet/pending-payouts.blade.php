@@ -107,9 +107,8 @@
                                 @endif
                             </td>
                             <td>
-                                @if($payout->metadata && isset($payout->metadata['account_number']))
-                                    {{ substr($payout->metadata['account_number'], 0, 4) }}****{{ substr($payout->metadata['account_number'], -4) }}
-                                    <br><small>{{ $payout->metadata['account_name'] ?? 'N/A' }}</small>
+                                @if($payout->metadata && isset($payout->metadata['account_name']))
+                                    {{ $payout->metadata['account_name'] }}
                                 @else
                                     N/A
                                 @endif

@@ -549,35 +549,6 @@
                 console.log('Socket client NOT found - this is the problem!');
             }
             
-            // Test button functionality
-            const testBtn = document.getElementById('testCallSystem');
-            if (testBtn) {
-                testBtn.addEventListener('click', function() {
-                    console.log('=== TESTING CALL SYSTEM ===');
-                    console.log('window.chatSocket:', window.chatSocket);
-                    console.log('window.currentUserId:', window.currentUserId);
-                    console.log('window.currentUserType:', window.currentUserType);
-                    
-                    // Test event dispatch
-                    const testEvent = new CustomEvent('test-event', {
-                        detail: {
-                            message: 'Manual test event',
-                            timestamp: new Date()
-                        }
-                    });
-                    document.dispatchEvent(testEvent);
-                    console.log('Test event dispatched');
-                    
-                    // Test socket connection
-                    if (window.chatSocket && window.chatSocket.socket) {
-                        console.log('Socket is connected:', window.chatSocket.socket.connected);
-                        console.log('Socket ID:', window.chatSocket.socket.id);
-                    } else {
-                        console.log('Socket not available');
-                    }
-                });
-            }
-            
             // Listen for incoming calls (only for receivers)
             Livewire.on('callIncoming', (data) => {
                 console.log('Incoming call received:', data);
@@ -591,11 +562,6 @@
                 @this.call('handleInitiateCall', data);
             });
             
-                    // Test event listener to verify event system works
-        Livewire.on('testEvent', (data) => {
-            console.log('=== TEST EVENT RECEIVED ===');
-            console.log('Test event data:', data);
-        });
         
         // Direct method to handle call initiation (alternative to events)
         window.handleCallInitiation = function(callData) {
@@ -853,11 +819,6 @@
             handleIceCandidate(event.detail.candidate);
         });
 
-        // Test event listener to verify event system is working
-        document.addEventListener('test-event', (event) => {
-            console.log('=== TEST EVENT RECEIVED ===');
-            console.log('Test event data:', event.detail);
-        });
 
         // Show incoming call modal (for receivers)
         function showIncomingCallModal(data) {
@@ -1532,7 +1493,6 @@
             }
         }
 
-        // Force show remote profile placeholder (for testing)
         function forceShowRemoteProfile() {
             console.log('Force showing remote profile placeholder');
             showRemoteProfilePlaceholder();

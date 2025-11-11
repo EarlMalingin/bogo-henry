@@ -181,14 +181,12 @@
             document.querySelectorAll('.view-profile-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     // Add view profile functionality
-                    console.log('View profile clicked');
                 });
             });
 
             document.querySelectorAll('.book-session-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     // Add book session functionality
-                    console.log('Book session clicked');
                 });
             });
         });

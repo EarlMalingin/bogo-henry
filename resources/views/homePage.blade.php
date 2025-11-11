@@ -150,7 +150,6 @@
             <p>Connect with expert tutors worldwide for personalized online and face-to-face sessions. Track progress, complete assignments, and achieve academic excellence with our comprehensive learning platform.</p>
             <div class="hero-buttons">
                 <button class="cta-btn" onclick="window.location.href='select-role'">Start Learning Today</button>
-                <button class="cta-btn secondary" onclick="window.location.href='#demo'">Watch Demo</button>
             </div>
         </div>
         <div class="wave"></div>

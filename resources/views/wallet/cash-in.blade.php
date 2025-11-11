@@ -529,8 +529,7 @@
                 </div>
             <div class="info-box-text">
                 <strong>Smart Cash-In System:</strong><br>
-                • <strong>Pay with GCash:</strong> Processed via GCash payment gateway (any amount)<br>
-                • <strong>Add Money Directly:</strong> Alternative method for instant wallet top-up (any amount)
+                • <strong>Pay with GCash:</strong> Processed via GCash payment gateway (any amount)
             </div>
             </div>
 
@@ -602,21 +601,11 @@
                     <a href="{{ $userType === 'student' ? route('student.wallet') : route('tutor.wallet') }}" class="btn btn-secondary">
                         Cancel
                     </a>
-                    <button type="button" class="btn btn-success" id="internalCashInBtn">
-                        <i class="fas fa-plus"></i>
-                        Add Money Directly
-                    </button>
                     <button type="submit" class="btn btn-primary" id="submitBtn">
                         <i class="fas fa-credit-card"></i>
                         Pay with GCash
                     </button>
                 </div>
-            </form>
-
-            <!-- Internal Cash-in Form (Hidden) -->
-            <form id="internalCashInForm" method="POST" action="{{ $userType === 'student' ? route('student.wallet.internal-cash-in') : route('tutor.wallet.internal-cash-in') }}" style="display: none;">
-                @csrf
-                <input type="hidden" id="internalAmount" name="amount">
             </form>
 
             <div class="loading" id="loading">
@@ -628,19 +617,11 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Cash-in page loaded'); // Debug log
-            
             const form = document.getElementById('cashInForm');
-            const internalForm = document.getElementById('internalCashInForm');
             const amountInput = document.getElementById('amount');
-            const internalAmountInput = document.getElementById('internalAmount');
             const presets = document.querySelectorAll('.amount-preset');
             const submitBtn = document.getElementById('submitBtn');
-            const internalCashInBtn = document.getElementById('internalCashInBtn');
             const loading = document.getElementById('loading');
-
-            console.log('Form found:', form); // Debug log
-            console.log('Submit button found:', submitBtn); // Debug log
 
             // Handle preset amount clicks
             presets.forEach(preset => {
@@ -662,7 +643,6 @@
                 
                 const amount = parseFloat(amountInput.value);
                 
-                console.log('Form submitted with amount:', amount); // Debug log
                 
                 if (!amount || amount < 0.01) {
                     alert('Please enter a valid amount (minimum ₱0.01)');
@@ -701,52 +681,10 @@
                 });
             });
 
-            // Handle internal cash-in button click
-            internalCashInBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log('Internal cash-in button clicked'); // Debug log
-                
-                const amount = parseFloat(amountInput.value);
-                console.log('Amount from input:', amount); // Debug log
-                
-                if (!amount || amount < 0.01) {
-                    alert('Please enter a valid amount (minimum ₱0.01)');
-                    amountInput.focus();
-                    return;
-                }
-                
-                if (amount > 50000) {
-                    alert('Maximum amount is ₱50,000');
-                    amountInput.focus();
-                    return;
-                }
-                
-                // Confirm with user
-                if (!confirm(`Are you sure you want to add ₱${amount.toFixed(2)} directly to your wallet? This is for demo purposes.`)) {
-                    return;
-                }
-                
-                // Set amount in internal form
-                internalAmountInput.value = amount;
-                
-                // Show loading
-                form.style.display = 'none';
-                loading.style.display = 'block';
-                loading.querySelector('p').textContent = 'Adding money to wallet...';
-                
-                // Submit internal form after a short delay to show loading
-                setTimeout(() => {
-                    internalForm.submit();
-                }, 500);
-            });
-
             // Handle submit button click (GCash payment)
             submitBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                console.log('Submit button clicked'); // Debug log
-                
                 const amount = parseFloat(amountInput.value);
-                console.log('Amount from input:', amount); // Debug log
                 
                 if (!amount || amount < 0.01) {
                     alert('Please enter a valid amount (minimum ₱0.01)');

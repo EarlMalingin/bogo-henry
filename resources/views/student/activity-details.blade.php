@@ -670,7 +670,6 @@
         function initializeExistingFiles() {
             // This function will be called to handle existing files from the server
             // For now, we'll just ensure the uploadedFiles array is ready
-            console.log('Initializing existing files...');
         }
 
         function initializeFileUpload() {
@@ -821,28 +820,21 @@
 
         function submitActivity() {
             if (confirm('Are you sure you want to submit this activity? You won\'t be able to make changes after submission.')) {
-                console.log('Starting activity submission...');
                 const form = document.getElementById('activity-form');
                 const formData = new FormData(form);
                 
                 // Add student attachments to form data
                 const fileInput = document.getElementById('student-attachments');
-                console.log('File input files:', fileInput.files.length);
                 if (fileInput.files.length > 0) {
                     Array.from(fileInput.files).forEach(file => {
-                        console.log('Adding file from input:', file.name);
                         formData.append('student_attachments[]', file);
                     });
                 }
                 
                 // Add uploaded files from drag & drop
-                console.log('Uploaded files from drag & drop:', uploadedFiles.length);
                 uploadedFiles.forEach(file => {
-                    console.log('Adding file from drag & drop:', file.name);
                     formData.append('student_attachments[]', file);
                 });
-                
-                console.log('Submitting to:', '{{ route("student.activities.submit", $activity) }}');
                 
                 fetch('{{ route("student.activities.submit", $activity) }}', {
                     method: 'POST',
@@ -851,12 +843,8 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     }
                 })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    console.log('Response data:', data);
                     if (data.success) {
                         alert('Activity submitted successfully!');
                         location.reload();
