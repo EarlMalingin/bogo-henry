@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Session;
 use App\Models\Review;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Tutor extends Authenticatable
 {
@@ -24,6 +25,7 @@ class Tutor extends Authenticatable
         'profile_picture',
         'cv',
         'session_rate',
+        'hourly_rate',
         'verification_code',
         'verification_code_expires_at',
         'is_verified',
@@ -103,5 +105,14 @@ class Tutor extends Authenticatable
             return asset('storage/' . $this->cv);
         }
         return null;
+    }
+
+    public static function generateTutorId(): string
+    {
+        do {
+            $id = 'TUT-' . Str::upper(Str::random(8));
+        } while (self::where('tutor_id', $id)->exists());
+
+        return $id;
     }
 }

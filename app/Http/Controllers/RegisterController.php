@@ -18,7 +18,6 @@ class RegisterController extends Controller
             'last_name' => 'required|string|max:255|regex:/^[a-zA-Z\s\-\']+$/',
             'email' => 'required|string|email|max:255|unique:students',
             'password' => 'required|string|confirmed|min:8',
-            'student_id' => 'required|string|unique:students',
             'year_level' => 'required|string',
             'course' => 'required|string',
             'subjects_interest' => 'nullable|string',
@@ -35,12 +34,14 @@ class RegisterController extends Controller
                 ->withInput();
         }
 
+        $studentId = Student::generateStudentId();
+
         $student = Student::create([
             'first_name' => $request->input('first_name'),
             'last_name' => $request->input('last_name'),
             'email' => $request->input('email'),
             'password' => $request->input('password'),
-            'student_id' => $request->input('student_id'),
+            'student_id' => $studentId,
             'year_level' => $request->input('year_level'),
             'course' => $request->input('course'),
             'subjects_interest' => $request->input('subjects_interest'),

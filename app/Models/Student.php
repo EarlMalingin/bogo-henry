@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Session; // Added this import
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Student extends Authenticatable
 {
@@ -83,5 +84,14 @@ class Student extends Authenticatable
             return asset('storage/' . $this->profile_picture);
         }
         return $this->getInitials();
+    }
+
+    public static function generateStudentId(): string
+    {
+        do {
+            $id = 'STU-' . Str::upper(Str::random(8));
+        } while (self::where('student_id', $id)->exists());
+
+        return $id;
     }
 }

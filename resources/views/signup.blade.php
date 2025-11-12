@@ -12,11 +12,16 @@
     <header>
         <div class="navbar">
             <a href="{{ route('home') }}" class="logo">
-                <img src="{{ asset('images/MentorHub.png') }}" alt="MentorHub Logo" class="logo-img" style="image-rendering: crisp-edges; width: auto; height: 80px;">
+                <img src="{{ asset('images/MentorHub.png') }}" alt="MentorHub Logo" class="logo-img">
+                <div class="brand-text">
+                    <span class="brand-title">MentorHub</span>
+                    <span class="brand-subtitle">Expert Tutoring Platform</span>
+                </div>
             </a>
+            <button class="menu-toggle" id="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
             <nav class="nav-links" id="nav-links">
                 <a href="{{ route('home') }}">Home</a>
-                <a href="{{ route('home') }}#features">About</a>
+                <a href="{{ route('home') }}#features">Features</a>
                 <a href="{{ route('home') }}#subjects">Subjects</a>
                 <a href="{{ route('home') }}#contact">Contact</a>
             </nav>
@@ -159,11 +164,9 @@
                         
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="student_id">Student ID *</label>
-                                <input type="text" id="student_id" name="student_id" value="{{ old('student_id') }}" required>
-                                @error('student_id')
-                                    <span class="error-message">{{ $message }}</span>
-                                @enderror
+                                <label for="student-id-display">Student ID</label>
+                                <input type="text" id="student-id-display" value="Will be generated automatically" disabled style="background-color: #f3f4f6; color: #6b7280;">
+                                <small style="display:block; margin-top:0.5rem; color:#6b7280;">Your Student ID will be assigned by the system after registration.</small>
                             </div>
                             
                             <div class="form-group">
@@ -398,7 +401,16 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Mobile menu functionality removed
+            // Mobile menu toggle
+            const menuToggle = document.getElementById('menu-toggle');
+            const navLinks = document.getElementById('nav-links');
+
+            if (menuToggle && navLinks) {
+                menuToggle.addEventListener('click', function() {
+                    const isOpen = navLinks.classList.toggle('active');
+                    menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                });
+            }
 
             // Modal functionality
             const termsModal = document.getElementById('terms-modal');

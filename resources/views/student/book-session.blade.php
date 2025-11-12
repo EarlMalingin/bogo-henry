@@ -746,7 +746,14 @@
                         <div class="tutor-body">
                             <div class="tutor-name">{{ $tutor->first_name }} {{ $tutor->last_name }}</div>
                             <div class="tutor-title">{{ $tutor->specialization ?? 'Tutor' }}</div>
-                            <div class="tutor-rate">₱{{ number_format($tutor->session_rate ?? 0, 2) }}/month</div>
+                            @php
+                                $hourlyRate = $tutor->hourly_rate ?? $tutor->session_rate ?? 0;
+                                $monthlyRate = $tutor->session_rate;
+                            @endphp
+                            <div class="tutor-rate">₱{{ number_format($hourlyRate, 2) }}/hour</div>
+                            @if(!is_null($monthlyRate))
+                                <div class="tutor-rate-month" style="font-size: 0.9rem; color: #666;">₱{{ number_format($monthlyRate, 2) }}/month</div>
+                            @endif
                             <div class="tutor-rating">
                                 <span class="star">&#9733;</span>
                                 <span class="star">&#9733;</span>
@@ -885,7 +892,7 @@
                             </div>
                             <div class="summary-item">
                                 <span class="summary-label">Rate:</span>
-                                <span class="summary-value" id="summary-rate">$0.00</span>
+                                <span class="summary-value" id="summary-rate">₱0.00/hour</span>
                             </div>
                         </div>
                         
@@ -1122,10 +1129,16 @@
 
                     document.getElementById('modal-tutor-name').textContent = `${tutor.first_name} ${tutor.last_name}`;
                     document.getElementById('modal-tutor-title').textContent = tutor.specialization || 'Tutor';
-                    document.getElementById('modal-tutor-rate').textContent = `₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/month`;
+                    const hourlyRate = parseFloat(tutor.hourly_rate ?? tutor.session_rate ?? 0);
+                    const monthlyRate = tutor.session_rate;
+                    const modalRateEl = document.getElementById('modal-tutor-rate');
+                    modalRateEl.innerHTML = `
+                        <div>₱${hourlyRate.toFixed(2)}/hour</div>
+                        ${monthlyRate !== null && monthlyRate !== undefined ? `<div style="font-size: 0.9rem; color: #666;">₱${parseFloat(monthlyRate || 0).toFixed(2)}/month (Book a tutor)</div>` : ''}
+                    `;
                     
                     document.getElementById('summary-tutor').textContent = `${tutor.first_name} ${tutor.last_name}`;
-                    document.getElementById('summary-rate').textContent = `₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/month`;
+                    document.getElementById('summary-rate').textContent = `₱${hourlyRate.toFixed(2)}/hour`;
 
                     // Initialize end session date display
                     const currentDate = new Date(document.getElementById('session-date').value);
@@ -1254,7 +1267,10 @@
                                     <span class="star">&#9733;</span>
                                     <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">(12 reviews)</span>
                                 </div>
-                                <div class="tutor-modal-rate" style="font-size: 1.1rem; font-weight: 600; color: #4a90e2;">₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/month</div>
+                                <div class="tutor-modal-rate" style="font-size: 1.1rem; font-weight: 600; color: #4a90e2;">
+                                    <div>₱${parseFloat(tutor.hourly_rate ?? tutor.session_rate ?? 0).toFixed(2)}/hour</div>
+                                    ${tutor.session_rate !== null && tutor.session_rate !== undefined ? `<div style="font-size: 0.9rem; color: #666;">₱${parseFloat(tutor.session_rate || 0).toFixed(2)}/month (Book a tutor)</div>` : ''}
+                                </div>
                             </div>
                         </div>
 

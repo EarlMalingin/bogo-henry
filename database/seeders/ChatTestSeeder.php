@@ -57,7 +57,8 @@ class ChatTestSeeder extends Seeder
                 'specialization' => 'Mathematics, Calculus, Algebra',
                 'phone' => '1234567892',
                 'bio' => 'Experienced mathematics tutor with 5 years of teaching experience.',
-                'session_rate' => 50.00
+                'session_rate' => 50.00,
+                'hourly_rate' => 120.00
             ]
         );
 
@@ -71,7 +72,8 @@ class ChatTestSeeder extends Seeder
                 'specialization' => 'Physics, Chemistry, Biology',
                 'phone' => '1234567893',
                 'bio' => 'Science tutor specializing in physics and chemistry.',
-                'session_rate' => 45.00
+                'session_rate' => 45.00,
+                'hourly_rate' => 110.00
             ]
         );
 

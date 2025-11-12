@@ -48,6 +48,7 @@ class StudentSessionController extends Controller
 
             // Get tutor to get their rate
             $tutor = Tutor::findOrFail($request->tutor_id);
+            $sessionRate = $tutor->hourly_rate ?? $tutor->session_rate ?? 0;
             $studentId = Auth::guard('student')->id();
 
             if (!$studentId) {
@@ -82,7 +83,7 @@ class StudentSessionController extends Controller
             }
 
             // Check if student has sufficient balance
-            if (!$wallet->canAfford($tutor->session_rate)) {
+            if (!$wallet->canAfford($sessionRate)) {
                 DB::rollBack();
                 return redirect()->back()
                     ->withInput()
@@ -90,7 +91,7 @@ class StudentSessionController extends Controller
             }
 
             // Deduct payment from wallet
-            $transaction = $wallet->deductFunds($tutor->session_rate, 'session_booking', [
+            $transaction = $wallet->deductFunds($sessionRate, 'session_booking', [
                 'tutor_id' => $tutor->id,
                 'tutor_name' => $tutor->first_name . ' ' . $tutor->last_name,
                 'session_type' => $request->session_type,
@@ -113,7 +114,7 @@ class StudentSessionController extends Controller
                 'start_time' => $request->start_time,
                 'end_time' => $request->end_time,
                 'notes' => $request->notes,
-                'rate' => $tutor->session_rate,
+                'rate' => $sessionRate,
                 'status' => 'pending',
             ]);
 
@@ -123,7 +124,7 @@ class StudentSessionController extends Controller
             $achievementService->checkAndNotifyProgress($student, 'student', 'sessions_booked');
 
             DB::commit();
-            return redirect()->route('student.book-session')->with('success', 'Session booking request sent successfully! Payment of ₱' . number_format($tutor->session_rate, 2) . ' has been deducted from your wallet.');
+            return redirect()->route('student.book-session')->with('success', 'Session booking request sent successfully! Payment of ₱' . number_format($sessionRate, 2) . ' has been deducted from your wallet.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()

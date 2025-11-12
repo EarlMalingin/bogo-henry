@@ -123,6 +123,7 @@ class AdminUserController extends Controller
                 'tutor_id' => $u->tutor_id,
                 'specialization' => $u->specialization,
                 'session_rate' => $u->session_rate,
+                'hourly_rate' => $u->hourly_rate,
             ];
         }
 

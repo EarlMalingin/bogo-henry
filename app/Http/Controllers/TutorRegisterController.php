@@ -23,11 +23,11 @@ class TutorRegisterController extends Controller
             'last_name' => 'required|string|max:255|regex:/^[a-zA-Z\s\-\']+$/',
             'email' => 'required|string|email|max:255|unique:tutors',
             'password' => 'required|string|confirmed|min:8',
-            'tutor_id' => 'required|string|unique:tutors',
             'specialization' => 'required|string|max:1000',
             'phone' => 'nullable|string',
             'bio' => 'nullable|string',
             'rate' => 'required|numeric|min:0',
+            'hourly_rate' => 'required|numeric|min:0',
             'cv' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB max, required
             'terms' => 'accepted',
         ], [
@@ -51,6 +51,8 @@ class TutorRegisterController extends Controller
                 ->withInput();
         }
 
+        $tutorId = Tutor::generateTutorId();
+
         // Handle CV file upload (required) - store temporarily
         $cvPath = $request->file('cv')->store('temp-cvs', 'public');
 
@@ -67,12 +69,13 @@ class TutorRegisterController extends Controller
             'last_name' => $request->input('last_name'),
             'email' => $request->input('email'),
             'password' => bcrypt($request->input('password')),
-            'tutor_id' => $request->input('tutor_id'),
+            'tutor_id' => $tutorId,
             'specialization' => $request->input('specialization'),
             'phone' => $request->input('phone'),
             'bio' => $request->input('bio'),
             'cv' => $cvPath,
             'session_rate' => $request->input('rate'),
+            'hourly_rate' => $request->input('hourly_rate'),
             'verification_code' => $verificationCode,
             'verification_code_expires_at' => $expiresAt,
         ], 1800); // 30 minutes

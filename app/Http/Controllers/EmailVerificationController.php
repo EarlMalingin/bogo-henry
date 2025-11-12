@@ -100,6 +100,7 @@ class EmailVerificationController extends Controller
                 'bio' => $registrationData['bio'],
                 'cv' => $newCvPath,
                 'session_rate' => $registrationData['session_rate'],
+                'hourly_rate' => $registrationData['hourly_rate'] ?? null,
                 'is_verified' => true, // Verified since they entered the code
                 'registration_status' => 'pending', // Set to pending for admin approval
             ]);
