@@ -12,13 +12,35 @@ class ChatSocket {
     // Initialize socket connection
     connect() {
         try {
-            // Get the current host and use it for the socket server
+            // Get the current host and protocol
             const currentHost = window.location.hostname;
-            const socketServerUrl = `http://${currentHost}:3001`;
+            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+            const port = window.location.port ? `:${window.location.port}` : '';
+            
+            // For production, use the same domain and protocol as the main app
+            // Socket server should be proxied through the same domain or use a subdomain
+            // If using a proxy, use the same origin; otherwise use port 3001
+            let socketServerUrl;
+            
+            // Check if we have a custom socket URL from Laravel config
+            if (window.socketServerUrl) {
+                socketServerUrl = window.socketServerUrl;
+            } else if (window.location.port === '443' || window.location.port === '' && protocol === 'https:') {
+                // HTTPS production - socket should be on same domain (proxied) or use wss
+                socketServerUrl = `${protocol}//${currentHost}${port}/socket.io`;
+            } else {
+                // Development or HTTP - use port 3001
+                socketServerUrl = `${protocol}//${currentHost}:3001`;
+            }
+            
+            console.log('Connecting to socket server:', socketServerUrl);
             
             this.socket = io(socketServerUrl, {
                 transports: ['websocket', 'polling'],
-                timeout: 20000
+                timeout: 20000,
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionAttempts: 5
             });
 
             this.socket.on('connect', () => {

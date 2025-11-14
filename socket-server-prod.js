@@ -8,14 +8,46 @@ const server = http.createServer(app);
 
 // Environment variables
 const PORT = process.env.SOCKET_PORT || 3001;
-const LARAVEL_URL = process.env.LARAVEL_URL || 'http://localhost:8000';
+const LARAVEL_URL = process.env.LARAVEL_URL || process.env.APP_URL || 'http://localhost:8000';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Configure CORS for production
+// Allow multiple origins from environment variable (comma-separated)
+const getAllowedOrigins = () => {
+    if (NODE_ENV === 'production') {
+        const origins = [];
+        
+        // Add LARAVEL_URL
+        if (LARAVEL_URL) {
+            origins.push(LARAVEL_URL);
+        }
+        
+        // Add APP_URL if different
+        if (process.env.APP_URL && process.env.APP_URL !== LARAVEL_URL) {
+            origins.push(process.env.APP_URL);
+        }
+        
+        // Add SOCKET_ALLOWED_ORIGINS if set (comma-separated)
+        if (process.env.SOCKET_ALLOWED_ORIGINS) {
+            const additionalOrigins = process.env.SOCKET_ALLOWED_ORIGINS.split(',').map(o => o.trim());
+            origins.push(...additionalOrigins);
+        }
+        
+        // If no origins configured, allow all (not recommended for production)
+        return origins.length > 0 ? origins : true;
+    }
+    
+    // Development: allow localhost variants
+    return [
+        'http://localhost:8000',
+        'http://127.0.0.1:8000',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000'
+    ];
+};
+
 const corsOptions = {
-    origin: NODE_ENV === 'production' 
-        ? [LARAVEL_URL, 'https://yourdomain.com'] // Add your production domain
-        : LARAVEL_URL,
+    origin: getAllowedOrigins(),
     methods: ["GET", "POST"],
     credentials: true
 };
