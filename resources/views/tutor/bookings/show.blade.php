@@ -767,7 +767,12 @@
                 </div>
                 <div class="detail-item">
                     <strong><i class="fas fa-money-bill-wave"></i> Session Rate:</strong>
-                    <span>₱{{ number_format($booking->rate, 2) }}/month</span>
+                    @php
+                        // Determine if booking is hourly or monthly by comparing rate with tutor's session_rate
+                        $isMonthly = abs($booking->rate - ($booking->tutor->session_rate ?? 0)) < 0.01;
+                        $rateLabel = $isMonthly ? '/month' : '/hour';
+                    @endphp
+                    <span>₱{{ number_format($booking->rate, 2) }}{{ $rateLabel }}</span>
                 </div>
 
             </div>

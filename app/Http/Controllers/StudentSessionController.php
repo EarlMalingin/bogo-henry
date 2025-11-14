@@ -41,20 +41,82 @@ class StudentSessionController extends Controller
             ]);
 
             // Additional validation to ensure end_time is after start_time
-            if ($request->start_time >= $request->end_time) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['end_time' => 'The end time must be after the start time.']);
+            // For hourly bookings, allow next-day end times
+            if ($request->booking_type === 'hourly') {
+                $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $request->start_time);
+                $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $request->end_time);
+                
+                // If end time is before start time, treat it as next day
+                if ($endTime->lt($startTime)) {
+                    $endTime->addDay();
+                }
+                
+                // Validate that duration is reasonable (not more than 24 hours)
+                $totalMinutes = $startTime->diffInMinutes($endTime);
+                if ($totalMinutes <= 0) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['end_time' => 'The end time must be after the start time.']);
+                }
+                if ($totalMinutes > 24 * 60) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['end_time' => 'Session duration cannot exceed 24 hours.']);
+                }
+            } else {
+                // For monthly bookings, simple validation
+                if ($request->start_time >= $request->end_time) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['end_time' => 'The end time must be after the start time.']);
+                }
             }
 
             // Get tutor to get their rate
             $tutor = Tutor::findOrFail($request->tutor_id);
             
             // Use the appropriate rate based on booking type
+            $hourlyRate = null;
+            $hours = null;
+            
             if ($request->booking_type === 'monthly') {
                 $sessionRate = $tutor->session_rate ?? 0;
             } else {
-                $sessionRate = $tutor->hourly_rate ?? $tutor->session_rate ?? 0;
+                // For hourly bookings, calculate total based on duration
+                $hourlyRate = $tutor->hourly_rate ?? $tutor->session_rate ?? 0;
+                
+                // Calculate hours between start and end time
+                $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $request->start_time);
+                $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $request->end_time);
+                
+                // Handle case where end time is before start time
+                if ($endTime->lt($startTime)) {
+                    // If end time is 00:00 (midnight) and start is in the morning (before 12:00 PM),
+                    // and the duration would be > 12 hours, assume user meant 12:00 PM (noon) instead
+                    if ($endTime->format('H:i') === '00:00' && $startTime->format('H') < 12) {
+                        $nextDayEndTime = $endTime->copy()->addDay();
+                        $nextDayDuration = $startTime->diffInMinutes($nextDayEndTime) / 60;
+                        
+                        // Treat 00:00 as 12:00 PM (noon) for same-day calculation
+                        $sameDayEndTime = $endTime->copy()->setTime(12, 0);
+                        $sameDayDuration = $startTime->diffInMinutes($sameDayEndTime) / 60;
+                        
+                        // If same-day duration is more reasonable (< 12 hours), use that
+                        if ($sameDayDuration > 0 && $sameDayDuration <= 12 && $nextDayDuration > 12) {
+                            $endTime = $sameDayEndTime; // Treat as 12:00 PM (noon)
+                        } else {
+                            $endTime->addDay(); // Add 24 hours for next day
+                        }
+                    } else {
+                        $endTime->addDay(); // Add 24 hours for next day
+                    }
+                }
+                
+                // Calculate total minutes and convert to hours (including fractional hours)
+                $totalMinutes = $startTime->diffInMinutes($endTime);
+                $hours = $totalMinutes / 60;
+                
+                $sessionRate = $hourlyRate * $hours;
             }
             $studentId = Auth::guard('student')->id();
 
@@ -131,8 +193,14 @@ class StudentSessionController extends Controller
             $achievementService->checkAndNotifyProgress($student, 'student', 'sessions_booked');
 
             DB::commit();
-            $rateType = $request->booking_type === 'monthly' ? '/month' : '/hour';
-            return redirect()->route('student.book-session')->with('success', 'Session booking request sent successfully! Payment of ₱' . number_format($sessionRate, 2) . $rateType . ' has been deducted from your wallet.');
+            
+            if ($request->booking_type === 'monthly') {
+                $message = 'Session booking request sent successfully! Payment of ₱' . number_format($sessionRate, 2) . '/month has been deducted from your wallet.';
+            } else {
+                $message = 'Session booking request sent successfully! Payment of ₱' . number_format($sessionRate, 2) . ' (₱' . number_format($hourlyRate, 2) . '/hour) has been deducted from your wallet.';
+            }
+            
+            return redirect()->route('student.book-session')->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()

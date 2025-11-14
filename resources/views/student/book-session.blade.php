@@ -1240,11 +1240,17 @@
         function updateBookingRate(bookingType) {
             if (!window.currentTutorRates) return;
             
-            const rate = bookingType === 'monthly' ? window.currentTutorRates.monthly : window.currentTutorRates.hourly;
-            const rateLabel = bookingType === 'monthly' ? '/month' : '/hour';
-            
-            document.getElementById('summary-rate').textContent = `₱${rate.toFixed(2)}${rateLabel}`;
             document.getElementById('booking-type').value = bookingType;
+            
+            if (bookingType === 'monthly') {
+                const rate = window.currentTutorRates.monthly;
+                document.getElementById('summary-rate').textContent = `₱${rate.toFixed(2)}/month`;
+            } else {
+                // For hourly, rate will be calculated based on duration in updateSummaryTime
+                // Just show the hourly rate for now, it will be updated when time is selected
+                const hourlyRate = window.currentTutorRates.hourly;
+                document.getElementById('summary-rate').textContent = `₱${hourlyRate.toFixed(2)}/hour`;
+            }
             
             const endDateContainer = document.getElementById('end-date-container');
             const timeSelectionContainer = document.getElementById('time-selection-container');
@@ -1304,16 +1310,39 @@
                 const startTime = startTimeInput.value;
                 const endTime = endTimeInput.value;
                 
-                // Validate that end time is after start time
-                if (endTime <= startTime) {
+                // Calculate hours to check if valid
+                const hours = calculateHours(startTime, endTime);
+                
+                // Validate that duration is reasonable
+                if (hours <= 0) {
                     timeError.textContent = 'End time must be after start time';
+                    timeError.style.display = 'block';
+                    return false;
+                } else if (hours > 24) {
+                    timeError.textContent = 'Session duration cannot exceed 24 hours';
                     timeError.style.display = 'block';
                     return false;
                 } else {
                     timeError.style.display = 'none';
                     // Update hidden fields
                     document.getElementById('start-time').value = startTime + ':00';
-                    document.getElementById('end-time').value = endTime + ':00';
+                    
+                    // If we treated 00:00 as 12:00 PM in calculateHours, store 12:00:00 instead
+                    let endTimeToStore = endTime;
+                    const [endHours, endMinutes] = endTime.split(':').map(Number);
+                    const [startHours, startMinutes] = startTime.split(':').map(Number);
+                    
+                    if (endHours === 0 && startHours < 12) {
+                        // Check if calculateHours treated it as 12:00 PM
+                        const calculatedHours = calculateHours(startTime, endTime);
+                        const startTotalMinutes = startHours * 60 + startMinutes;
+                        const sameDayHours = (12 * 60 - startTotalMinutes) / 60;
+                        if (calculatedHours === sameDayHours && calculatedHours <= 12) {
+                            // We treated 00:00 as 12:00 PM, so store 12:00:00
+                            endTimeToStore = '12:00';
+                        }
+                    }
+                    document.getElementById('end-time').value = endTimeToStore + ':00';
                     return true;
                 }
             }
@@ -1330,7 +1359,38 @@
             return `${hour12}:${minutes} ${ampm}`;
         }
         
-        // Function to update summary with time information
+        // Function to calculate hours between two times
+        function calculateHours(startTime, endTime) {
+            const [startHours, startMinutes] = startTime.split(':').map(Number);
+            const [endHours, endMinutes] = endTime.split(':').map(Number);
+            
+            const startTotalMinutes = startHours * 60 + startMinutes;
+            let endTotalMinutes = endHours * 60 + endMinutes;
+            
+            // Handle case where end time is before start time
+            if (endTotalMinutes < startTotalMinutes) {
+                // If end time is 00:00 (midnight) and start is in the morning (before 12:00 PM),
+                // and the duration would be > 12 hours, assume user meant 12:00 PM (noon) instead
+                if (endHours === 0 && startHours < 12) {
+                    const nextDayDuration = (24 * 60 - startTotalMinutes + endTotalMinutes) / 60;
+                    const sameDayDuration = (12 * 60 - startTotalMinutes) / 60; // Treating 00:00 as 12:00 PM
+                    
+                    // If same-day duration is more reasonable (< 12 hours), use that
+                    if (sameDayDuration > 0 && sameDayDuration <= 12 && nextDayDuration > 12) {
+                        endTotalMinutes = 12 * 60; // Treat as 12:00 PM (noon)
+                    } else {
+                        endTotalMinutes += 24 * 60; // Add 24 hours for next day
+                    }
+                } else {
+                    endTotalMinutes += 24 * 60; // Add 24 hours for next day
+                }
+            }
+            
+            const diffMinutes = endTotalMinutes - startTotalMinutes;
+            return diffMinutes / 60; // Convert to hours
+        }
+        
+        // Function to update summary with time information and calculate total rate
         function updateSummaryTime() {
             const bookingType = document.getElementById('booking-type')?.value;
             const summaryTimeItem = document.getElementById('summary-time-item');
@@ -1349,6 +1409,28 @@
                     }
                     if (summaryTimeItem) {
                         summaryTimeItem.style.display = 'flex';
+                    }
+                    
+                    // Calculate total rate based on duration
+                    if (window.currentTutorRates) {
+                        const hours = calculateHours(startTime, endTime);
+                        const hourlyRate = window.currentTutorRates.hourly;
+                        const totalRate = hourlyRate * hours;
+                        const rateDisplay = document.getElementById('summary-rate');
+                        if (rateDisplay) {
+                            rateDisplay.textContent = `₱${totalRate.toFixed(2)} (₱${hourlyRate.toFixed(2)}/hour)`;
+                        }
+                        
+                        // Update time display if we corrected 00:00 to 12:00 PM
+                        if (endTime === '00:00' && startTime.split(':')[0] < 12) {
+                            const startTotalMinutes = parseInt(startTime.split(':')[0]) * 60 + parseInt(startTime.split(':')[1]);
+                            const sameDayHours = (12 * 60 - startTotalMinutes) / 60;
+                            if (hours === sameDayHours && hours <= 12) {
+                                // Update the displayed time to show 12:00 PM instead of 12:00 AM
+                                const endFormatted = formatTime('12:00');
+                                timeDisplay.textContent = `${startFormatted} - ${endFormatted}`;
+                            }
+                        }
                     }
                 }
             } else {

@@ -51,7 +51,7 @@ class TutorSessionController extends Controller
         
         $booking = Session::where('tutor_id', Auth::guard('tutor')->id())
             ->where('id', $id)
-            ->with('student')
+            ->with(['student', 'tutor'])
             ->firstOrFail();
 
         return view('tutor.bookings.show', compact('tutor', 'booking'));
@@ -71,6 +71,7 @@ class TutorSessionController extends Controller
         $booking = Session::where('tutor_id', Auth::guard('tutor')->id())
             ->where('id', $id)
             ->where('status', 'pending')
+            ->with('student')
             ->firstOrFail();
 
         DB::beginTransaction();
@@ -111,6 +112,16 @@ class TutorSessionController extends Controller
                 'message' => 'You received ₱' . number_format($tutorEarnings, 2) . ' for the accepted session booking.',
             ]);
 
+            // Create notification for student
+            $student = $booking->student;
+            Notification::create([
+                'user_id' => $student->id,
+                'user_type' => 'student',
+                'type' => 'booking_accepted',
+                'title' => 'Booking Accepted!',
+                'message' => 'Your booking with ' . $tutor->first_name . ' ' . $tutor->last_name . ' has been accepted. Session scheduled for ' . $booking->formatted_date . ' at ' . $booking->formatted_start_time . '.',
+            ]);
+
             DB::commit();
             return redirect()->route('tutor.bookings.index')->with('success', 'Booking accepted successfully! Earnings of ₱' . number_format($tutorEarnings, 2) . ' have been added to your wallet.');
         } catch (\Exception $e) {
@@ -126,17 +137,51 @@ class TutorSessionController extends Controller
             'rejection_reason' => 'required|string|max:500'
         ]);
 
-        $booking = Session::where('tutor_id', Auth::guard('tutor')->id())
-            ->where('id', $id)
-            ->where('status', 'pending')
-            ->firstOrFail();
+        DB::beginTransaction();
+        try {
+            $booking = Session::where('tutor_id', Auth::guard('tutor')->id())
+                ->where('id', $id)
+                ->where('status', 'pending')
+                ->with('student')
+                ->firstOrFail();
 
-        $booking->update([
-            'status' => 'rejected',
-            'notes' => $request->input('rejection_reason')
-        ]);
+            // Update booking status
+            $booking->update([
+                'status' => 'rejected',
+                'notes' => $request->input('rejection_reason')
+            ]);
 
-        return redirect()->route('tutor.bookings.index')->with('success', 'Booking rejected successfully!');
+            // Refund the student's payment
+            $student = $booking->student;
+            $wallet = Wallet::where('user_id', $student->id)
+                ->where('user_type', 'student')
+                ->first();
+
+            if ($wallet && $booking->rate > 0) {
+                // Refund the booking amount
+                $wallet->addFunds($booking->rate, 'refund', [
+                    'booking_id' => $booking->id,
+                    'rejection_reason' => $request->input('rejection_reason'),
+                    'tutor_id' => $booking->tutor_id,
+                    'tutor_name' => Auth::guard('tutor')->user()->first_name . ' ' . Auth::guard('tutor')->user()->last_name,
+                ]);
+
+                // Create notification for student
+                Notification::create([
+                    'user_id' => $student->id,
+                    'user_type' => 'student',
+                    'type' => 'booking_rejected',
+                    'title' => 'Booking Rejected - Refund Processed',
+                    'message' => 'Your booking has been rejected. A refund of ₱' . number_format($booking->rate, 2) . ' has been added back to your wallet.',
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('tutor.bookings.index')->with('success', 'Booking rejected successfully! The student has been refunded.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('tutor.bookings.index')->with('error', 'Failed to reject booking: ' . $e->getMessage());
+        }
     }
 
     // Complete booking
