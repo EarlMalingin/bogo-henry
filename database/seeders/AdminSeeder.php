@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Admin;
-use Illuminate\Support\Facades\Hash;
 
 class AdminSeeder extends Seeder
 {
@@ -14,8 +13,13 @@ class AdminSeeder extends Seeder
             Admin::create([
                 'name' => 'Administrator',
                 'email' => 'admin@mentorhub.com',
-                'password' => Hash::make('earlgwapo123'),
+                'password' => 'earlgwapo123', // Will be automatically hashed by the model's cast
             ]);
+        } else {
+            // Update existing admin password if it exists
+            $admin = Admin::where('email', 'admin@mentorhub.com')->first();
+            $admin->password = 'earlgwapo123'; // Will be automatically hashed by the model's cast
+            $admin->save();
         }
     }
 }

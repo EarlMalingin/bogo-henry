@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Session; // Added this import
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 class Student extends Authenticatable
 {
@@ -89,7 +88,9 @@ class Student extends Authenticatable
     public static function generateStudentId(): string
     {
         do {
-            $id = 'STU-' . Str::upper(Str::random(8));
+            // Generate an 8-digit number
+            $number = str_pad(random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+            $id = 'STU-' . $number;
         } while (self::where('student_id', $id)->exists());
 
         return $id;

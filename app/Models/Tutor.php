@@ -7,7 +7,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Session;
 use App\Models\Review;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
 
 class Tutor extends Authenticatable
 {
@@ -110,7 +109,9 @@ class Tutor extends Authenticatable
     public static function generateTutorId(): string
     {
         do {
-            $id = 'TUT-' . Str::upper(Str::random(8));
+            // Generate an 8-digit number
+            $number = str_pad(random_int(0, 99999999), 8, '0', STR_PAD_LEFT);
+            $id = 'TUT-' . $number;
         } while (self::where('tutor_id', $id)->exists());
 
         return $id;

@@ -1114,14 +1114,69 @@
         </div>
     </div>
 
+    <!-- FAQ Modal -->
+    <div id="faq-modal" class="footer-modal">
+        <div class="footer-modal-content">
+            <div class="footer-modal-header">
+                <h2>Frequently Asked Questions</h2>
+                <button class="footer-modal-close">&times;</button>
+            </div>
+            <div class="footer-modal-body">
+                <h3>How do I book a tutoring session?</h3>
+                <p>You can book a session by going to the "Book Session" page, selecting a tutor, choosing your preferred date and time, and confirming your booking.</p>
+                
+                <h3>What subjects are available for tutoring?</h3>
+                <p>We offer tutoring in a wide range of subjects including Mathematics, Science, English, History, and more. Available subjects vary by tutor specialization.</p>
+                
+                <h3>Can I reschedule or cancel a session?</h3>
+                <p>Yes, sessions can be rescheduled or cancelled up to 24 hours in advance. Cancellations made within 24 hours may be subject to charges.</p>
+                
+                <h3>How do payments work?</h3>
+                <p>Payments are processed securely through our integrated payment system. You can add funds to your wallet and use them to pay for sessions and assignments.</p>
+                
+                <h3>What should I do if I have a technical issue?</h3>
+                <p>Please use the "Report a Problem" feature in your dashboard to submit a detailed report of any technical issues you encounter.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Modal -->
+    <div id="contact-modal" class="footer-modal">
+        <div class="footer-modal-content">
+            <div class="footer-modal-header">
+                <h2>Contact Us</h2>
+                <button class="footer-modal-close">&times;</button>
+            </div>
+            <div class="footer-modal-body">
+                <h3>Get in Touch</h3>
+                <p>We're here to help! Reach out to us through any of the following channels:</p>
+                
+                <h3>Email</h3>
+                <p>
+                    <strong>Email Us:</strong> <a href="mailto:MentorHub.Website@gmail.com">MentorHub.Website@gmail.com</a><br>
+                    <small style="color: #666;">We typically respond within 24 hours</small>
+                </p>
+                
+                <h3>Phone</h3>
+                <p>+63958667092</p>
+                
+                <h3>Address</h3>
+                <p>University of Cebu<br>Cebu City, Philippines</p>
+                
+                <h3>Business Hours</h3>
+                <p>Monday - Friday: 8:00 AM - 6:00 PM<br>Saturday: 9:00 AM - 3:00 PM<br>Sunday: Closed</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
         <div class="footer-content">
             <div class="footer-links">
                 <a href="#" id="footer-privacy">Privacy Policy</a>
                 <a href="#" id="footer-terms">Terms of Service</a>
-                <a href="#">FAQ</a>
-                <a href="#">Contact</a>
+                <a href="#" id="footer-faq-link">FAQ</a>
+                <a href="#" id="footer-contact-link">Contact</a>
             </div>
             <div class="copyright">
                 &copy; {{ date('Y') }} MentorHub. All rights reserved.
@@ -1145,6 +1200,8 @@
             // Modal functionality
             const termsModal = document.getElementById('terms-modal');
             const privacyModal = document.getElementById('privacy-modal');
+            const faqModal = document.getElementById('faq-modal');
+            const contactModal = document.getElementById('contact-modal');
             
             const termsLinks = [
                 document.getElementById('terms-link'),
@@ -1161,17 +1218,26 @@
 
             // Track animation state to prevent conflicts
             let isAnimating = false;
+            let scrollPosition = 0;
 
             // Functions to open/close modals with smooth animations
             function openModal(modal) {
                 if (isAnimating || !modal) return;
                 isAnimating = true;
                 
+                // Store scroll position before opening modal
+                scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+                
+                // Prevent body scroll and preserve scrollbar width
+                document.body.style.position = 'fixed';
+                document.body.style.top = `-${scrollPosition}px`;
+                document.body.style.width = '100%';
+                document.body.style.overflow = 'hidden';
+                
                 modal.style.display = 'flex';
                 // Force reflow to ensure display is set before adding class
                 void modal.offsetWidth;
                 modal.classList.add('show');
-                document.body.style.overflow = 'hidden';
                 
                 setTimeout(() => {
                     isAnimating = false;
@@ -1183,11 +1249,20 @@
                 isAnimating = true;
                 
                 modal.classList.remove('show');
-                document.body.style.overflow = 'auto';
                 
-                // Wait for transition to complete before hiding
+                // Wait for transition to complete before restoring scroll
                 modal.addEventListener('transitionend', function handler() {
                     modal.removeEventListener('transitionend', handler);
+                    
+                    // Restore body scroll smoothly
+                    document.body.style.position = '';
+                    document.body.style.top = '';
+                    document.body.style.width = '';
+                    document.body.style.overflow = '';
+                    
+                    // Restore scroll position
+                    window.scrollTo(0, scrollPosition);
+                    
                     if (!modal.classList.contains('show')) {
                         modal.style.display = 'none';
                     }
@@ -1245,11 +1320,60 @@
                 });
             }
 
+            // Add event listeners for FAQ modal
+            const faqLink = document.getElementById('footer-faq-link');
+            if (faqLink && faqModal) {
+                faqLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openModal(faqModal);
+                });
+            }
+
+            // Add event listeners for Contact modal
+            const contactLink = document.getElementById('footer-contact-link');
+            if (contactLink && contactModal) {
+                contactLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openModal(contactModal);
+                });
+            }
+
+            // Close buttons for FAQ and Contact modals
+            if (faqModal) {
+                const faqClose = faqModal.querySelector('.footer-modal-close');
+                if (faqClose) {
+                    faqClose.addEventListener('click', function() {
+                        closeModal(faqModal);
+                    });
+                }
+                faqModal.addEventListener('click', function(e) {
+                    if (e.target === faqModal) {
+                        closeModal(faqModal);
+                    }
+                });
+            }
+
+            if (contactModal) {
+                const contactClose = contactModal.querySelector('.footer-modal-close');
+                if (contactClose) {
+                    contactClose.addEventListener('click', function() {
+                        closeModal(contactModal);
+                    });
+                }
+                contactModal.addEventListener('click', function(e) {
+                    if (e.target === contactModal) {
+                        closeModal(contactModal);
+                    }
+                });
+            }
+
             // Close modals with Escape key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeModal(termsModal);
                     closeModal(privacyModal);
+                    closeModal(faqModal);
+                    closeModal(contactModal);
                 }
             });
 
