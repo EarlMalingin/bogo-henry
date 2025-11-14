@@ -6,21 +6,19 @@
     <title>Pending Payouts | MentorHub</title>
     <style>
         :root { --primary:#4a90e2; --secondary:#5637d9; --card:#ffffff; --muted:#6b7280; }
-        *{box-sizing:border-box}
+        *{box-sizing:border-box;margin:0;padding:0}
         body{margin:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.92)),url('{{ asset('images/Uc-background.jpg') }}') no-repeat center/cover fixed;min-height:100vh}
-        .topbar{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1)}
-        .nav{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:20px;padding:16px 20px}
-        .logo{display:flex;align-items:center;gap:12px;color:#fff;text-decoration:none;transition:transform 0.3s}
-        .logo:hover{transform:scale(1.05)}
-        .logo-img{height:70px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2))}
-        .tabs{display:flex;gap:4px;margin-left:auto;margin-right:16px;background:rgba(255,255,255,0.1);padding:4px;border-radius:10px;backdrop-filter:blur(10px)}
-        .tab{color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:500;transition:all 0.3s;position:relative}
-        .tab:hover{background:rgba(255,255,255,0.15);transform:translateY(-2px)}
-        .tab.active{background:rgba(255,255,255,0.25);font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
-        .tab.active::before{content:'';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:80%;height:3px;background:#fff;border-radius:2px}
+        header{background:linear-gradient(135deg,#4a90e2,#5637d9);color:#fff;padding:1rem 0;width:100%;position:fixed;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
+        .navbar{display:flex;justify-content:space-between;align-items:center;padding:0 5%;max-width:1400px;margin:0 auto;flex-wrap:wrap}
+        .logo{display:flex;align-items:center;font-size:2rem;font-weight:bold;color:#fff;text-decoration:none;text-shadow:0 2px 8px rgba(44,62,80,0.12)}
+        .logo:hover{transform:scale(1.05);transition:transform 0.3s}
+        .logo-img{margin-right:0.5rem;height:70px}
+        .nav-links{display:flex;gap:1rem}
+        .nav-links a{color:#fff;text-decoration:none;font-weight:500;transition:all 0.3s;padding:0.5rem 1rem;border-radius:25px}
+        .nav-links a:hover,.nav-links a.active{background-color:rgba(255,255,255,0.2);transform:translateY(-2px)}
         .logout{border:none;border-radius:8px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;padding:10px 20px;cursor:pointer;font-weight:600;transition:all 0.3s;box-shadow:0 2px 6px rgba(231,76,60,0.3)}
         .logout:hover{background:linear-gradient(135deg,#c0392b,#a93226);transform:translateY(-2px);box-shadow:0 4px 12px rgba(231,76,60,0.4)}
-        main{max-width:1200px;margin:28px auto;padding:0 16px}
+        main{max-width:1200px;margin:100px auto 28px;padding:0 16px}
         h2{margin:0 0 16px;color:#1f2d3d}
         .table{background:var(--card);border-radius:14px;box-shadow:0 12px 32px rgba(20,33,61,.07);overflow:auto}
         table{width:100%;border-collapse:collapse}
@@ -51,22 +49,24 @@
     </style>
 </head>
 <body>
-    <div class="topbar">
-        <div class="nav">
+    <header>
+        <div class="navbar">
             <a class="logo" href="{{ route('admin.dashboard') }}">
                 <img src="{{ asset('images/MentorHub.png') }}" alt="MentorHub" class="logo-img">
             </a>
-            <div class="tabs">
-                <a class="tab" href="{{ route('admin.dashboard') }}">Dashboard</a>
-                <a class="tab" href="{{ route('admin.wallet.index') }}">Wallet</a>
-                <a class="tab active" href="{{ route('admin.wallet.pending-payouts') }}">Pending Payouts</a>
-            </div>
-            <form method="POST" action="{{ route('admin.logout') }}">
+            <nav class="nav-links">
+                <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+                <a href="{{ route('admin.pending-tutors') }}">Pending users</a>
+                <a href="{{ route('admin.ratings') }}">Ratings</a>
+                <a href="{{ route('admin.problem-reports.index') }}">Reports</a>
+                <a href="{{ route('admin.wallet.index') }}" class="active">Wallet</a>
+            </nav>
+            <form method="POST" action="{{ route('admin.logout') }}" style="margin:0;">
                 @csrf
                 <button class="logout">Logout</button>
             </form>
         </div>
-    </div>
+    </header>
 
     <main>
         <h2>Pending Payout Requests</h2>

@@ -24,7 +24,7 @@ class StudentProfileController extends Controller
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:students,email,' . $student->id,
             'phone' => 'nullable|string|max:20',
-            'student_id' => 'required|string|unique:students,student_id,' . $student->id,
+            // student_id is automatically generated and cannot be changed
             'year_level' => 'required|string',
             'course' => 'required|string',
             'subjects_interest' => 'nullable|string',
@@ -51,6 +51,9 @@ class StudentProfileController extends Controller
             }
         }
 
+        // Remove student_id from validated data if present (should not be updated)
+        unset($validated['student_id']);
+        
         $student->update($validated);
         // Refresh the authenticated user in the session
         Auth::guard('student')->setUser($student->fresh());

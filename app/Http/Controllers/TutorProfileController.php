@@ -24,7 +24,6 @@ class TutorProfileController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:tutors,email,' . $tutor->id,
-            'tutor_id' => 'required|string|unique:tutors,tutor_id,' . $tutor->id,
             'specialization' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
@@ -46,7 +45,7 @@ class TutorProfileController extends Controller
         $tutor->first_name = $validated['first_name'];
         $tutor->last_name = $validated['last_name'];
         $tutor->email = $validated['email'];
-        $tutor->tutor_id = $validated['tutor_id'];
+        // tutor_id is automatically generated and cannot be changed
         $tutor->specialization = $validated['specialization'] ?? null;
         $tutor->phone = $validated['phone'] ?? null;
         $tutor->bio = $validated['bio'] ?? null;

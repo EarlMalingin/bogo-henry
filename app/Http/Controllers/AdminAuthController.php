@@ -47,7 +47,7 @@ class AdminAuthController extends Controller
         $totalUsers = $studentCount + $tutorCount;
 
         $upcomingToday = Session::where('status', 'accepted')
-            ->whereBetween('date', [now()->startOfDay(), now()->endOfDay()])
+            ->whereDate('date', today())
             ->count();
 
         $pendingPayouts = WalletTransaction::where('type', 'cash_out')
@@ -163,6 +163,41 @@ class AdminAuthController extends Controller
 
         return redirect()->route('admin.pending-tutors')
             ->with('success', 'Tutor registration rejected.');
+    }
+
+    public function sessions(Request $request)
+    {
+        $filter = $request->get('filter', 'all'); // all, current, finished
+        
+        $query = Session::with(['student', 'tutor']);
+
+        // Apply filter
+        if ($filter === 'current') {
+            $query->whereIn('status', ['pending', 'accepted']);
+        } elseif ($filter === 'finished') {
+            $query->whereIn('status', ['completed', 'cancelled', 'rejected']);
+        }
+
+        $sessions = $query->orderBy('date', 'desc')
+            ->orderBy('start_time', 'desc')
+            ->paginate(20);
+
+        // Get statistics
+        $totalSessions = Session::count();
+        $currentSessions = Session::whereIn('status', ['pending', 'accepted'])->count();
+        $finishedSessions = Session::whereIn('status', ['completed', 'cancelled', 'rejected'])->count();
+        $upcomingToday = Session::where('status', 'accepted')
+            ->whereDate('date', today())
+            ->count();
+
+        return view('admin.sessions', compact(
+            'sessions',
+            'filter',
+            'totalSessions',
+            'currentSessions',
+            'finishedSessions',
+            'upcomingToday'
+        ));
     }
 }
 

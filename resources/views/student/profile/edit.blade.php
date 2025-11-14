@@ -618,7 +618,8 @@
 
                 <div class="form-group">
                     <label for="student_id">Student ID</label>
-                    <input type="text" id="student_id" name="student_id" class="form-control" value="{{ old('student_id', $student->student_id) }}" required>
+                    <input type="text" id="student_id" name="student_id" class="form-control" value="{{ old('student_id', $student->student_id) }}" readonly style="background-color: #f3f4f6; color: #6b7280; cursor: not-allowed;">
+                    <small style="display:block; margin-top:0.5rem; color:#6b7280;">Your Student ID is automatically generated and cannot be changed.</small>
                     @error('student_id')
                         <span class="text-danger">{{ $message }}</span>
                     @enderror

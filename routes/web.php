@@ -92,6 +92,9 @@ Route::middleware('web')->group(function () {
         Route::get('/admin/problem-reports', [App\Http\Controllers\ProblemReportController::class, 'adminIndex'])->name('admin.problem-reports.index');
         Route::get('/admin/problem-reports/{id}', [App\Http\Controllers\ProblemReportController::class, 'adminShow'])->name('admin.problem-reports.show');
         Route::post('/admin/problem-reports/{id}/update', [App\Http\Controllers\ProblemReportController::class, 'adminUpdate'])->name('admin.problem-reports.update');
+        
+        // Admin sessions
+        Route::get('/admin/sessions', [AdminAuthController::class, 'sessions'])->name('admin.sessions');
     });
 });
 

@@ -857,7 +857,8 @@
                 </div>
                 <div class="form-group">
                     <label for="tutor_id">Tutor ID</label>
-                    <input type="text" id="tutor_id" name="tutor_id" class="form-control" value="{{ old('tutor_id', $tutor->tutor_id) }}" required>
+                    <input type="text" id="tutor_id" name="tutor_id" class="form-control" value="{{ old('tutor_id', $tutor->tutor_id) }}" readonly style="background-color: #f3f4f6; color: #6b7280; cursor: not-allowed;">
+                    <small style="display:block; margin-top:0.5rem; color:#6b7280;">Your Tutor ID is automatically generated and cannot be changed.</small>
                     @error('tutor_id')
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
