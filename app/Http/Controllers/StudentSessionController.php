@@ -30,6 +30,7 @@ class StudentSessionController extends Controller
         try {
             $request->validate([
                 'tutor_id' => 'required|exists:tutors,id',
+                'booking_type' => 'required|in:hourly,monthly',
                 'session_type' => 'required|in:face_to_face,online',
                 'date' => 'required|date|after_or_equal:today',
                 'start_time' => 'required',
@@ -48,7 +49,13 @@ class StudentSessionController extends Controller
 
             // Get tutor to get their rate
             $tutor = Tutor::findOrFail($request->tutor_id);
-            $sessionRate = $tutor->hourly_rate ?? $tutor->session_rate ?? 0;
+            
+            // Use the appropriate rate based on booking type
+            if ($request->booking_type === 'monthly') {
+                $sessionRate = $tutor->session_rate ?? 0;
+            } else {
+                $sessionRate = $tutor->hourly_rate ?? $tutor->session_rate ?? 0;
+            }
             $studentId = Auth::guard('student')->id();
 
             if (!$studentId) {
@@ -124,7 +131,8 @@ class StudentSessionController extends Controller
             $achievementService->checkAndNotifyProgress($student, 'student', 'sessions_booked');
 
             DB::commit();
-            return redirect()->route('student.book-session')->with('success', 'Session booking request sent successfully! Payment of ₱' . number_format($sessionRate, 2) . ' has been deducted from your wallet.');
+            $rateType = $request->booking_type === 'monthly' ? '/month' : '/hour';
+            return redirect()->route('student.book-session')->with('success', 'Session booking request sent successfully! Payment of ₱' . number_format($sessionRate, 2) . $rateType . ' has been deducted from your wallet.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()

@@ -463,6 +463,38 @@
             color: white;
         }
         
+        .booking-type-toggle {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .booking-type-btn {
+            flex: 1;
+            padding: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .booking-type-btn:hover {
+            border-color: #4a90e2;
+            background-color: #f0f7ff;
+        }
+        
+        .booking-type-btn.active {
+            background-color: #4a90e2;
+            border-color: #4a90e2;
+            color: white;
+        }
+        
+        .booking-type-btn.active div {
+            color: white !important;
+        }
+        
         .calendar-container {
             margin-bottom: 1.5rem;
         }
@@ -848,6 +880,20 @@
                     </div>
                     
                     <div class="session-options">
+                        <h3>Booking Type</h3>
+                        
+                        <div class="booking-type-toggle" style="margin-bottom: 2rem;">
+                            <button type="button" class="booking-type-btn active" data-booking-type="hourly" id="booking-type-hourly">
+                                <div style="font-weight: 600; font-size: 1rem;">Book a Session</div>
+                                <div style="font-size: 0.85rem; color: #666; margin-top: 0.25rem;">Pay per hour</div>
+                            </button>
+                            <button type="button" class="booking-type-btn" data-booking-type="monthly" id="booking-type-monthly">
+                                <div style="font-weight: 600; font-size: 1rem;">Book a Tutor</div>
+                                <div style="font-size: 0.85rem; color: #666; margin-top: 0.25rem;">Pay per month</div>
+                            </button>
+                        </div>
+                        <input type="hidden" id="booking-type" name="booking_type" value="hourly">
+                        
                         <h3>Session Details</h3>
                         
                         <div class="session-type-toggle">
@@ -855,13 +901,30 @@
                             <button type="button" data-type="face_to_face">Face-to-Face</button>
                         </div>
                         <input type="hidden" id="session-type" name="session_type" value="online">
-                        <input type="hidden" name="start_time" value="00:00:00">
-                        <input type="hidden" name="end_time" value="23:59:59">
+                        <input type="hidden" id="start-time" name="start_time" value="00:00:00">
+                        <input type="hidden" id="end-time" name="end_time" value="23:59:59">
                         
                         <div class="calendar-container">
                             <h4>Select Date</h4>
                             <input type="date" id="session-date" name="date" min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; width: 100%;">
-                            <div style="margin-top: 1rem; padding: 0.75rem; background-color: #f8f9fa; border-radius: 5px; border-left: 3px solid #4a90e2;">
+                            
+                            <!-- Time selection for hourly bookings -->
+                            <div id="time-selection-container" style="margin-top: 1rem; display: none;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                    <div>
+                                        <label for="session-start-time" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Start Time *</label>
+                                        <input type="time" id="session-start-time" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; width: 100%;">
+                                    </div>
+                                    <div>
+                                        <label for="session-end-time" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">End Time *</label>
+                                        <input type="time" id="session-end-time" style="padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; width: 100%;">
+                                    </div>
+                                </div>
+                                <div id="time-error" style="margin-top: 0.5rem; color: #e74c3c; font-size: 0.85rem; display: none;"></div>
+                            </div>
+                            
+                            <!-- End date display for monthly bookings -->
+                            <div id="end-date-container" style="margin-top: 1rem; padding: 0.75rem; background-color: #f8f9fa; border-radius: 5px; border-left: 3px solid #4a90e2; display: none;">
                                 <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">Session End Date:</div>
                                 <div id="end-session-date-display" style="font-size: 1rem; font-weight: 600; color: #e74c3c;">{{ date('F j, Y', strtotime('+1 month')) }}</div>
                             </div>
@@ -886,7 +949,11 @@
                                 <span class="summary-label">Session Start Date:</span>
                                 <span class="summary-value" id="summary-date">{{ date('F j, Y') }}</span>
                             </div>
-                            <div class="summary-item">
+                            <div class="summary-item" id="summary-time-item" style="display: none;">
+                                <span class="summary-label">Time:</span>
+                                <span class="summary-value" id="summary-time"></span>
+                            </div>
+                            <div class="summary-item" id="summary-end-date-item" style="display: none;">
                                 <span class="summary-label">Session End Date:</span>
                                 <span class="summary-value" id="summary-end-date" style="color: #e74c3c; font-weight: 600;">{{ date('F j, Y', strtotime('+1 month')) }}</span>
                             </div>
@@ -1130,15 +1197,22 @@
                     document.getElementById('modal-tutor-name').textContent = `${tutor.first_name} ${tutor.last_name}`;
                     document.getElementById('modal-tutor-title').textContent = tutor.specialization || 'Tutor';
                     const hourlyRate = parseFloat(tutor.hourly_rate ?? tutor.session_rate ?? 0);
-                    const monthlyRate = tutor.session_rate;
+                    const monthlyRate = parseFloat(tutor.session_rate ?? 0);
+                    
+                    // Store rates globally for booking type toggle
+                    window.currentTutorRates = {
+                        hourly: hourlyRate,
+                        monthly: monthlyRate
+                    };
+                    
                     const modalRateEl = document.getElementById('modal-tutor-rate');
                     modalRateEl.innerHTML = `
                         <div>₱${hourlyRate.toFixed(2)}/hour</div>
-                        ${monthlyRate !== null && monthlyRate !== undefined ? `<div style="font-size: 0.9rem; color: #666;">₱${parseFloat(monthlyRate || 0).toFixed(2)}/month (Book a tutor)</div>` : ''}
+                        ${monthlyRate > 0 ? `<div style="font-size: 0.9rem; color: #666;">₱${monthlyRate.toFixed(2)}/month (Book a tutor)</div>` : ''}
                     `;
                     
                     document.getElementById('summary-tutor').textContent = `${tutor.first_name} ${tutor.last_name}`;
-                    document.getElementById('summary-rate').textContent = `₱${hourlyRate.toFixed(2)}/hour`;
+                    updateBookingRate('hourly'); // Initialize with hourly rate
 
                     // Initialize end session date display
                     const currentDate = new Date(document.getElementById('session-date').value);
@@ -1162,10 +1236,144 @@
             document.getElementById('confirm-booking').disabled = true;
         }
         
+        // Function to update booking rate based on booking type
+        function updateBookingRate(bookingType) {
+            if (!window.currentTutorRates) return;
+            
+            const rate = bookingType === 'monthly' ? window.currentTutorRates.monthly : window.currentTutorRates.hourly;
+            const rateLabel = bookingType === 'monthly' ? '/month' : '/hour';
+            
+            document.getElementById('summary-rate').textContent = `₱${rate.toFixed(2)}${rateLabel}`;
+            document.getElementById('booking-type').value = bookingType;
+            
+            const endDateContainer = document.getElementById('end-date-container');
+            const timeSelectionContainer = document.getElementById('time-selection-container');
+            const sessionDate = document.getElementById('session-date');
+            const date = new Date(sessionDate.value);
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            
+            // Update end date display for monthly bookings
+            const summaryEndDateItem = document.getElementById('summary-end-date-item');
+            const summaryTimeItem = document.getElementById('summary-time-item');
+            if (bookingType === 'monthly') {
+                const endDate = new Date(date);
+                endDate.setMonth(endDate.getMonth() + 1);
+                document.getElementById('end-session-date-display').textContent = endDate.toLocaleDateString('en-US', options);
+                document.getElementById('summary-end-date').textContent = endDate.toLocaleDateString('en-US', options);
+                endDateContainer.style.display = 'block';
+                timeSelectionContainer.style.display = 'none';
+                summaryEndDateItem.style.display = 'flex';
+                summaryTimeItem.style.display = 'none';
+                // Set default times for monthly bookings
+                document.getElementById('start-time').value = '00:00:00';
+                document.getElementById('end-time').value = '23:59:59';
+                // Remove required attribute for time fields
+                const startTimeInput = document.getElementById('session-start-time');
+                const endTimeInput = document.getElementById('session-end-time');
+                if (startTimeInput) startTimeInput.removeAttribute('required');
+                if (endTimeInput) endTimeInput.removeAttribute('required');
+            } else {
+                // For hourly, show time selection and hide end date display
+                document.getElementById('summary-end-date').textContent = date.toLocaleDateString('en-US', options);
+                endDateContainer.style.display = 'none';
+                timeSelectionContainer.style.display = 'block';
+                summaryEndDateItem.style.display = 'none';
+                summaryTimeItem.style.display = 'flex';
+                // Set default times for hourly bookings (e.g., 9:00 AM to 10:00 AM)
+                const startTimeInput = document.getElementById('session-start-time');
+                const endTimeInput = document.getElementById('session-end-time');
+                if (startTimeInput && endTimeInput) {
+                    if (!startTimeInput.value) startTimeInput.value = '09:00';
+                    if (!endTimeInput.value) endTimeInput.value = '10:00';
+                    // Add required attribute for time fields
+                    startTimeInput.setAttribute('required', 'required');
+                    endTimeInput.setAttribute('required', 'required');
+                    updateTimeFields();
+                    updateSummaryTime();
+                }
+            }
+        }
+        
+        // Function to update hidden time fields and validate
+        function updateTimeFields() {
+            const startTimeInput = document.getElementById('session-start-time');
+            const endTimeInput = document.getElementById('session-end-time');
+            const timeError = document.getElementById('time-error');
+            
+            if (startTimeInput && endTimeInput && startTimeInput.value && endTimeInput.value) {
+                const startTime = startTimeInput.value;
+                const endTime = endTimeInput.value;
+                
+                // Validate that end time is after start time
+                if (endTime <= startTime) {
+                    timeError.textContent = 'End time must be after start time';
+                    timeError.style.display = 'block';
+                    return false;
+                } else {
+                    timeError.style.display = 'none';
+                    // Update hidden fields
+                    document.getElementById('start-time').value = startTime + ':00';
+                    document.getElementById('end-time').value = endTime + ':00';
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Helper function to format time (HH:MM to 12-hour format)
+        function formatTime(time24) {
+            if (!time24) return '';
+            const [hours, minutes] = time24.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+        
+        // Function to update summary with time information
+        function updateSummaryTime() {
+            const bookingType = document.getElementById('booking-type')?.value;
+            const summaryTimeItem = document.getElementById('summary-time-item');
+            if (bookingType === 'hourly') {
+                const startTimeInput = document.getElementById('session-start-time');
+                const endTimeInput = document.getElementById('session-end-time');
+                if (startTimeInput && endTimeInput && startTimeInput.value && endTimeInput.value) {
+                    const startTime = startTimeInput.value;
+                    const endTime = endTimeInput.value;
+                    // Format time for display (e.g., "9:00 AM - 10:00 AM")
+                    const startFormatted = formatTime(startTime);
+                    const endFormatted = formatTime(endTime);
+                    const timeDisplay = document.getElementById('summary-time');
+                    if (timeDisplay) {
+                        timeDisplay.textContent = `${startFormatted} - ${endFormatted}`;
+                    }
+                    if (summaryTimeItem) {
+                        summaryTimeItem.style.display = 'flex';
+                    }
+                }
+            } else {
+                if (summaryTimeItem) {
+                    summaryTimeItem.style.display = 'none';
+                }
+            }
+        }
+        
         function initializeBookingModal() {
             const sessionTypeButtons = document.querySelectorAll('.session-type-toggle button');
+            const bookingTypeButtons = document.querySelectorAll('.booking-type-toggle button');
             const sessionDate = document.getElementById('session-date');
             const confirmBooking = document.getElementById('confirm-booking');
+            
+            // Booking type toggle
+            bookingTypeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    bookingTypeButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    const bookingType = this.getAttribute('data-booking-type');
+                    updateBookingRate(bookingType);
+                    validateForm();
+                });
+            });
             
             // Session type toggle
             sessionTypeButtons.forEach(button => {
@@ -1185,12 +1393,39 @@
                 validateForm();
             });
             
+            // Time input handlers for hourly bookings
+            const startTimeInput = document.getElementById('session-start-time');
+            const endTimeInput = document.getElementById('session-end-time');
+            
+            if (startTimeInput && endTimeInput) {
+                startTimeInput.addEventListener('change', function() {
+                    updateTimeFields();
+                    updateSummaryTime();
+                    validateForm();
+                });
+                
+                endTimeInput.addEventListener('change', function() {
+                    updateTimeFields();
+                    updateSummaryTime();
+                    validateForm();
+                });
+            }
+            
             function validateForm() {
                 const isSessionTypeSelected = document.querySelector('.session-type-toggle button.active') !== null;
                 const isDateSelected = sessionDate.value !== '';
                 const isTermsAccepted = document.getElementById('terms-checkbox').checked;
+                const bookingType = document.getElementById('booking-type').value;
                 
-                confirmBooking.disabled = !(isSessionTypeSelected && isDateSelected && isTermsAccepted);
+                let isValid = isSessionTypeSelected && isDateSelected && isTermsAccepted;
+                
+                // For hourly bookings, also validate time fields
+                if (bookingType === 'hourly') {
+                    const timeValid = updateTimeFields();
+                    isValid = isValid && timeValid;
+                }
+                
+                confirmBooking.disabled = !isValid;
             }
             
             // Add event listener to terms checkbox
@@ -1204,13 +1439,29 @@
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 document.getElementById('summary-date').textContent = date.toLocaleDateString('en-US', options);
                 
-                // Calculate end date (1 month from start date)
-                const endDate = new Date(date);
-                endDate.setMonth(endDate.getMonth() + 1);
-                document.getElementById('summary-end-date').textContent = endDate.toLocaleDateString('en-US', options);
+                // Get current booking type
+                const bookingType = document.getElementById('booking-type').value;
+                const endDateContainer = document.getElementById('end-date-container');
                 
-                // Update the end session date display below the date field
-                document.getElementById('end-session-date-display').textContent = endDate.toLocaleDateString('en-US', options);
+                const summaryEndDateItem = document.getElementById('summary-end-date-item');
+                const summaryTimeItem = document.getElementById('summary-time-item');
+                if (bookingType === 'monthly') {
+                    // Calculate end date (1 month from start date)
+                    const endDate = new Date(date);
+                    endDate.setMonth(endDate.getMonth() + 1);
+                    document.getElementById('summary-end-date').textContent = endDate.toLocaleDateString('en-US', options);
+                    document.getElementById('end-session-date-display').textContent = endDate.toLocaleDateString('en-US', options);
+                    endDateContainer.style.display = 'block';
+                    summaryEndDateItem.style.display = 'flex';
+                    summaryTimeItem.style.display = 'none';
+                } else {
+                    // For hourly, end date is same as start date and hide end date container
+                    document.getElementById('summary-end-date').textContent = date.toLocaleDateString('en-US', options);
+                    endDateContainer.style.display = 'none';
+                    summaryEndDateItem.style.display = 'none';
+                    summaryTimeItem.style.display = 'flex';
+                    updateSummaryTime();
+                }
             }
             
         }
