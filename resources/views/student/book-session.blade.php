@@ -300,6 +300,34 @@
         .star {
             color: #ffc107;
             font-size: 1.1rem;
+            margin: 0 1px;
+            display: inline-block;
+            position: relative;
+        }
+
+        .star.empty {
+            color: #e0e0e0;
+        }
+
+        .star.half {
+            position: relative;
+            color: #e0e0e0;
+        }
+
+        .star.half::before {
+            content: '\2605';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 50%;
+            overflow: hidden;
+            color: #ffc107;
+        }
+
+        .rating-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-left: 0.5rem;
         }
         
         .tutor-footer {
@@ -781,18 +809,34 @@
                             @php
                                 $hourlyRate = $tutor->hourly_rate ?? $tutor->session_rate ?? 0;
                                 $monthlyRate = $tutor->session_rate;
+                                $averageRating = round($tutor->reviews_avg_rating ?? 0, 1);
+                                $ratingCount = $tutor->reviews_count ?? 0;
+                                $filledStars = floor($averageRating);
+                                $hasHalfStar = ($averageRating - $filledStars) >= 0.5;
                             @endphp
                             <div class="tutor-rate">₱{{ number_format($hourlyRate, 2) }}/hour</div>
                             @if(!is_null($monthlyRate))
                                 <div class="tutor-rate-month" style="font-size: 0.9rem; color: #666;">₱{{ number_format($monthlyRate, 2) }}/month</div>
                             @endif
-                            <div class="tutor-rating">
-                                <span class="star">&#9733;</span>
-                                <span class="star">&#9733;</span>
-                                <span class="star">&#9733;</span>   
-                                <span class="star">&#9733;</span>
-                                <span class="star">&#9733;</span>
-                                <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">(12)</span>
+                            <div class="tutor-rating" aria-label="Tutor rating">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @php
+                                        $starClass = 'empty';
+                                        if ($i <= $filledStars) {
+                                            $starClass = 'filled';
+                                        } elseif ($i === $filledStars + 1 && $hasHalfStar) {
+                                            $starClass = 'half';
+                                        }
+                                    @endphp
+                                    <span class="star {{ $starClass }}">&#9733;</span>
+                                @endfor
+                                <span class="rating-text">
+                                    @if($ratingCount > 0)
+                                        {{ number_format($averageRating, 1) }} ({{ $ratingCount }})
+                                    @else
+                                        No reviews yet
+                                    @endif
+                                </span>
                             </div>
                             @if($tutor->specialization)
                                 <div class="tutor-specialties">
@@ -867,14 +911,7 @@
                         <div class="tutor-modal-info">
                             <div id="modal-tutor-name" style="font-size: 1.8rem; font-weight: 600;"></div>
                             <div id="modal-tutor-title" style="font-size: 1rem; color: #555; margin-bottom: 0.5rem;"></div>
-                            <div class="tutor-rating" style="margin-bottom: 0.75rem; display: flex; align-items: center;">
-                                <span class="star">&#9733;</span>
-                                <span class="star">&#9733;</span>
-                                <span class="star">&#9733;</span>
-                                <span class="star">&#9733;</span>
-                                <span class="star">&#9733;</span>
-                                <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">(12 reviews)</span>
-                            </div>
+                            <div class="tutor-rating" id="modal-rating" style="margin-bottom: 0.75rem; display: flex; align-items: center;"></div>
                             <div id="modal-tutor-rate" style="font-size: 1.1rem; font-weight: 600; color: #4a90e2;"></div>
                         </div>
                     </div>
@@ -1174,6 +1211,33 @@
             });
         }
         
+        function extractRatingData(tutor) {
+            const rawAverage = tutor.reviews_avg_rating ?? tutor.average_rating ?? 0;
+            const rawCount = tutor.reviews_count ?? tutor.rating_count ?? 0;
+            const average = Math.round((parseFloat(rawAverage) || 0) * 10) / 10;
+            const count = parseInt(rawCount, 10) || 0;
+            return { average, count };
+        }
+
+        function renderRatingStars(average, count) {
+            const filledStars = Math.floor(average);
+            const hasHalfStar = average - filledStars >= 0.5;
+            let starsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                let starClass = 'empty';
+                if (i <= filledStars) {
+                    starClass = 'filled';
+                } else if (i === filledStars + 1 && hasHalfStar) {
+                    starClass = 'half';
+                }
+                starsHtml += `<span class="star ${starClass}">&#9733;</span>`;
+            }
+            const ratingLabel = count > 0
+                ? `${average.toFixed(1)} (${count} review${count === 1 ? '' : 's'})`
+                : 'No reviews yet';
+            return `${starsHtml}<span class="rating-text">${ratingLabel}</span>`;
+        }
+
         function bookSession(tutorId) {
             const url = `/student/tutor/${tutorId}/details`;
             fetch(url)
@@ -1198,12 +1262,18 @@
                     document.getElementById('modal-tutor-title').textContent = tutor.specialization || 'Tutor';
                     const hourlyRate = parseFloat(tutor.hourly_rate ?? tutor.session_rate ?? 0);
                     const monthlyRate = parseFloat(tutor.session_rate ?? 0);
+                    const ratingData = extractRatingData(tutor);
                     
                     // Store rates globally for booking type toggle
                     window.currentTutorRates = {
                         hourly: hourlyRate,
                         monthly: monthlyRate
                     };
+
+                    const modalRatingEl = document.getElementById('modal-rating');
+                    if (modalRatingEl) {
+                        modalRatingEl.innerHTML = renderRatingStars(ratingData.average, ratingData.count);
+                    }
                     
                     const modalRateEl = document.getElementById('modal-tutor-rate');
                     modalRateEl.innerHTML = `
@@ -1569,6 +1639,8 @@
                 })
                 .then(tutor => {
                     const content = document.getElementById('tutor-details-content');
+                    const ratingData = extractRatingData(tutor);
+                    const ratingHtml = renderRatingStars(ratingData.average, ratingData.count);
                     
                     let avatarHtml;
                     if (tutor.profile_picture) {
@@ -1593,12 +1665,7 @@
                                 <div class="tutor-modal-name" style="font-size: 1.8rem; font-weight: 600;">${tutor.first_name} ${tutor.last_name}</div>
                                 <div class="tutor-modal-title" style="font-size: 1rem; color: #555; margin-bottom: 0.5rem;">${tutor.specialization || 'Tutor'}</div>
                                 <div class="tutor-rating" style="margin-bottom: 0.75rem; display: flex; align-items: center;">
-                                    <span class="star">&#9733;</span>
-                                    <span class="star">&#9733;</span>
-                                    <span class="star">&#9733;</span>
-                                    <span class="star">&#9733;</span>
-                                    <span class="star">&#9733;</span>
-                                    <span style="font-size: 0.9rem; color: #666; margin-left: 0.5rem;">(12 reviews)</span>
+                                    ${ratingHtml}
                                 </div>
                                 <div class="tutor-modal-rate" style="font-size: 1.1rem; font-weight: 600; color: #4a90e2;">
                                     <div>₱${parseFloat(tutor.hourly_rate ?? tutor.session_rate ?? 0).toFixed(2)}/hour</div>

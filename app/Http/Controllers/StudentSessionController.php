@@ -19,6 +19,8 @@ class StudentSessionController extends Controller
         // Only show approved tutors that are active
         $tutors = Tutor::where('registration_status', 'approved')
             ->where('is_active', true)
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->get();
         return view('student.book-session', compact('tutors'));
     }
@@ -212,7 +214,10 @@ class StudentSessionController extends Controller
     // Get tutor details for modal
     public function getTutorDetails($id)
     {
-        $tutor = Tutor::findOrFail($id);
+        $tutor = Tutor::where('id', $id)
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->firstOrFail();
         return response()->json($tutor);
     }
 
