@@ -108,7 +108,7 @@
                             <td>{{ $tutor->created_at->format('M d, Y') }}</td>
                             <td>
                                 <div style="display:flex;gap:8px;flex-wrap:wrap">
-                                    <button type="button" class="btn btn-view-cv" onclick="viewTutorDetails({{ $tutor->id }}, '{{ addslashes($tutor->getFullName()) }}', '{{ addslashes($tutor->email) }}', '{{ addslashes($tutor->tutor_id) }}', '{{ addslashes($tutor->specialization) }}', '{{ $tutor->session_rate }}', '{{ addslashes($tutor->phone ?? 'N/A') }}', '{{ addslashes($tutor->bio ?? 'N/A') }}', '{{ $tutor->cv ? asset('storage/' . $tutor->cv) : '' }}')">
+                                    <button type="button" class="btn btn-view-cv" onclick="viewTutorDetails({{ $tutor->id }}, '{{ addslashes($tutor->getFullName()) }}', '{{ addslashes($tutor->email) }}', '{{ addslashes($tutor->tutor_id) }}', '{{ addslashes($tutor->specialization) }}', '{{ $tutor->session_rate }}', '{{ addslashes($tutor->phone ?? 'N/A') }}', '{{ addslashes($tutor->bio ?? 'N/A') }}', '{{ $tutor->cv ? route('admin.tutors.cv', $tutor->id) : '' }}')">
                                         View Details
                                     </button>
                                     <form action="{{ route('admin.tutors.approve', $tutor->id) }}" method="POST" style="display:inline">

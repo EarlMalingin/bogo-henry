@@ -73,6 +73,7 @@ Route::middleware('web')->group(function () {
         Route::post('/admin/wallet/cash-ins/{id}/approve', [App\Http\Controllers\AdminWalletController::class, 'approveCashIn'])->name('admin.wallet.approve-cash-in');
         Route::post('/admin/wallet/cash-ins/{id}/reject', [App\Http\Controllers\AdminWalletController::class, 'rejectCashIn'])->name('admin.wallet.reject-cash-in');
         Route::post('/admin/wallet/cash-ins/{id}/upload-proof', [App\Http\Controllers\AdminWalletController::class, 'uploadPaymentProof'])->name('admin.wallet.upload-payment-proof');
+        Route::get('/admin/wallet/cash-ins/{id}/payment-proof', [App\Http\Controllers\AdminWalletController::class, 'viewPaymentProof'])->name('admin.wallet.view-payment-proof');
         Route::get('/admin/wallet/user-wallets', [App\Http\Controllers\AdminWalletController::class, 'userWallets'])->name('admin.wallet.user-wallets');
         Route::get('/admin/wallet/user-wallet/{userType}/{userId}', [App\Http\Controllers\AdminWalletController::class, 'showUserWallet'])->name('admin.wallet.user-wallet-detail');
         Route::post('/admin/wallet/manual-transaction', [App\Http\Controllers\AdminWalletController::class, 'manualTransaction'])->name('admin.wallet.manual-transaction');
@@ -87,6 +88,7 @@ Route::middleware('web')->group(function () {
         Route::get('/admin/pending-tutors', [AdminAuthController::class, 'pendingTutors'])->name('admin.pending-tutors');
         Route::post('/admin/tutors/{id}/approve', [AdminAuthController::class, 'approveTutor'])->name('admin.tutors.approve');
         Route::post('/admin/tutors/{id}/reject', [AdminAuthController::class, 'rejectTutor'])->name('admin.tutors.reject');
+        Route::get('/admin/tutors/{id}/cv', [AdminAuthController::class, 'downloadTutorCv'])->name('admin.tutors.cv');
         
         // Admin problem reports
         Route::get('/admin/problem-reports', [App\Http\Controllers\ProblemReportController::class, 'adminIndex'])->name('admin.problem-reports.index');
@@ -155,6 +157,7 @@ Route::middleware(['auth:student'])->group(function () {
     Route::get('/student/activities/{activity}', [App\Http\Controllers\StudentActivityController::class, 'show'])->name('student.activities.show');
     Route::post('/student/activities/{activity}/save-draft', [App\Http\Controllers\StudentActivityController::class, 'saveDraft'])->name('student.activities.save-draft');
     Route::post('/student/activities/{activity}/submit', [App\Http\Controllers\StudentActivityController::class, 'submit'])->name('student.activities.submit');
+    Route::get('/student/activities/{activity}/download/{attachment}', [App\Http\Controllers\StudentActivityController::class, 'downloadAttachment'])->name('student.activities.download-attachment');
     Route::get('/student/activities/stats', [App\Http\Controllers\StudentActivityController::class, 'getProgressStats'])->name('student.activities.stats');
     Route::get('/student/tutor/{tutor}/progress', [App\Http\Controllers\StudentActivityController::class, 'getTutorProgress'])->name('student.tutor.progress');
     

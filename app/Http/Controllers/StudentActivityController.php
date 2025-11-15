@@ -9,6 +9,7 @@ use App\Models\Tutor;
 use App\Models\Session;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class StudentActivityController extends Controller
 {
@@ -385,6 +386,52 @@ class StudentActivityController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Thank you for your rating!'
+        ]);
+    }
+
+    /**
+     * Download activity attachment
+     */
+    public function downloadAttachment(Activity $activity, $attachment)
+    {
+        $student = Auth::guard('student')->user();
+        
+        // Ensure the activity is assigned to this student
+        if ($activity->student_id !== $student->id) {
+            abort(403, 'Unauthorized access to this activity.');
+        }
+
+        // Decode the attachment path
+        $attachmentPath = base64_decode($attachment);
+        
+        if (!$attachmentPath || !in_array($attachmentPath, $activity->attachments ?? [])) {
+            abort(404, 'Attachment not found.');
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($attachmentPath)) {
+            abort(404, 'Attachment file not found.');
+        }
+
+        $filePath = Storage::disk('public')->path($attachmentPath);
+        $fileName = basename($attachmentPath);
+        
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'txt' => 'text/plain',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+        ];
+        
+        $contentType = $contentTypes[$extension] ?? 'application/octet-stream';
+
+        return response()->download($filePath, $fileName, [
+            'Content-Type' => $contentType,
         ]);
     }
 }

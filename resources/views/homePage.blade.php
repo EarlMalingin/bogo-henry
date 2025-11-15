@@ -130,7 +130,7 @@
     <header>
         <div class="navbar">
             <div class="logo">
-                <img src="{{asset('images/MentorHub.PNG')}}" alt="MentorHub Logo" class="logo-img" style="image-rendering: crisp-edges; width: auto; height: 80px;">
+                <img src="{{asset('images/MentorHub.png')}}" alt="MentorHub Logo" class="logo-img" style="image-rendering: crisp-edges; width: auto; height: 80px;">
             </div>
             
             <nav class="nav-links">

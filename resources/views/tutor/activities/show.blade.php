@@ -273,7 +273,7 @@
 
         .back-btn {
             margin-bottom: 1rem;
-            margin-top: 3rem;
+            margin-top: 1rem;
         }
 
         .no-submission {
@@ -307,44 +307,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <div class="navbar">
-            <a href="#" class="logo">
-                <img src="{{asset('images/MentorHub.png')}}" alt="MentorHub Logo" class="logo-img">
-            </a>
-            <button class="menu-toggle" id="menu-toggle">☰</button>
-            <nav class="nav-links" id="nav-links">
-                <a href="{{route('tutor.dashboard')}}">Dashboard</a>
-                <a href="{{route('tutor.bookings.index')}}">My Bookings</a>
-                <a href="{{route('tutor.my-sessions')}}" class="active">My Sessions</a>
-                <a href="#">Students</a>
-                <a href="#">Schedule</a>
-                
-            </nav>
-            <div class="profile-icon" id="profile-icon">
-                @auth('tutor')
-                    @if(Auth::guard('tutor')->user()->profile_picture)
-                        <img src="{{ asset('storage/' . Auth::guard('tutor')->user()->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
-                    @else
-                        {{ substr(Auth::guard('tutor')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('tutor')->user()->last_name, 0, 1) }}
-                    @endif
-                    <div class="dropdown-menu" id="dropdown-menu">
-                        <a href="{{ route('tutor.profile.edit') }}">My Profile</a>
-                        <a href="{{ route('tutor.settings') }}">Achievements</a>
-                        <a href="#">Report a Problem</a>
-                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                        <form id="logout-form" method="POST" action="{{ route('tutor.logout') }}" style="display: none;">
-                            @csrf
-                        </form>
-                    </div>
-                @else
-                    <a href="{{ route('login.tutor') }}" class="login-link">Login</a>
-                @endauth
-            </div>
-        </div>
-    </header>
-    
     <!-- Main Content -->
     <main>
         <div class="activity-container">
@@ -459,7 +421,7 @@
                             <!-- Grading Section -->
                             <div class="grading-section">
                                 <h3 style="margin-bottom: 1.5rem; color: #333;">Grade This Activity</h3>
-                                <form method="POST" action="{{ route('tutor.activities.grade', $activity) }}">
+                                <form id="grade-form" method="POST" action="{{ route('tutor.activities.grade', $activity) }}">
                                     @csrf
                                     <div class="grading-form">
                                         <div class="form-group">
@@ -479,7 +441,7 @@
                                                       placeholder="Provide feedback to the student...">{{ $submission->feedback ?? '' }}</textarea>
                                         </div>
                                         <div>
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary" id="submit-grade-btn">
                                                 <i class="fas fa-check"></i> Submit Grade
                                             </button>
                                         </div>
@@ -547,32 +509,86 @@
             </div>
         </div>
     </footer>
-    
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <div style="font-size: 3rem; color: #10b981; margin-bottom: 1rem;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2 style="color: #333; margin-bottom: 1rem;">Activity Graded Successfully!</h2>
+            <p style="color: #666; margin-bottom: 2rem;">The student has been notified of their grade.</p>
+            <button onclick="redirectToMySessions()" class="btn btn-primary" style="width: 100%;">
+                Go to My Sessions
+            </button>
+        </div>
+    </div>
+
+    <style>
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mobile menu toggle
-            const menuToggle = document.getElementById('menu-toggle');
-            const navLinks = document.getElementById('nav-links');
-            
-            menuToggle.addEventListener('click', function() {
-                navLinks.classList.toggle('active');
+        const gradeForm = document.getElementById('grade-form');
+        if (gradeForm) {
+            gradeForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const form = this;
+                const formData = new FormData(form);
+                const submitBtn = document.getElementById('submit-grade-btn');
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Grading...';
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success modal
+                        document.getElementById('successModal').style.display = 'flex';
+                    } else {
+                        throw new Error(data.message || 'Grading failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while grading. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> Submit Grade';
+                });
             });
-            
-            // Profile dropdown
-            const profileIcon = document.getElementById('profile-icon');
-            const dropdownMenu = document.getElementById('dropdown-menu');
-            
-            profileIcon.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdownMenu.classList.toggle('active');
-            });
-            
-            document.addEventListener('click', function() {
-                if (dropdownMenu.classList.contains('active')) {
-                    dropdownMenu.classList.remove('active');
-                }
-            });
-        });
+        }
+
+        function redirectToMySessions() {
+            window.location.href = "{{ route('tutor.my-sessions') }}";
+        }
     </script>
 </body>
 </html>

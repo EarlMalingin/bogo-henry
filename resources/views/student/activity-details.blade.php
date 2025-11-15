@@ -237,7 +237,7 @@
 
         .back-btn {
             margin-bottom: 1rem;
-            margin-top: 3rem;
+            margin-top: 1rem;
         }
 
         .progress-info {
@@ -381,42 +381,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <div class="navbar">
-            <a href="#" class="logo">
-                <img src="{{asset('images/MentorHub.png')}}" alt="MentorHub Logo" class="logo-img">
-            </a>
-            <button class="menu-toggle" id="menu-toggle">☰</button>
-            <nav class="nav-links" id="nav-links">
-                <a href="{{route('student.dashboard')}}">Dashboard</a>
-                <a href="{{route('student.book-session')}}">Tutors</a>
-                <a href="{{route('student.my-sessions')}}" class="active">Sessions</a>
-                <a href="#">Resources</a>
-            </nav>
-            <div class="profile-icon" id="profile-icon">
-                @auth('student')
-                    @if(Auth::guard('student')->user()->profile_picture)
-                        <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
-                    @else
-                        {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
-                    @endif
-                    <div class="dropdown-menu" id="dropdown-menu">
-                        <a href="{{ route('student.profile.edit') }}">My Profile</a>
-                        <a href="{{ route('student.settings') }}">Achievements</a>
-                        <a href="#">Report a Problem</a>
-                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                        <form id="logout-form" method="POST" action="{{ route('student.logout') }}" style="display: none;">
-                            @csrf
-                        </form>
-                    </div>
-                @else
-                    <a href="{{ route('login.student') }}" class="login-link">Login</a>
-                @endauth
-            </div>
-        </div>
-    </header>
-    
     <!-- Main Content -->
     <main>
         <div class="activity-container">
@@ -460,12 +424,36 @@
 
             @if($submission && $submission->status === 'graded')
                 <!-- Graded Results -->
-                <div class="progress-info">
-                    <i class="fas fa-check-circle progress-icon"></i>
-                    <div class="progress-text">
-                        Activity completed! Your score: {{ $submission->score }}/{{ $activity->total_points }} 
-                        ({{ round(($submission->score / $activity->total_points) * 100) }}%)
+                <div class="grading-section" style="background-color: #e8f5e9; border: 2px solid #4caf50; margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1.5rem; color: #2e7d32;">
+                        <i class="fas fa-check-circle" style="color: #4caf50; margin-right: 0.5rem;"></i>
+                        Activity Graded
+                    </h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $submission->score }}</div>
+                            <div style="color: #666; margin-top: 0.5rem;">Your Score</div>
+                        </div>
+                        <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $activity->total_points }}</div>
+                            <div style="color: #666; margin-top: 0.5rem;">Total Points</div>
+                        </div>
+                        <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ round(($submission->score / $activity->total_points) * 100) }}%</div>
+                            <div style="color: #666; margin-top: 0.5rem;">Percentage</div>
+                        </div>
                     </div>
+                    
+                    @if($submission->feedback)
+                        <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <h4 style="color: #333; margin-bottom: 1rem; display: flex; align-items: center;">
+                                <i class="fas fa-comment-alt" style="color: #4a90e2; margin-right: 0.5rem;"></i>
+                                Tutor's Feedback:
+                            </h4>
+                            <p style="color: #666; line-height: 1.8; font-size: 1rem; white-space: pre-wrap;">{{ $submission->feedback }}</p>
+                        </div>
+                    @endif
                 </div>
             @elseif($submission && $submission->status === 'submitted')
                 <!-- Submitted Status -->
@@ -485,53 +473,93 @@
                 </div>
             @endif
 
-            <!-- Main Form -->
-            <form id="activity-form" method="POST" action="{{ route('student.activities.save-draft', $activity) }}">
-                @csrf
-                
+            @if(!$submission || $submission->status !== 'graded')
+                <!-- Main Form -->
+                <form id="activity-form" method="POST" action="{{ route('student.activities.save-draft', $activity) }}">
+                    @csrf
+                    
+                    @if($activity->questions && count($activity->questions) > 0)
+                        <!-- Questions Section -->
+                        <div class="questions-section">
+                            <h2 style="margin-bottom: 2rem; color: #333;">Questions</h2>
+                            
+                            @foreach($activity->questions as $index => $question)
+                                <div class="question-item">
+                                    <div class="question-number">Question {{ $index + 1 }}</div>
+                                    <div class="question-text">{{ $question['question'] ?? $question }}</div>
+                                    
+                                    @if(isset($question['type']) && $question['type'] === 'multiple_choice')
+                                        <!-- Multiple Choice -->
+                                        @if(isset($question['options']))
+                                            @foreach($question['options'] as $optionIndex => $option)
+                                                <label style="display: block; margin-bottom: 0.5rem; cursor: pointer;">
+                                                    <input type="radio" 
+                                                           name="answers[{{ $index }}]" 
+                                                           value="{{ $optionIndex }}"
+                                                           {{ ($submission && isset($submission->answers[$index]) && $submission->answers[$index] == $optionIndex) ? 'checked' : '' }}
+                                                           style="margin-right: 0.5rem;">
+                                                    {{ $option }}
+                                                </label>
+                                            @endforeach
+                                        @endif
+                                    @else
+                                        <!-- Text Answer -->
+                                        <textarea name="answers[{{ $index }}]" 
+                                                  class="answer-input answer-textarea" 
+                                                  placeholder="Enter your answer here...">{{ $submission && isset($submission->answers[$index]) ? $submission->answers[$index] : '' }}</textarea>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                    
+                    <!-- Notes Section -->
+                    <div class="notes-section" style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem; color: #333;">Additional Notes (Optional)</h3>
+                        <textarea name="notes" 
+                                  class="answer-input answer-textarea" 
+                                  placeholder="Add any additional notes or comments here...">{{ $submission && $submission->notes ? $submission->notes : '' }}</textarea>
+                    </div>
+                </form>
+            @else
+                <!-- Show submitted answers when graded -->
                 @if($activity->questions && count($activity->questions) > 0)
-                    <!-- Questions Section -->
                     <div class="questions-section">
-                        <h2 style="margin-bottom: 2rem; color: #333;">Questions</h2>
+                        <h2 style="margin-bottom: 2rem; color: #333;">Your Answers</h2>
                         
                         @foreach($activity->questions as $index => $question)
                             <div class="question-item">
                                 <div class="question-number">Question {{ $index + 1 }}</div>
                                 <div class="question-text">{{ $question['question'] ?? $question }}</div>
                                 
-                                @if(isset($question['type']) && $question['type'] === 'multiple_choice')
-                                    <!-- Multiple Choice -->
-                                    @if(isset($question['options']))
-                                        @foreach($question['options'] as $optionIndex => $option)
-                                            <label style="display: block; margin-bottom: 0.5rem; cursor: pointer;">
-                                                <input type="radio" 
-                                                       name="answers[{{ $index }}]" 
-                                                       value="{{ $optionIndex }}"
-                                                       {{ ($submission && isset($submission->answers[$index]) && $submission->answers[$index] == $optionIndex) ? 'checked' : '' }}
-                                                       style="margin-right: 0.5rem;">
-                                                {{ $option }}
-                                            </label>
-                                        @endforeach
-                                    @endif
-                                @else
-                                    <!-- Text Answer -->
-                                    <textarea name="answers[{{ $index }}]" 
-                                              class="answer-input answer-textarea" 
-                                              placeholder="Enter your answer here...">{{ $submission && isset($submission->answers[$index]) ? $submission->answers[$index] : '' }}</textarea>
-                                @endif
+                                <div style="margin-top: 1rem; padding: 1rem; background-color: #f8f9fa; border-radius: 5px;">
+                                    <strong style="color: #333;">Your Answer:</strong>
+                                    <p style="color: #666; margin-top: 0.5rem; white-space: pre-wrap;">
+                                        @if(isset($question['type']) && $question['type'] === 'multiple_choice' && isset($question['options']))
+                                            @if($submission && isset($submission->answers[$index]))
+                                                {{ $question['options'][$submission->answers[$index]] ?? 'No answer selected' }}
+                                            @else
+                                                No answer provided
+                                            @endif
+                                        @else
+                                            {{ $submission && isset($submission->answers[$index]) ? $submission->answers[$index] : 'No answer provided' }}
+                                        @endif
+                                    </p>
+                                </div>
                             </div>
                         @endforeach
                     </div>
                 @endif
                 
-                <!-- Notes Section -->
-                <div class="notes-section" style="margin-top: 2rem;">
-                    <h3 style="margin-bottom: 1rem; color: #333;">Additional Notes (Optional)</h3>
-                    <textarea name="notes" 
-                              class="answer-input answer-textarea" 
-                              placeholder="Add any additional notes or comments here...">{{ $submission && $submission->notes ? $submission->notes : '' }}</textarea>
-                </div>
-            </form>
+                @if($submission && $submission->notes)
+                    <div class="notes-section" style="margin-top: 2rem;">
+                        <h3 style="margin-bottom: 1rem; color: #333;">Your Additional Notes</h3>
+                        <div style="padding: 1rem; background-color: #f8f9fa; border-radius: 5px;">
+                            <p style="color: #666; white-space: pre-wrap;">{{ $submission->notes }}</p>
+                        </div>
+                    </div>
+                @endif
+            @endif
 
             @if($activity->attachments && count($activity->attachments) > 0)
                 <!-- Tutor Attachments Section -->
@@ -545,7 +573,7 @@
                                 <div class="attachment-name">{{ basename($attachment) }}</div>
                                 <div class="attachment-size">Download file</div>
                             </div>
-                            <a href="{{ asset('storage/' . $attachment) }}" 
+                            <a href="{{ route('student.activities.download-attachment', ['activity' => $activity->id, 'attachment' => base64_encode($attachment)]) }}" 
                                class="download-btn" 
                                download>
                                 <i class="fas fa-download"></i> Download
@@ -637,29 +665,6 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Mobile menu toggle
-            const menuToggle = document.getElementById('menu-toggle');
-            const navLinks = document.getElementById('nav-links');
-            
-            menuToggle.addEventListener('click', function() {
-                navLinks.classList.toggle('active');
-            });
-            
-            // Profile dropdown
-            const profileIcon = document.getElementById('profile-icon');
-            const dropdownMenu = document.getElementById('dropdown-menu');
-            
-            profileIcon.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdownMenu.classList.toggle('active');
-            });
-            
-            document.addEventListener('click', function() {
-                if (dropdownMenu.classList.contains('active')) {
-                    dropdownMenu.classList.remove('active');
-                }
-            });
-
             // File upload functionality
             initializeFileUpload();
             
@@ -863,6 +868,7 @@
             // Placeholder for showing feedback modal
             alert('Feedback: {{ $submission->feedback ?? "No feedback available." }}');
         }
+
     </script>
 </body>
 </html>

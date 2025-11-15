@@ -154,15 +154,48 @@ class TutorActivityController extends Controller
             'feedback' => 'nullable|string|max:1000'
         ]);
 
-        $activity->update([
+        // Get the submission
+        $submission = $activity->submissions()->where('student_id', $activity->student_id)->first();
+        
+        if (!$submission || $submission->status !== 'submitted') {
+            return redirect()->route('tutor.activities.show', $activity)
+                ->with('error', 'No submitted activity found to grade.');
+        }
+
+        // Update the submission with grade and feedback
+        $submission->update([
             'score' => $request->score,
             'feedback' => $request->feedback,
             'status' => 'graded',
             'graded_at' => now()
         ]);
 
-        return redirect()->route('tutor.activities.show', $activity)
-            ->with('success', 'Activity graded successfully!');
+        // Also update activity status
+        $activity->update([
+            'status' => 'graded',
+            'graded_at' => now()
+        ]);
+
+        // Create notification for student
+        \App\Models\Notification::create([
+            'user_id' => $activity->student_id,
+            'user_type' => 'student',
+            'type' => 'activity_graded',
+            'title' => 'Activity Graded',
+            'message' => 'Your activity "' . $activity->title . '" has been graded. Score: ' . $request->score . '/' . $activity->total_points,
+        ]);
+
+        // If AJAX request, return JSON response
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Activity graded successfully! The student has been notified.',
+                'redirect' => route('tutor.my-sessions')
+            ]);
+        }
+
+        return redirect()->route('tutor.my-sessions')
+            ->with('success', 'Activity graded successfully! The student has been notified.');
     }
 
     // Get progress statistics
@@ -270,15 +303,18 @@ class TutorActivityController extends Controller
     {
         $tutor = Auth::guard('tutor')->user();
         
-        // Get current students (with active sessions)
+        // Get current students (with active sessions - accepted or pending)
+        // A student is "current" if they have at least one accepted or pending session
         $currentStudents = Student::whereHas('sessions', function($query) use ($tutor) {
             $query->where('tutor_id', $tutor->id)
-                  ->whereIn('status', ['accepted', 'completed']);
+                  ->whereIn('status', ['accepted', 'pending']);
         })->with(['sessions' => function($query) use ($tutor) {
-            $query->where('tutor_id', $tutor->id);
-        }])->get();
+            $query->where('tutor_id', $tutor->id)
+                  ->orderBy('date', 'desc')
+                  ->orderBy('start_time', 'desc');
+        }])->distinct()->get();
 
-        // Get past students (with completed sessions only)
+        // Get past students (with completed sessions only, and no active sessions)
         $pastStudents = Student::whereHas('sessions', function($query) use ($tutor) {
             $query->where('tutor_id', $tutor->id)
                   ->where('status', 'completed');
@@ -286,8 +322,10 @@ class TutorActivityController extends Controller
             $query->where('tutor_id', $tutor->id)
                   ->whereIn('status', ['accepted', 'pending']);
         })->with(['sessions' => function($query) use ($tutor) {
-            $query->where('tutor_id', $tutor->id);
-        }])->get();
+            $query->where('tutor_id', $tutor->id)
+                  ->orderBy('date', 'desc')
+                  ->orderBy('start_time', 'desc');
+        }])->distinct()->get();
 
         // Get rejected students (students whose sessions were rejected)
         $rejectedStudents = Student::whereHas('sessions', function($query) use ($tutor) {

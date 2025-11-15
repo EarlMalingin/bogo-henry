@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Student;
 use App\Models\Tutor;
 use App\Models\Session;
@@ -163,6 +164,41 @@ class AdminAuthController extends Controller
 
         return redirect()->route('admin.pending-tutors')
             ->with('success', 'Tutor registration rejected.');
+    }
+
+    /**
+     * Download or view tutor CV
+     */
+    public function downloadTutorCv($id)
+    {
+        $tutor = Tutor::findOrFail($id);
+
+        if (!$tutor->cv) {
+            abort(404, 'CV not found');
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($tutor->cv)) {
+            abort(404, 'CV file not found');
+        }
+
+        $filePath = Storage::disk('public')->path($tutor->cv);
+        $fileName = basename($tutor->cv);
+        
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+        
+        $contentType = $contentTypes[$extension] ?? 'application/octet-stream';
+
+        return response()->file($filePath, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
     }
 
     public function sessions(Request $request)

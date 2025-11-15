@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Models\Student;
@@ -175,23 +176,24 @@ class AdminWalletController extends Controller
 
         DB::beginTransaction();
         try {
-            // Refund the amount back to wallet
-            $transaction->wallet->addFunds($transaction->amount, 'refund', [
-                'original_transaction_id' => $transaction->id,
-                'rejection_reason' => $request->reason
-            ]);
-
             // Update transaction status
+            // Note: No refund needed since funds were never deducted during cash out request
             $transaction->update([
                 'status' => 'failed',
                 'processed_at' => now(),
                 'processed_by' => Auth::guard('admin')->id(),
-                'failure_reason' => $request->reason
+                'failure_reason' => $request->reason,
+                'metadata' => array_merge($transaction->metadata ?? [], [
+                    'admin_rejected' => true,
+                    'rejected_by' => Auth::guard('admin')->id(),
+                    'rejected_at' => now(),
+                    'rejection_reason' => $request->reason
+                ])
             ]);
 
             DB::commit();
 
-            return back()->with('success', 'Payout rejected and funds refunded.');
+            return back()->with('success', 'Payout rejected successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to reject payout: ' . $e->getMessage());
@@ -427,5 +429,41 @@ class AdminWalletController extends Controller
             DB::rollBack();
             return back()->with('error', 'Failed to upload payment proof: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * View payment proof for a cash-in transaction
+     */
+    public function viewPaymentProof($id)
+    {
+        $transaction = WalletTransaction::findOrFail($id);
+
+        if (!$transaction->payment_proof_path) {
+            abort(404, 'Payment proof not found');
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($transaction->payment_proof_path)) {
+            abort(404, 'Payment proof file not found');
+        }
+
+        $filePath = Storage::disk('public')->path($transaction->payment_proof_path);
+        $fileName = basename($transaction->payment_proof_path);
+        
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+        ];
+        
+        $contentType = $contentTypes[$extension] ?? 'image/jpeg';
+
+        return response()->file($filePath, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
     }
 }

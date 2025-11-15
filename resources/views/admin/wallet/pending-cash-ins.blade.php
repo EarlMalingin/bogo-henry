@@ -112,10 +112,10 @@
                                 @php
                                     // Check payment proof directly
                                     $hasProof = !empty($cashIn->payment_proof_path);
-                                    $proofUrl = $hasProof ? asset('storage/' . $cashIn->payment_proof_path) : null;
+                                    $proofUrl = $hasProof ? route('admin.wallet.view-payment-proof', $cashIn->id) : null;
                                 @endphp
                                 @if($hasProof && $proofUrl)
-                                    <button onclick="showPaymentProofModal('{{ $proofUrl }}', '{{ $cashIn->payment_proof_description ?? 'No description provided' }}')" class="btn btn-primary" style="font-size:12px;padding:4px 8px;">
+                                    <button onclick="showPaymentProofModal('{{ $proofUrl }}', '{{ addslashes($cashIn->payment_proof_description ?? 'No description provided') }}')" class="btn btn-primary" style="font-size:12px;padding:4px 8px;">
                                         <i class="fas fa-image"></i> View Proof
                                     </button>
                                 @else
