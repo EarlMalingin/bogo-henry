@@ -127,10 +127,12 @@ class TutorChat extends Component
             ->orderBy('created_at', 'asc')
             ->get()
             ->map(function($message) use ($currentTutor) {
+                // Get base URL for absolute URLs
+                $baseUrl = request()->getSchemeAndHttpHost();
+                
                 $fileUrl = null;
                 if ($message->file_path) {
                     // Use the current request URL to generate the correct file URL
-                    $baseUrl = request()->getSchemeAndHttpHost();
                     $fileUrl = $baseUrl . '/storage/' . $message->file_path;
                 }
                 
@@ -141,45 +143,26 @@ class TutorChat extends Component
                 // and the chat mate's profile picture for messages from the chat mate
                 if ($isFromCurrentUser) {
                     // Message from current tutor - show tutor's profile picture
-                    $displayAvatar = $currentTutor->profile_picture ? 
-                        asset('storage/' . $currentTutor->profile_picture) : 
-                        $currentTutor->getInitials();
-                    $displayHasProfilePicture = $currentTutor->profile_picture ? true : false;
+                    if ($currentTutor->profile_picture) {
+                        $displayAvatar = $baseUrl . route('tutor.profile.picture', [], false);
+                        $displayHasProfilePicture = true;
+                    } else {
+                        $displayAvatar = $currentTutor->getInitials();
+                        $displayHasProfilePicture = false;
+                    }
                 } else {
                     // Message from student - show student's profile picture
                     // Force a fresh load of the student data to ensure we get the latest profile picture
                     $studentId = $message->sender_id;
                     $student = Student::find($studentId);
                     
-                    // Debug: Check if we can load the student directly
-                    \Log::info('Direct student load check:', [
-                        'message_id' => $message->id,
-                        'sender_id' => $message->sender_id,
-                        'sender_type' => $message->sender_type,
-                        'student_loaded' => $student ? 'yes' : 'no',
-                        'student_class' => $student ? get_class($student) : 'null'
-                    ]);
-                    
-                    // Debug: Check what's in the student object
-                    \Log::info('Student data from direct load:', [
-                        'student_id' => $student ? $student->id : 'null',
-                        'student_name' => $student ? $student->getFullName() : 'null',
-                        'first_name' => $student ? $student->first_name : 'null',
-                        'last_name' => $student ? $student->last_name : 'null',
-                        'profile_picture' => $student ? $student->profile_picture : 'null',
-                        'getAvatar_result' => $student ? $student->getAvatar() : 'null',
-                        'getInitials_result' => $student ? $student->getInitials() : 'null'
-                    ]);
-                    
                     if ($student && $student->profile_picture) {
-                        $displayAvatar = asset('storage/' . $student->profile_picture) . '?t=' . time();
+                        $displayAvatar = $baseUrl . route('student.profile.picture.view', ['id' => $student->id], false);
                         $displayHasProfilePicture = true;
-                        \Log::info('Using student profile picture from direct load:', ['path' => $displayAvatar]);
                     } else {
                         // Get the actual student initials from the database
                         $displayAvatar = $student ? $student->getInitials() : 'S';
                         $displayHasProfilePicture = false;
-                        \Log::info('Using student initials from direct load:', ['initials' => $displayAvatar]);
                     }
                 }
                 

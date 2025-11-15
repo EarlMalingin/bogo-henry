@@ -563,7 +563,7 @@
                                 $tutor = Auth::guard('tutor')->user();
                             @endphp
                             @if($tutor->profile_picture)
-                                <img src="{{ asset('storage/' . $tutor->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                                <img src="{{ route('tutor.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
                                 {{ strtoupper(substr($tutor->first_name, 0, 1) . substr($tutor->last_name, 0, 1)) }}
                             @endif

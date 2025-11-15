@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use App\Models\Student;
+use App\Models\Tutor;
 
 class StudentProfileController extends Controller
 {
@@ -60,5 +62,104 @@ class StudentProfileController extends Controller
 
         return redirect()->route('student.profile.edit')
             ->with('success', 'Profile updated successfully');
+    }
+
+    public function profilePicture()
+    {
+        $student = Auth::guard('student')->user();
+
+        if (!$student->profile_picture) {
+            abort(404, 'Profile picture not found');
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($student->profile_picture)) {
+            abort(404, 'Profile picture file not found');
+        }
+
+        $filePath = Storage::disk('public')->path($student->profile_picture);
+        $fileName = basename($student->profile_picture);
+        
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+        ];
+        
+        $contentType = $contentTypes[$extension] ?? 'image/jpeg';
+
+        return response()->file($filePath, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
+    }
+
+    public function viewStudentPicture($id)
+    {
+        $student = Student::findOrFail($id);
+
+        if (!$student->profile_picture) {
+            abort(404, 'Profile picture not found');
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($student->profile_picture)) {
+            abort(404, 'Profile picture file not found');
+        }
+
+        $filePath = Storage::disk('public')->path($student->profile_picture);
+        $fileName = basename($student->profile_picture);
+        
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+        ];
+        
+        $contentType = $contentTypes[$extension] ?? 'image/jpeg';
+
+        return response()->file($filePath, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
+    }
+
+    public function viewTutorPicture($id)
+    {
+        $tutor = Tutor::findOrFail($id);
+
+        if (!$tutor->profile_picture) {
+            abort(404, 'Profile picture not found');
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($tutor->profile_picture)) {
+            abort(404, 'Profile picture file not found');
+        }
+
+        $filePath = Storage::disk('public')->path($tutor->profile_picture);
+        $fileName = basename($tutor->profile_picture);
+        
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+        ];
+        
+        $contentType = $contentTypes[$extension] ?? 'image/jpeg';
+
+        return response()->file($filePath, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
     }
 } 

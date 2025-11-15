@@ -513,7 +513,7 @@
                     <div class="profile-icon" id="profile-icon">
                         @auth('student')
                             @if(Auth::guard('student')->user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?v={{ file_exists(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) ? filemtime(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
+                                <img src="{{ route('student.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
                                 {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
                             @endif
@@ -561,19 +561,11 @@
                     <label for="profile_picture_input">
                         <div class="profile-picture-container">
                             @if($student->profile_picture)
-                                @php
-                                    $imagePath = 'storage/' . $student->profile_picture;
-                                    $fullPath = public_path($imagePath);
-                                    $fileExists = file_exists($fullPath);
-                                    $cacheBuster = $fileExists ? filemtime($fullPath) : time();
-                                @endphp
-                                <img src="{{ asset($imagePath) }}?v={{ $cacheBuster }}" alt="Profile Picture" class="profile-picture" 
+                                <img src="{{ route('student.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-picture" 
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                @if(!$fileExists)
-                                    <div style="background-color: #ff6b6b; color: white; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; font-size: 0.8rem; text-align: center; padding: 10px;">
-                                        Image file not found<br>Path: {{ $student->profile_picture }}
-                                    </div>
-                                @endif
+                                <div style="background-color: #ff6b6b; color: white; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; font-size: 0.8rem; text-align: center; padding: 10px;">
+                                    Image file not found
+                                </div>
                             @else
                                 <div style="background-color: #4a90e2; color: white; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: 600;">
                                     {{ substr($student->first_name, 0, 1) }}{{ substr($student->last_name, 0, 1) }}

@@ -678,7 +678,7 @@
                 <div class="profile-dropdown-container" style="position: relative;">
                     <div class="profile-icon" id="profile-icon">
                         @if($student->profile_picture)
-                            <img src="{{ asset('storage/' . $student->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                            <img src="{{ route('student.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                         @else
                             {{ strtoupper(substr($student->first_name, 0, 1) . substr($student->last_name, 0, 1)) }}
                         @endif

@@ -705,7 +705,7 @@
                     <div class="profile-icon" id="profile-icon">
                         @auth('student')
                             @if(Auth::guard('student')->user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                                <img src="{{ route('student.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
                                 {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
                             @endif
@@ -795,7 +795,7 @@
                         <div class="tutor-header">
                             <div class="tutor-avatar">
                                 @if($tutor->profile_picture)
-                                    <img src="{{ asset('storage/' . $tutor->profile_picture) }}" alt="{{ $tutor->first_name }} {{ $tutor->last_name }}">
+                                    <img src="{{ route('tutor.profile.picture.view', $tutor->id) }}" alt="{{ $tutor->first_name }} {{ $tutor->last_name }}">
                                 @else
                                     <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.5rem;">
                                         {{ substr($tutor->first_name, 0, 1) }}{{ substr($tutor->last_name, 0, 1) }}
@@ -1251,7 +1251,8 @@
 
                     const avatarContainer = document.querySelector('#booking-modal .tutor-modal-avatar');
                     if (tutor.profile_picture) {
-                        avatarContainer.innerHTML = `<img src="/storage/${tutor.profile_picture}" alt="${tutor.first_name}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">`;
+                        const tutorPicUrl = `/tutor/profile/picture/${tutor.id}`;
+                        avatarContainer.innerHTML = `<img src="${tutorPicUrl}" alt="${tutor.first_name}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">`;
                     } else {
                         avatarContainer.innerHTML = `<div style="width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 2.5rem;">
                                         ${tutor.first_name.charAt(0)}${tutor.last_name.charAt(0)}
@@ -1644,7 +1645,8 @@
                     
                     let avatarHtml;
                     if (tutor.profile_picture) {
-                        avatarHtml = `<img src="/storage/${tutor.profile_picture}" alt="${tutor.first_name}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                        const tutorPicUrl = `/tutor/profile/picture/${tutor.id}`;
+                        avatarHtml = `<img src="${tutorPicUrl}" alt="${tutor.first_name}" style="width: 100%; height: 100%; object-fit: cover;">`;
                     } else {
                         avatarHtml = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 2.5rem;">
                                         ${tutor.first_name.charAt(0)}${tutor.last_name.charAt(0)}

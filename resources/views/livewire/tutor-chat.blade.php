@@ -88,7 +88,8 @@
                         <div class="message {{ $message['sender_type'] === 'tutor' ? 'sent' : '' }}">
                                                     <div class="message-avatar">
                             @if($message['display_has_profile_picture'])
-                                <img src="{{ $message['display_avatar'] }}" alt="{{ $message['sender_name'] }}" class="avatar-image">
+                                <img src="{{ $message['display_avatar'] }}" alt="{{ $message['sender_name'] }}" class="avatar-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #4a90e2; color: white; font-weight: bold; border-radius: 50%;">{{ $message['sender_avatar'] }}</div>
                             @else
                                 {{ $message['display_avatar'] }}
                             @endif

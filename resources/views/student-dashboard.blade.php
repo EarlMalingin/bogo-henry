@@ -439,7 +439,7 @@
                     <div class="profile-icon" id="profile-icon">
                         @auth('student')
                             @if(Auth::guard('student')->user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?v={{ file_exists(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) ? filemtime(public_path('storage/' . Auth::guard('student')->user()->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
+                                <img src="{{ route('student.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
                                 {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
                             @endif
@@ -903,7 +903,7 @@
 
             let tutorProfilePicHtml = '';
             if (session.tutor && session.tutor.profile_picture) {
-                const profilePicUrl = `{{ asset('storage') }}/${session.tutor.profile_picture}`;
+                const profilePicUrl = `/tutor/profile/picture/${session.tutor.id}`;
                 tutorProfilePicHtml = `
                     <div class="tutor-profile-pic-container">
                         <img src="${profilePicUrl}" alt="Tutor Profile Picture" class="tutor-profile-pic">

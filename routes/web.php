@@ -113,6 +113,12 @@ Route::get('/reset-password', [App\Http\Controllers\PasswordResetController::cla
 
 Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'resetPassword'])->name('password.update');
 
+// Shared profile picture routes (accessible by both students and tutors)
+Route::middleware([\App\Http\Middleware\AllowStudentOrTutor::class])->group(function () {
+    Route::get('/tutor/profile/picture/{id}', [App\Http\Controllers\TutorProfileController::class, 'viewTutorPicture'])->name('tutor.profile.picture.view');
+    Route::get('/student/profile/picture/{id}', [App\Http\Controllers\StudentProfileController::class, 'viewStudentPicture'])->name('student.profile.picture.view');
+});
+
 // Protected student routes
 Route::middleware(['auth:student'])->group(function () {
     Route::get('/student/dashboard', function () {
@@ -135,6 +141,8 @@ Route::middleware(['auth:student'])->group(function () {
     Route::get('/student/profile/edit', [StudentProfileController::class, 'edit'])->name('student.profile.edit');
 
     Route::put('/student/profile/update', [StudentProfileController::class, 'update'])->name('student.profile.update');
+    
+    Route::get('/student/profile/picture', [StudentProfileController::class, 'profilePicture'])->name('student.profile.picture');
     
     Route::get('/student/settings', [App\Http\Controllers\StudentSettingsController::class, 'index'])->name('student.settings');
 
@@ -206,6 +214,7 @@ Route::middleware(['auth:tutor'])->group(function () {
 
     Route::get('/tutor/profile/edit', [App\Http\Controllers\TutorProfileController::class, 'edit'])->name('tutor.profile.edit');
     Route::put('/tutor/profile/update', [App\Http\Controllers\TutorProfileController::class, 'update'])->name('tutor.profile.update');
+    Route::get('/tutor/profile/picture', [App\Http\Controllers\TutorProfileController::class, 'profilePicture'])->name('tutor.profile.picture');
     
     Route::get('/tutor/settings', [App\Http\Controllers\TutorSettingsController::class, 'index'])->name('tutor.settings');
 

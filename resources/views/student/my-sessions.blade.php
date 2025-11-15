@@ -733,7 +733,7 @@
                     <div class="profile-icon" id="profile-icon">
                         @auth('student')
                             @if(Auth::guard('student')->user()->profile_picture)
-                                <img src="{{ asset('storage/' . Auth::guard('student')->user()->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                                <img src="{{ route('student.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
                                 {{ substr(Auth::guard('student')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('student')->user()->last_name, 0, 1) }}
                             @endif
@@ -807,7 +807,7 @@
                             <div class="tutor-header" onclick="viewTutorActivities({{ $tutor->id }})" style="cursor: pointer;">
                                 <div class="tutor-avatar">
                                     @if($tutor->profile_picture)
-                                        <img src="{{ asset('storage/' . $tutor->profile_picture) }}" alt="Tutor" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                        <img src="{{ route('tutor.profile.picture.view', $tutor->id) }}" alt="Tutor" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                                     @else
                                         {{ strtoupper(substr($tutor->first_name, 0, 1) . substr($tutor->last_name, 0, 1)) }}
                                     @endif

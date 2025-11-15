@@ -777,7 +777,7 @@
                 <div class="profile-dropdown-container" style="position: relative;">
                     <div class="profile-icon" id="profile-icon">
                         @if(Auth::guard('tutor')->user()->profile_picture)
-                            <img src="{{ asset('storage/' . Auth::guard('tutor')->user()->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                            <img src="{{ route('tutor.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                         @else
                             {{ strtoupper(substr(Auth::guard('tutor')->user()->first_name, 0, 1) . substr(Auth::guard('tutor')->user()->last_name, 0, 1)) }}
                         @endif
@@ -816,7 +816,11 @@
                     <label for="profile_picture_input">
                         <div class="profile-picture-container">
                             @if($tutor->profile_picture)
-                                <img src="{{ asset('storage/' . $tutor->profile_picture) }}?v={{ file_exists(public_path('storage/' . $tutor->profile_picture)) ? filemtime(public_path('storage/' . $tutor->profile_picture)) : time() }}" alt="Profile Picture" class="profile-picture">
+                                <img src="{{ route('tutor.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-picture" 
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="background-color: #ff6b6b; color: white; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; font-size: 0.8rem; text-align: center; padding: 10px;">
+                                    Image file not found
+                                </div>
                             @else
                                 <div style="background-color: #4a90e2; color: white; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: 600;">
                                     {{ substr($tutor->first_name, 0, 1) }}{{ substr($tutor->last_name, 0, 1) }}

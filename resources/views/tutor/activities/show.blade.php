@@ -359,7 +359,7 @@
                         <div class="student-info">
                             <div class="student-avatar">
                                 @if($activity->student->profile_picture)
-                                    <img src="{{ asset('storage/' . $activity->student->profile_picture) }}" alt="Student" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                    <img src="{{ route('student.profile.picture.view', $activity->student->id) }}" alt="Student" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                                 @else
                                     {{ strtoupper(substr($activity->student->first_name, 0, 1) . substr($activity->student->last_name, 0, 1)) }}
                                 @endif

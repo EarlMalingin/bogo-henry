@@ -485,13 +485,13 @@
                     <div class="profile-icon" id="profile-icon">
                         @if($userType === 'student')
                             @if($user->profile_picture)
-                                <img src="{{ asset('storage/' . $user->profile_picture) }}?v={{ file_exists(public_path('storage/' . $user->profile_picture)) ? filemtime(public_path('storage/' . $user->profile_picture)) : time() }}" alt="Profile Picture" class="profile-icon-img">
+                                <img src="{{ route('student.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
                                 {{ substr($user->first_name, 0, 1) }}{{ substr($user->last_name, 0, 1) }}
                             @endif
                         @else
                             @if($user->profile_picture)
-                                <img src="{{ asset('storage/' . $user->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                                <img src="{{ route('tutor.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                             @else
                                 {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
                             @endif

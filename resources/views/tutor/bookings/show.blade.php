@@ -710,7 +710,7 @@
                 <div class="profile-dropdown-container" style="position: relative;">
                     <div class="profile-icon" id="profile-icon">
                         @if($tutor->profile_picture)
-                            <img src="{{ asset('storage/' . $tutor->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                            <img src="{{ route('tutor.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
                         @else
                             {{ strtoupper(substr($tutor->first_name, 0, 1) . substr($tutor->last_name, 0, 1)) }}
                         @endif
@@ -735,7 +735,7 @@
                 <div class="student-info">
                     <div class="student-avatar">
                         @if($booking->student->profile_picture)
-                            <img src="{{ asset('storage/' . $booking->student->profile_picture) }}?{{ time() }}" alt="Student Profile Picture" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                            <img src="{{ route('student.profile.picture.view', $booking->student->id) }}" alt="Student Profile Picture" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                         @else
                             {{ substr($booking->student->first_name, 0, 1) }}{{ substr($booking->student->last_name, 0, 1) }}
                         @endif

@@ -125,27 +125,25 @@ class StudentChat extends Component
                 
                 // For display purposes, always show the current user's profile picture for their own messages
                 // and the chat mate's profile picture for messages from the chat mate
+                // Get base URL for absolute URLs
+                $baseUrl = request()->getSchemeAndHttpHost();
+                
                 if ($isFromCurrentUser) {
                     // Message from current student - show student's profile picture
-                    $displayAvatar = $currentStudent->profile_picture ? 
-                        asset('storage/' . $currentStudent->profile_picture) : 
-                        $currentStudent->getInitials();
-                    $displayHasProfilePicture = $currentStudent->profile_picture ? true : false;
+                    if ($currentStudent->profile_picture) {
+                        $displayAvatar = $baseUrl . route('student.profile.picture', [], false);
+                        $displayHasProfilePicture = true;
+                    } else {
+                        $displayAvatar = $currentStudent->getInitials();
+                        $displayHasProfilePicture = false;
+                    }
                 } else {
                     // Message from tutor - show tutor's profile picture
                     // Make sure we're getting the actual tutor data
                     $tutor = $message->sender;
                     
-                    // Debug: Check what's in the tutor sender object
-                    \Log::info('Tutor sender data:', [
-                        'tutor_id' => $tutor ? $tutor->id : 'null',
-                        'tutor_name' => $tutor ? $tutor->getFullName() : 'null',
-                        'profile_picture' => $tutor ? $tutor->profile_picture : 'null',
-                        'getAvatar_result' => $tutor ? $tutor->getAvatar() : 'null'
-                    ]);
-                    
                     if ($tutor && $tutor->profile_picture) {
-                        $displayAvatar = asset('storage/' . $tutor->profile_picture);
+                        $displayAvatar = $baseUrl . route('tutor.profile.picture.view', ['id' => $tutor->id], false);
                         $displayHasProfilePicture = true;
                     } else {
                         $displayAvatar = $tutor ? $tutor->getInitials() : 'T';
