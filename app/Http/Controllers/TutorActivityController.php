@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Activity;
+use App\Models\ActivitySubmission;
 use App\Models\Student;
 use App\Models\Session;
 use Illuminate\Support\Facades\Auth;
@@ -117,6 +118,18 @@ class TutorActivityController extends Controller
             'time_limit' => $request->time_limit,
         ]);
 
+        // Create notification for student
+        $student = \App\Models\Student::find($request->student_id);
+        if ($student) {
+            \App\Models\Notification::create([
+                'user_id' => $student->id,
+                'user_type' => 'student',
+                'type' => 'activity_posted',
+                'title' => 'New Activity Assigned',
+                'message' => $tutor->first_name . ' ' . $tutor->last_name . ' has assigned you a new activity: "' . $activity->title . '".' . ($activity->due_date ? ' Due date: ' . $activity->due_date->format('M d, Y') : ''),
+            ]);
+        }
+
         // Check achievements for tutor
         $achievementService = new \App\Services\AchievementNotificationService();
         $achievementService->checkAndNotifyProgress($tutor, 'tutor', 'activities_created');
@@ -203,18 +216,110 @@ class TutorActivityController extends Controller
     {
         $tutor = Auth::guard('tutor')->user();
         
+        // Get all activities for this tutor
+        $activities = Activity::where('tutor_id', $tutor->id)->get();
+        
+        // Total activities
+        $totalActivities = $activities->count();
+        
+        // Get all activity IDs
+        $activityIds = $activities->pluck('id')->toArray();
+        
+        // Get all submissions for these activities in one query
+        $submissions = \App\Models\ActivitySubmission::whereIn('activity_id', $activityIds)
+            ->get()
+            ->keyBy(function($submission) {
+                return $submission->activity_id . '_' . $submission->student_id;
+            });
+        
+        // Count completed activities (activities with graded submissions matching the activity's student_id)
+        $completedActivities = 0;
+        $pendingGrading = 0;
+        $overdueActivities = 0;
+        
+        foreach ($activities as $activity) {
+            // Get submission for this activity's student
+            $submissionKey = $activity->id . '_' . $activity->student_id;
+            $submission = $submissions->get($submissionKey);
+            
+            if ($submission) {
+                if ($submission->status === 'graded') {
+                    $completedActivities++;
+                } elseif ($submission->status === 'submitted') {
+                    $pendingGrading++;
+                }
+            }
+            
+            // Check if overdue
+            if ($activity->due_date && $activity->due_date->isPast()) {
+                if (!$submission || !in_array($submission->status, ['submitted', 'graded'])) {
+                    $overdueActivities++;
+                }
+            }
+        }
+        
         $stats = [
-            'total_activities' => Activity::where('tutor_id', $tutor->id)->count(),
-            'completed_activities' => Activity::where('tutor_id', $tutor->id)
-                ->whereIn('status', ['completed', 'graded'])->count(),
-            'pending_grading' => Activity::where('tutor_id', $tutor->id)
-                ->where('status', 'completed')->count(),
-            'overdue_activities' => Activity::where('tutor_id', $tutor->id)
-                ->where('due_date', '<', now())
-                ->whereNotIn('status', ['completed', 'graded'])->count(),
+            'total_activities' => $totalActivities,
+            'completed_activities' => $completedActivities,
+            'pending_grading' => $pendingGrading,
+            'overdue_activities' => $overdueActivities,
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * Download student submission attachment
+     */
+    public function downloadSubmissionAttachment(Activity $activity, $attachment)
+    {
+        $tutor = Auth::guard('tutor')->user();
+        
+        // Ensure the tutor owns this activity
+        if ($activity->tutor_id !== $tutor->id) {
+            abort(403, 'Unauthorized access to this activity.');
+        }
+
+        // Get the submission
+        $submission = $activity->submissions()->where('student_id', $activity->student_id)->first();
+        
+        if (!$submission) {
+            abort(404, 'Submission not found.');
+        }
+
+        // Decode the attachment path
+        $attachmentPath = base64_decode($attachment);
+        
+        if (!$attachmentPath || !in_array($attachmentPath, $submission->attachments ?? [])) {
+            abort(404, 'Attachment not found.');
+        }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($attachmentPath)) {
+            abort(404, 'Attachment file not found.');
+        }
+
+        $filePath = Storage::disk('public')->path($attachmentPath);
+        $fileName = basename($attachmentPath);
+        
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'txt' => 'text/plain',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+        ];
+        
+        $contentType = $contentTypes[$extension] ?? 'application/octet-stream';
+
+        return response()->download($filePath, $fileName, [
+            'Content-Type' => $contentType,
+        ]);
     }
 
     // Get student progress

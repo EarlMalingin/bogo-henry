@@ -354,11 +354,21 @@ main {
     border-radius: 50px;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: background-color 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
 }
 
 .session-actions button:hover {
-    background-color: #3a7ccc;
+    background-color: #357abd;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.35);
+}
+
+.session-actions button:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Quick Links */
@@ -381,7 +391,7 @@ main {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
     padding: 1.2rem 1rem;
     text-align: center;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
     color: #333;
     display: flex;
@@ -391,8 +401,13 @@ main {
 }
 
 .quick-link:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.quick-link:active {
+    transform: translateY(-3px) scale(0.98);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .quick-link-icon {

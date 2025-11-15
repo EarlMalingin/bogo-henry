@@ -397,7 +397,7 @@
                                             <div class="attachment-info">
                                                 <div class="attachment-name">{{ basename($attachment) }}</div>
                                             </div>
-                                            <a href="{{ asset('storage/' . $attachment) }}" 
+                                            <a href="{{ route('tutor.activities.download-submission', ['activity' => $activity->id, 'attachment' => base64_encode($attachment)]) }}" 
                                                class="download-btn" 
                                                download>
                                                 <i class="fas fa-download"></i> Download

@@ -790,29 +790,6 @@
                 </div>
             @endif
 
-            <!-- Statistics -->
-            <div class="stats-grid" id="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-tasks"></i></div>
-                    <div class="stat-value" id="total-activities">0</div>
-                    <div class="stat-label">Total Activities</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-paper-plane"></i></div>
-                    <div class="stat-value" id="submitted-activities">0</div>
-                    <div class="stat-label">Submitted</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-graduation-cap"></i></div>
-                    <div class="stat-value" id="graded-activities">0</div>
-                    <div class="stat-label">Graded</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                    <div class="stat-value" id="pending-activities">0</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-            </div>
 
             <!-- Tabs -->
             <div class="tabs">
@@ -1031,9 +1008,6 @@
             // Initialize currency display
             initializeCurrencyDisplay();
             loadCurrencyData();
-
-            // Load initial stats
-            loadStats();
         });
 
         // Currency display functionality
@@ -1083,19 +1057,6 @@
             window.location.href = `/student/tutor/${tutorId}/activities`;
         }
 
-        function loadStats() {
-            fetch('{{ route("student.activities.stats") }}')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('total-activities').textContent = data.total_activities;
-                    document.getElementById('submitted-activities').textContent = data.submitted_activities;
-                    document.getElementById('graded-activities').textContent = data.graded_activities;
-                    document.getElementById('pending-activities').textContent = data.pending_activities;
-                })
-                .catch(error => {
-                    console.error('Error loading stats:', error);
-                });
-        }
 
         function showFeedback(submissionId) {
             // Placeholder for showing feedback modal

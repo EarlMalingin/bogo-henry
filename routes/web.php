@@ -234,6 +234,7 @@ Route::middleware(['auth:tutor'])->group(function () {
     Route::post('/tutor/activities', [App\Http\Controllers\TutorActivityController::class, 'store'])->name('tutor.activities.store');
     Route::get('/tutor/activities/{activity}', [App\Http\Controllers\TutorActivityController::class, 'show'])->name('tutor.activities.show');
     Route::post('/tutor/activities/{activity}/grade', [App\Http\Controllers\TutorActivityController::class, 'grade'])->name('tutor.activities.grade');
+    Route::get('/tutor/activities/{activity}/download-submission/{attachment}', [App\Http\Controllers\TutorActivityController::class, 'downloadSubmissionAttachment'])->name('tutor.activities.download-submission');
     Route::get('/tutor/activities/stats', [App\Http\Controllers\TutorActivityController::class, 'getProgressStats'])->name('tutor.activities.stats');
     Route::get('/tutor/students', [App\Http\Controllers\TutorActivityController::class, 'students'])->name('tutor.students');
     Route::get('/tutor/students/{student}/progress', [App\Http\Controllers\TutorActivityController::class, 'getStudentProgress'])->name('tutor.students.progress');

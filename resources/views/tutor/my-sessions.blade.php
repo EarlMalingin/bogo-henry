@@ -698,40 +698,12 @@
                 </div>
             </div>
 
-            <!-- Statistics -->
-            <div class="stats-grid" id="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-tasks"></i></div>
-                    <div class="stat-value" id="total-activities">0</div>
-                    <div class="stat-label">Total Activities</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="stat-value" id="completed-activities">0</div>
-                    <div class="stat-label">Completed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                    <div class="stat-value" id="pending-grading">0</div>
-                    <div class="stat-label">Pending Grading</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                    <div class="stat-value" id="overdue-activities">0</div>
-                    <div class="stat-label">Overdue</div>
-                </div>
-            </div>
-
             <!-- Actions -->
             <div class="actions-bar">
                 <a href="{{ route('tutor.activities.create') }}" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
                     Create Activity
                 </a>
-                <button class="btn btn-secondary" onclick="refreshStats()">
-                    <i class="fas fa-sync-alt"></i>
-                    Refresh Stats
-                </button>
             </div>
 
             <!-- Activities -->
@@ -838,8 +810,6 @@
             initializeCurrencyDisplay();
             loadCurrencyData();
 
-            // Load initial stats
-            loadStats();
         });
 
         function viewWallet() {
@@ -871,23 +841,6 @@
                 });
         }
 
-        function loadStats() {
-            fetch('{{ route("tutor.activities.stats") }}')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('total-activities').textContent = data.total_activities;
-                    document.getElementById('completed-activities').textContent = data.completed_activities;
-                    document.getElementById('pending-grading').textContent = data.pending_grading;
-                    document.getElementById('overdue-activities').textContent = data.overdue_activities;
-                })
-                .catch(error => {
-                    console.error('Error loading stats:', error);
-                });
-        }
-
-        function refreshStats() {
-            loadStats();
-        }
 
         function gradeActivity(activityId) {
             // Redirect to grading page

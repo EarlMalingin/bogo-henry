@@ -640,7 +640,7 @@
                     <button type="button" class="btn btn-secondary" onclick="saveDraft()">
                         <i class="fas fa-save"></i> Save Draft
                     </button>
-                    <button type="button" class="btn btn-primary" onclick="submitActivity()">
+                    <button type="button" class="btn btn-primary" id="submit-activity-btn" onclick="submitActivity()">
                         <i class="fas fa-paper-plane"></i> Submit Activity
                     </button>
                 @endif
@@ -823,8 +823,23 @@
             });
         }
 
+        // Track submission state to prevent double submissions
+        let isSubmitting = false;
+
         function submitActivity() {
+            // Prevent double submission
+            if (isSubmitting) {
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-activity-btn');
+            
             if (confirm('Are you sure you want to submit this activity? You won\'t be able to make changes after submission.')) {
+                // Set submitting flag and disable button
+                isSubmitting = true;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                
                 const form = document.getElementById('activity-form');
                 const formData = new FormData(form);
                 
@@ -855,11 +870,19 @@
                         location.reload();
                     } else {
                         alert('Error submitting activity: ' + (data.message || 'Unknown error'));
+                        // Re-enable button on error
+                        isSubmitting = false;
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Activity';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     alert('Error submitting activity. Please try again.');
+                    // Re-enable button on error
+                    isSubmitting = false;
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Activity';
                 });
             }
         }

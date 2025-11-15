@@ -598,12 +598,16 @@
             <div id="notifications-list">
                 @forelse($notifications as $notification)
                     <div class="notification-card {{ !$notification->is_read ? 'unread' : '' }}" data-id="{{ $notification->id }}">
-                        <div class="notification-icon alert">
+                        <div class="notification-icon {{ $notification->type === 'activity_submitted' ? 'booking' : ($notification->type === 'activity_posted' ? 'activity' : ($notification->type === 'payment_received' ? 'payment' : ($notification->type === 'booking_request' ? 'booking' : 'alert'))) }}">
                             @if($notification->type === 'problem_report_response')
                                 <i class="fas fa-exclamation-circle"></i>
                             @elseif($notification->type === 'booking_request')
                                 <i class="fas fa-calendar-check"></i>
                             @elseif($notification->type === 'assignment_submitted')
+                                <i class="fas fa-tasks"></i>
+                            @elseif($notification->type === 'activity_submitted')
+                                <i class="fas fa-paper-plane"></i>
+                            @elseif($notification->type === 'activity_posted')
                                 <i class="fas fa-tasks"></i>
                             @elseif($notification->type === 'payment_received')
                                 <i class="fas fa-money-bill-wave"></i>

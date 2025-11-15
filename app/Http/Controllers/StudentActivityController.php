@@ -182,6 +182,15 @@ class StudentActivityController extends Controller
             abort(403);
         }
 
+        // Check if already submitted
+        $existingSubmission = $activity->studentSubmission($student->id);
+        if ($existingSubmission && in_array($existingSubmission->status, ['submitted', 'graded'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This activity has already been submitted. You cannot submit it again.'
+            ], 400);
+        }
+
         $request->validate([
             'answers' => 'nullable|array',
             'notes' => 'nullable|string|max:1000',
@@ -191,12 +200,13 @@ class StudentActivityController extends Controller
             'student_attachments.*' => 'file|mimes:pdf,doc,docx,txt,jpg,jpeg,png|max:10240'
         ]);
 
-        $submission = $activity->studentSubmission($student->id);
+        $submission = $existingSubmission;
         if (!$submission) {
             $submission = new ActivitySubmission([
                 'activity_id' => $activity->id,
                 'student_id' => $student->id
             ]);
+            $submission->save();
         }
 
         // Handle file uploads
@@ -249,9 +259,20 @@ class StudentActivityController extends Controller
         // Update activity status
         $activity->update(['status' => 'completed']);
 
+        // Create notification for tutor
+        $tutor = $activity->tutor;
+        if ($tutor) {
+            \App\Models\Notification::create([
+                'user_id' => $tutor->id,
+                'user_type' => 'tutor',
+                'type' => 'activity_submitted',
+                'title' => 'Activity Submitted',
+                'message' => $student->first_name . ' ' . $student->last_name . ' has submitted the activity "' . $activity->title . '".',
+            ]);
+        }
+
         // Check achievements for student
         $achievementService = new \App\Services\AchievementNotificationService();
-        $student = Auth::guard('student')->user();
         $achievementService->checkAndNotifyProgress($student, 'student', 'activities_submitted');
 
         return response()->json(['success' => true, 'message' => 'Activity submitted successfully!']);
@@ -262,20 +283,53 @@ class StudentActivityController extends Controller
     {
         $student = Auth::guard('student')->user();
         
+        // Get all activities assigned to this student
+        $activities = Activity::where('student_id', $student->id)->get();
+        
+        // Total activities
+        $totalActivities = $activities->count();
+        
+        // Get all activity IDs
+        $activityIds = $activities->pluck('id')->toArray();
+        
+        // Get all submissions for these activities and this student in one query
+        $submissions = ActivitySubmission::whereIn('activity_id', $activityIds)
+            ->where('student_id', $student->id)
+            ->get()
+            ->keyBy('activity_id');
+        
+        // Count submitted and graded activities
+        $submittedActivities = 0;
+        $gradedActivities = 0;
+        $pendingActivities = 0;
+        
+        foreach ($activities as $activity) {
+            // Get submission for this activity
+            $submission = $submissions->get($activity->id);
+            
+            if ($submission) {
+                if ($submission->status === 'graded') {
+                    $gradedActivities++;
+                } elseif ($submission->status === 'submitted') {
+                    $submittedActivities++;
+                }
+            } else {
+                // No submission means pending
+                $pendingActivities++;
+            }
+        }
+        
+        // Average score from graded submissions
+        $averageScore = ActivitySubmission::where('student_id', $student->id)
+            ->where('status', 'graded')
+            ->avg('score') ?? 0;
+        
         $stats = [
-            'total_activities' => Activity::where('student_id', $student->id)->count(),
-            'submitted_activities' => ActivitySubmission::where('student_id', $student->id)
-                ->where('status', 'submitted')->count(),
-            'graded_activities' => ActivitySubmission::where('student_id', $student->id)
-                ->where('status', 'graded')->count(),
-            'pending_activities' => Activity::where('student_id', $student->id)
-                ->where('status', 'sent')
-                ->whereDoesntHave('submissions', function($query) use ($student) {
-                    $query->where('student_id', $student->id)->where('status', 'submitted');
-                })->count(),
-            'average_score' => ActivitySubmission::where('student_id', $student->id)
-                ->where('status', 'graded')
-                ->avg('score') ?? 0,
+            'total_activities' => $totalActivities,
+            'submitted_activities' => $submittedActivities,
+            'graded_activities' => $gradedActivities,
+            'pending_activities' => $pendingActivities,
+            'average_score' => round($averageScore, 2),
         ];
 
         return response()->json($stats);

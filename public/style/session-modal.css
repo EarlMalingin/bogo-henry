@@ -85,12 +85,14 @@
     font-size: 14px;
     font-weight: 500;
     border: none;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     min-width: 120px;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .session-modal-footer button i {
@@ -104,8 +106,8 @@
 
 #modal-message-btn:hover {
     background-color: #1e5bb8;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(45, 125, 210, 0.3);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(45, 125, 210, 0.35);
 }
 
 #modal-view-booking-btn {
@@ -115,8 +117,8 @@
 
 #modal-view-booking-btn:hover {
     background-color: #218838;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.35);
 }
 
 #modal-close-btn {
@@ -126,12 +128,13 @@
 
 #modal-close-btn:hover {
     background-color: #5a6268;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(108, 117, 125, 0.35);
 }
 
 .session-modal-footer button:active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.98);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .status-badge {

@@ -139,7 +139,9 @@
             font-size: 1rem;
             font-weight: 600;
             color: white;
-            transition: opacity 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
 
         #modal-footer #modal-close-btn {
@@ -148,9 +150,26 @@
             margin-left: 0.5rem;
         }
 
+        #modal-footer #modal-close-btn:hover {
+            background-color: #5a6268;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.35);
+        }
+
         #modal-footer #modal-message-btn {
             background-color: #4a90e2;
             color: white;
+        }
+
+        #modal-footer #modal-message-btn:hover {
+            background-color: #357abd;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.35);
+        }
+
+        #modal-footer button:active {
+            transform: translateY(0) scale(0.98);
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .logo {
@@ -318,11 +337,21 @@
             border-radius: 50px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
         
         .btn-secondary:hover {
             background-color: #f5f5f5;
+            border-color: #bbb;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0) scale(0.98);
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .btn-primary {
@@ -333,11 +362,21 @@
             border-radius: 50px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(74, 144, 226, 0.2);
         }
         
         .btn-primary:hover {
-            background-color: #3a7ccc;
+            background-color: #357abd;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         /* Unread notification styling */
@@ -352,11 +391,12 @@
         
         .activity-item {
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .activity-item:hover {
             background-color: #f8f9fa;
+            transform: translateX(4px);
         }
         
         .activity-message {
@@ -895,9 +935,18 @@
 
             const closeBtn = modal.querySelector('.session-modal-close-btn');
             const closeFooterBtn = modal.querySelector('#modal-close-btn');
+            const messageBtn = modal.querySelector('#modal-message-btn');
 
             if(closeBtn) closeBtn.onclick = () => modal.style.display = 'none';
             if(closeFooterBtn) closeFooterBtn.onclick = () => modal.style.display = 'none';
+            
+            if(messageBtn && session.tutor) {
+                messageBtn.onclick = () => {
+                    window.location.href = `{{ route('student.messages') }}?tutor_id=${session.tutor.id}`;
+                };
+            } else if(messageBtn) {
+                messageBtn.style.display = 'none';
+            }
             
             window.onclick = (event) => {
                 if (event.target == modal) {
