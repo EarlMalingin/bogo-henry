@@ -540,14 +540,45 @@
             console.log('Current user type:', window.currentUserType);
             console.log('Window location:', window.location.href);
             
-            // Check if socket client is available
+            // Check if socket client is available and ensure it's connected
             if (window.chatSocket) {
                 console.log('Socket client found:', window.chatSocket);
                 console.log('Socket connected:', window.chatSocket.socket?.connected);
                 console.log('Socket ID:', window.chatSocket.socket?.id);
+                
+                // If socket exists but not connected, try to connect
+                if (!window.chatSocket.isConnected && !window.chatSocket.socket?.connected) {
+                    console.log('Socket not connected, attempting to connect...');
+                    try {
+                        window.chatSocket.connect();
+                    } catch (e) {
+                        console.error('Error connecting socket:', e);
+                    }
+                }
             } else {
-                console.log('Socket client NOT found - this is the problem!');
+                console.log('Socket client NOT found - initializing...');
+                // Initialize socket client if it doesn't exist
+                if (typeof ChatSocket !== 'undefined') {
+                    window.chatSocket = new ChatSocket();
+                    window.chatSocket.connect();
+                    console.log('Socket client initialized');
+                } else {
+                    console.error('ChatSocket class not found - socket-client.js may not be loaded');
+                }
             }
+            
+            // Listen for socket ready event
+            document.addEventListener('socket:ready', (event) => {
+                console.log('=== SOCKET READY EVENT RECEIVED ===');
+                console.log('Socket is now ready for calls');
+            });
+            
+            // Listen for socket errors
+            document.addEventListener('socket:error', (event) => {
+                console.error('=== SOCKET ERROR EVENT ===');
+                console.error('Error:', event.detail);
+                console.error('Please check if socket server is running on port 3001');
+            });
             
             // Listen for incoming calls (only for receivers)
             Livewire.on('callIncoming', (data) => {
@@ -740,8 +771,23 @@
             console.log('Current user type:', window.currentUserType);
             const data = event.detail;
             
+            // Convert IDs to strings for comparison (in case one is number and other is string)
+            const receiverId = String(data.receiverId || '');
+            const currentUserId = String(window.currentUserId || '');
+            const receiverType = String(data.receiverType || '').toLowerCase();
+            const currentUserType = String(window.currentUserType || '').toLowerCase();
+            
+            console.log('Comparison:', {
+                receiverId: receiverId,
+                currentUserId: currentUserId,
+                receiverType: receiverType,
+                currentUserType: currentUserType,
+                idMatch: receiverId === currentUserId,
+                typeMatch: receiverType === currentUserType
+            });
+            
             // Show incoming call only if this user+role is the receiver
-            if (data.receiverId == window.currentUserId && data.receiverType == window.currentUserType) {
+            if (receiverId === currentUserId && receiverType === currentUserType) {
                 console.log('Showing incoming call modal for user:', window.currentUserId);
                 console.log('Call data:', data);
                 // Update the CallManager component with the incoming call data
@@ -749,6 +795,8 @@
                 showIncomingCallModal(data);
             } else {
                 console.log('Incoming call not targeted at this user/role, ignoring');
+                console.log('Expected receiverId:', receiverId, 'Current userId:', currentUserId);
+                console.log('Expected receiverType:', receiverType, 'Current userType:', currentUserType);
             }
         });
 
@@ -758,13 +806,21 @@
             console.log('Debug event detail:', event.detail);
             const data = event.detail;
             
+            // Convert IDs to strings for comparison
+            const receiverId = String(data.receiverId || '');
+            const currentUserId = String(window.currentUserId || '');
+            const receiverType = String(data.receiverType || '').toLowerCase();
+            const currentUserType = String(window.currentUserType || '').toLowerCase();
+            
             // Only handle if this is actually for us
-            if (data.receiverId == window.currentUserId && data.receiverType == window.currentUserType) {
+            if (receiverId === currentUserId && receiverType === currentUserType) {
                 console.log('This debug call is for us, handling as incoming call');
                 @this.call('handleIncomingCall', data);
                 showIncomingCallModal(data);
             } else {
                 console.log('This debug call is not for us, ignoring');
+                console.log('Expected receiverId:', receiverId, 'Current userId:', currentUserId);
+                console.log('Expected receiverType:', receiverType, 'Current userType:', currentUserType);
             }
         });
 
@@ -1969,18 +2025,37 @@
             console.log('Data type:', typeof data);
             console.log('Is array:', Array.isArray(data));
             
-            if (Array.isArray(data) && data.length > 0) {
+            // Handle array data (Livewire sometimes passes arrays)
+            if (Array.isArray(data)) {
+                if (data.length > 0) {
                 data = data[0]; // Extract first element if it's an array
                 console.log('Extracted data from array:', data);
+                } else {
+                    console.error('Empty array received in sendCallToSocket');
+                    return;
+                }
+            }
+            
+            // Handle nested data structures
+            if (data && typeof data === 'object' && data.data) {
+                data = data.data;
+                console.log('Extracted nested data:', data);
             }
             
             console.log('Processed data:', data);
+            console.log('Data keys:', Object.keys(data || {}));
             console.log('window.currentUserType:', window.currentUserType);
             
             // Validate required fields
+            if (!data || typeof data !== 'object') {
+                console.error('Invalid data received:', data);
+                return;
+            }
+            
             if (!data.roomId) {
                 console.error('Missing roomId in call data');
                 console.error('Data object:', data);
+                console.error('Available keys:', Object.keys(data));
                 return;
             }
             if (!data.callType) {
@@ -2003,11 +2078,26 @@
             const emitCall = () => {
                 const sock = window.chatSocket ? window.chatSocket.socket : null;
                 if (!sock || !sock.connected) {
+                    console.log('Socket not ready for emit:', {
+                        socketExists: !!sock,
+                        isConnected: sock ? sock.connected : false,
+                        socketId: sock?.id
+                    });
                     return false;
                 }
+                
+                console.log('=== EMITTING CALL TO SOCKET ===');
+                console.log('Call data:', callData);
+                console.log('Socket ID:', sock.id);
+                
+                try {
                 sock.emit('call_initiated', callData);
-                console.log('Call notification sent to Socket.IO successfully');
+                    console.log('✅ Call notification sent to Socket.IO successfully');
                 return true;
+                } catch (error) {
+                    console.error('❌ Error emitting call:', error);
+                    return false;
+                }
             };
 
             // Send call notification to the specific receiver
@@ -2018,29 +2108,76 @@
                 callerId: data.callerId,
                 callerName: data.callerName || 'Unknown Caller',
                 receiverId: data.receiverId,
-                callerType: window.currentUserType || 'tutor',
+                callerType: data.callerType || window.currentUserType || 'tutor', // Use data.callerType from CallManager
                 receiverType: data.receiverType || 'student' // Default to student if not specified
             };
             
             console.log('Final call data being sent to Socket.IO:', callData);
+            console.log('Socket connection status:', {
+                socketExists: !!globalSocket,
+                isConnected: globalSocket ? globalSocket.connected : false,
+                chatSocketExists: !!window.chatSocket,
+                chatSocketConnected: window.chatSocket ? window.chatSocket.isConnected : false
+            });
             
+            // Check socket connection status
             const socketReady = globalSocket && globalSocket.connected;
+            
             if (!socketReady) {
                 console.warn('Socket not connected yet. Will retry to emit call.');
-                if (window.chatSocket && !window.chatSocket.isConnected) {
-                    try { window.chatSocket.connect(); } catch (e) {}
+                
+                // Try to initialize socket if it doesn't exist
+                if (!window.chatSocket) {
+                    console.log('Socket client not found, initializing...');
+                    if (typeof ChatSocket !== 'undefined') {
+                        window.chatSocket = new ChatSocket();
+                        window.chatSocket.connect();
+                    } else {
+                        console.error('ChatSocket class not available');
+                        alert('Socket client not loaded. Please refresh the page.');
+                        return;
+                    }
                 }
-                let retries = 20; // ~5 seconds total
+                
+                // Try to connect if not connected
+                if (!window.chatSocket.isConnected && !window.chatSocket.socket?.connected) {
+                    try { 
+                        console.log('Attempting to connect socket...');
+                        window.chatSocket.connect();
+                    } catch (e) {
+                        console.error('Error connecting socket:', e);
+                    }
+                }
+                
+                // Wait for connection with retries
+                let retries = 40; // ~10 seconds total (more time for connection)
                 const interval = setInterval(() => {
-                    if (emitCall() || --retries <= 0) {
+                    const sock = window.chatSocket ? window.chatSocket.socket : null;
+                    const isConnected = sock && sock.connected;
+                    
+                    console.log(`Retry ${40 - retries + 1}/${40}: Socket connected = ${isConnected}`);
+                    
+                    if (isConnected && emitCall()) {
+                        console.log('Call sent successfully after retry');
                         clearInterval(interval);
-                        if (retries <= 0) {
-                            console.error('Failed to send call: socket never connected.');
-                        }
+                    } else if (--retries <= 0) {
+                        clearInterval(interval);
+                        console.error('Failed to send call: socket never connected after all retries.');
+                        console.error('Socket status:', {
+                            chatSocketExists: !!window.chatSocket,
+                            socketExists: !!sock,
+                            isConnected: isConnected,
+                            socketId: sock?.id
+                        });
+                        alert('Unable to connect to call server. Please check:\n1. Socket server is running\n2. No firewall blocking port 3001\n3. Refresh the page and try again');
                     }
                 }, 250);
             } else {
-                emitCall();
+                console.log('Socket is ready, sending call immediately');
+                const result = emitCall();
+                if (!result) {
+                    console.error('Failed to emit call even though socket appears connected');
+                }
             }
         }
 

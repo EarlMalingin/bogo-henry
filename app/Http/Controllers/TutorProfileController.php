@@ -35,27 +35,10 @@ class TutorProfileController extends Controller
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
-            // Use the disk specified in .env, or default to 'public'
-            $diskName = env('FILESYSTEM_DISK', 'public');
-            
             if ($tutor->profile_picture) {
-                // Try to delete from both disks
-                try {
-                    Storage::disk('public')->delete($tutor->profile_picture);
-                } catch (\Exception $e) {
-                    // Ignore if file doesn't exist
-                }
-                if ($diskName !== 'public') {
-                    try {
-                        Storage::disk($diskName)->delete($tutor->profile_picture);
-                    } catch (\Exception $e) {
-                        // Ignore if disk doesn't exist or file doesn't exist
-                    }
-                }
+                Storage::disk('public')->delete($tutor->profile_picture);
             }
-            
-            // Store in the configured disk
-            $path = $request->file('profile_picture')->store('profile-pictures', $diskName);
+            $path = $request->file('profile_picture')->store('profile-pictures', 'public');
             $tutor->profile_picture = $path;
         }
 
@@ -119,55 +102,35 @@ class TutorProfileController extends Controller
 
     public function viewTutorPicture($id)
     {
-        try {
-            $tutor = Tutor::findOrFail($id);
+        $tutor = Tutor::findOrFail($id);
 
-            if (!$tutor->profile_picture) {
-                abort(404, 'Profile picture not found');
-            }
-
-            $filePath = null;
-            
-            // Try Hostinger path first (direct file access)
-            $hostingerPath = '/home/u394503238/domains/uclm-mentorhub.com/public_html/storage/' . $tutor->profile_picture;
-            
-            if (file_exists($hostingerPath) && is_file($hostingerPath)) {
-                $filePath = $hostingerPath;
-            } else {
-                // Fallback to standard Laravel storage
-                try {
-                    if (Storage::disk('public')->exists($tutor->profile_picture)) {
-                        $filePath = Storage::disk('public')->path($tutor->profile_picture);
-                    }
-                } catch (\Exception $e) {
-                    // Storage failed, continue to 404
-                }
-            }
-
-            if (!$filePath) {
-                abort(404, 'Profile picture file not found');
-            }
-
-            $fileName = basename($tutor->profile_picture);
-            
-            // Determine content type
-            $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            $contentTypes = [
-                'jpg' => 'image/jpeg',
-                'jpeg' => 'image/jpeg',
-                'png' => 'image/png',
-                'gif' => 'image/gif',
-            ];
-            
-            $contentType = $contentTypes[$extension] ?? 'image/jpeg';
-
-            return response()->file($filePath, [
-                'Content-Type' => $contentType,
-                'Content-Disposition' => 'inline; filename="' . $fileName . '"',
-            ]);
-        } catch (\Exception $e) {
+        if (!$tutor->profile_picture) {
             abort(404, 'Profile picture not found');
         }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($tutor->profile_picture)) {
+            abort(404, 'Profile picture file not found');
+        }
+
+        $filePath = Storage::disk('public')->path($tutor->profile_picture);
+        $fileName = basename($tutor->profile_picture);
+        
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+        ];
+        
+        $contentType = $contentTypes[$extension] ?? 'image/jpeg';
+
+        return response()->file($filePath, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
     }
 
     public function viewStudentPicture($id)

@@ -455,7 +455,8 @@
                     <div class="profile-icon" id="profile-icon">
                         @auth('tutor')
                             @if(Auth::guard('tutor')->user()->profile_picture)
-                                <img src="{{ route('tutor.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                                <img src="{{ route('tutor.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.2rem; border-radius: 50%;">{{ strtoupper(substr(Auth::guard('tutor')->user()->first_name, 0, 1) . substr(Auth::guard('tutor')->user()->last_name, 0, 1)) }}</div>
                             @else
                                 {{ strtoupper(substr(Auth::guard('tutor')->user()->first_name, 0, 1) . substr(Auth::guard('tutor')->user()->last_name, 0, 1)) }}
                             @endif
@@ -482,7 +483,7 @@
     <!-- Main Content -->
     <main>
         @livewire('tutor-chat')
-        @livewire('call-manager')
+        @livewire(\App\Livewire\CallManager::class)
     </main>
 
     @include('layouts.footer-modals')

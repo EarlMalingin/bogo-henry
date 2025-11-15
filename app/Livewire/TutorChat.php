@@ -75,25 +75,9 @@ class TutorChat extends Component
                 ->where('is_read', false)
                 ->count();
 
-            // Debug: Check what's in the student object
-            \Log::info('Student data:', [
-                'id' => $student->id,
-                'name' => $student->getFullName(),
-                'profile_picture' => $student->profile_picture,
-                'avatar_method' => $student->getAvatar()
-            ]);
-
-            // Ensure we're getting the correct profile picture
-            $avatar = null;
+            // Always use initials instead of profile pictures
+            $avatar = $student->getInitials();
             $hasProfilePicture = false;
-            
-            if ($student->profile_picture) {
-                $avatar = asset('storage/' . $student->profile_picture) . '?t=' . time();
-                $hasProfilePicture = true;
-            } else {
-                $avatar = $student->getInitials();
-                $hasProfilePicture = false;
-            }
 
             return [
                 'id' => $student->id,
@@ -137,59 +121,17 @@ class TutorChat extends Component
                 // Determine if this message is from the current user (tutor)
                 $isFromCurrentUser = $message->sender_type === 'tutor';
                 
-                // For display purposes, always show the current user's profile picture for their own messages
-                // and the chat mate's profile picture for messages from the chat mate
+                // Always use initials instead of profile pictures
                 if ($isFromCurrentUser) {
-                    // Message from current tutor - show tutor's profile picture
-                    $displayAvatar = $currentTutor->profile_picture ? 
-                        asset('storage/' . $currentTutor->profile_picture) : 
-                        $currentTutor->getInitials();
-                    $displayHasProfilePicture = $currentTutor->profile_picture ? true : false;
+                    // Message from current tutor - show tutor's initials
+                    $displayAvatar = $currentTutor->getInitials();
+                    $displayHasProfilePicture = false;
                 } else {
-                    // Message from student - show student's profile picture
-                    // Force a fresh load of the student data to ensure we get the latest profile picture
+                    // Message from student - show student's initials
                     $studentId = $message->sender_id;
                     $student = Student::find($studentId);
-                    
-                    // Debug: Check if we can load the student directly
-                    \Log::info('Direct student load check:', [
-                        'message_id' => $message->id,
-                        'sender_id' => $message->sender_id,
-                        'sender_type' => $message->sender_type,
-                        'student_loaded' => $student ? 'yes' : 'no',
-                        'student_class' => $student ? get_class($student) : 'null'
-                    ]);
-                    
-                    // Debug: Check what's in the student object
-                    \Log::info('Student data from direct load:', [
-                        'student_id' => $student ? $student->id : 'null',
-                        'student_name' => $student ? $student->getFullName() : 'null',
-                        'first_name' => $student ? $student->first_name : 'null',
-                        'last_name' => $student ? $student->last_name : 'null',
-                        'profile_picture' => $student ? $student->profile_picture : 'null',
-                        'getAvatar_result' => $student ? $student->getAvatar() : 'null',
-                        'getInitials_result' => $student ? $student->getInitials() : 'null'
-                    ]);
-                    
-                    if ($student && $student->profile_picture) {
-                        $displayAvatar = route('student.profile.picture.view', $student->id);
-                        $displayHasProfilePicture = true;
-                        \Log::info('Using student profile picture from direct load:', ['path' => $displayAvatar]);
-                    } else {
-                        // Get the actual student initials from the database
-                        $displayAvatar = $student ? $student->getInitials() : 'S';
-                        $displayHasProfilePicture = false;
-                        \Log::info('Using student initials from direct load:', ['initials' => $displayAvatar]);
-                    }
-                }
-                
-                // Log if sender is null for debugging
-                if (!$message->sender) {
-                    \Log::warning('Message sender is null', [
-                        'message_id' => $message->id,
-                        'sender_id' => $message->sender_id,
-                        'sender_type' => $message->sender_type
-                    ]);
+                    $displayAvatar = $student ? $student->getInitials() : 'S';
+                    $displayHasProfilePicture = false;
                 }
                 
                 return [
@@ -197,8 +139,8 @@ class TutorChat extends Component
                     'message' => $message->message,
                     'sender_type' => $message->sender_type,
                     'sender_name' => $message->sender ? $message->sender->getFullName() : 'Unknown User',
-                    'sender_avatar' => $message->sender ? $message->sender->getAvatar() : 'Unknown',
-                    'sender_has_profile_picture' => $message->sender && $message->sender->profile_picture ? true : false,
+                    'sender_avatar' => $message->sender ? $message->sender->getInitials() : 'Unknown',
+                    'sender_has_profile_picture' => false,
                     'display_avatar' => $displayAvatar,
                     'display_has_profile_picture' => $displayHasProfilePicture,
                     'time' => $message->formatted_time,
@@ -228,22 +170,12 @@ class TutorChat extends Component
 
     public function startCall($callType, $receiverId, $receiverName)
     {
-        // Debug: Log the call attempt
-        \Log::info('TutorChat::startCall called with:', [
-            'callType' => $callType,
-            'receiverId' => $receiverId,
-            'receiverName' => $receiverName,
-            'selectedStudentId' => $this->selectedStudentId
-        ]);
-        
         if (!$receiverId || $receiverId === 'null') {
-            \Log::error('TutorChat::startCall - Invalid receiverId:', ['receiverId' => $receiverId]);
             return;
         }
         
         // Validate callType
         if (!in_array($callType, ['video', 'voice'])) {
-            \Log::error('TutorChat::startCall - Invalid callType:', ['callType' => $callType]);
             return;
         }
         
@@ -256,7 +188,7 @@ class TutorChat extends Component
         // Get receiver profile picture
         $receiverProfilePicture = null;
         try {
-            $receiver = \App\Models\Student::find($receiverId);
+            $receiver = Student::find($receiverId);
             $receiverProfilePicture = $receiver ? $receiver->profile_picture : null;
         } catch (\Exception $e) {
             \Log::error('Error getting receiver profile picture:', ['receiverId' => $receiverId, 'error' => $e->getMessage()]);
@@ -275,12 +207,8 @@ class TutorChat extends Component
             'receiverProfilePicture' => $receiverProfilePicture
         ];
         
-        \Log::info('TutorChat::startCall - Complete call data:', $callData);
-        
         // Dispatch to the CallManager component with complete data
         $this->dispatch('initiateCall', $callData);
-        
-        \Log::info('TutorChat::startCall - Event dispatched successfully');
     }
 
     public function sendMessage()

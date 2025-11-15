@@ -145,7 +145,7 @@ class StudentChat extends Component
                     ]);
                     
                     if ($tutor && $tutor->profile_picture) {
-                        $displayAvatar = route('tutor.profile.picture.view', $tutor->id);
+                        $displayAvatar = asset('storage/' . $tutor->profile_picture);
                         $displayHasProfilePicture = true;
                     } else {
                         $displayAvatar = $tutor ? $tutor->getInitials() : 'T';
@@ -389,3 +389,5 @@ class StudentChat extends Component
         ]);
     }
 }
+
+

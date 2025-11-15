@@ -532,7 +532,7 @@
                 @auth('tutor')
                     <div class="profile-icon" id="profile-icon">
                         @if(Auth::guard('tutor')->user()->profile_picture)
-                            <img src="{{ route('tutor.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img">
+                            <img src="{{ asset('storage/' . Auth::guard('tutor')->user()->profile_picture) }}?{{ time() }}" alt="Profile Picture" class="profile-icon-img">
                         @else
                             {{ substr(Auth::guard('tutor')->user()->first_name, 0, 1) }}{{ substr(Auth::guard('tutor')->user()->last_name, 0, 1) }}
                         @endif

@@ -34,8 +34,14 @@ class TutorSettingsController extends Controller
                 ->first();
             
             if (!$userAchievement) {
+                // Handle "Welcome!" achievement or achievements with no requirement
+                if (!$achievement->requirement_type) {
+                    $progress = 100;
+                    $isUnlocked = true;
+                } else {
                 $progress = $this->calculateProgress($tutor, $achievement);
                 $isUnlocked = $progress >= 100;
+                }
                 
                 $userAchievement = UserAchievement::create([
                     'achievement_id' => $achievement->id,
@@ -46,7 +52,8 @@ class TutorSettingsController extends Controller
                     'unlocked_at' => $isUnlocked ? now() : null,
                 ]);
             } else {
-                // Update progress
+                // Update progress (skip for achievements with no requirement)
+                if ($achievement->requirement_type) {
                 $progress = $this->calculateProgress($tutor, $achievement);
                 $userAchievement->progress = $progress;
                 
@@ -56,6 +63,7 @@ class TutorSettingsController extends Controller
                     $userAchievement->unlocked_at = now();
                 }
                 $userAchievement->save();
+                }
             }
             
             if ($userAchievement->is_unlocked) {

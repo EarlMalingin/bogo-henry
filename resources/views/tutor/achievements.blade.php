@@ -305,7 +305,8 @@
                 <div class="profile-dropdown-container" style="position: relative;">
                     <div class="profile-icon" id="profile-icon">
                         @if($tutor->profile_picture)
-                            <img src="{{ asset('storage/' . $tutor->profile_picture) }}" alt="Profile Picture" class="profile-icon-img">
+                            <img src="{{ route('tutor.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.2rem; border-radius: 50%;">{{ strtoupper(substr($tutor->first_name, 0, 1) . substr($tutor->last_name, 0, 1)) }}</div>
                         @else
                             {{ strtoupper(substr($tutor->first_name, 0, 1) . substr($tutor->last_name, 0, 1)) }}
                         @endif
@@ -363,6 +364,7 @@
                 Achievements
             </h2>
             
+            @if(count($userAchievements) > 0)
             <div class="achievements-grid">
                 @foreach($userAchievements as $item)
                     @php
@@ -393,6 +395,13 @@
                     </div>
                 @endforeach
             </div>
+            @else
+                <div style="text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <i class="fas fa-trophy" style="font-size: 4rem; color: #ddd; margin-bottom: 1rem;"></i>
+                    <h3 style="color: #666; margin-bottom: 0.5rem;">No Achievements Available</h3>
+                    <p style="color: #999;">Achievements will appear here once they are set up in the system.</p>
+                </div>
+            @endif
         </div>
     </div>
     
@@ -441,7 +450,35 @@
                     navLinks.classList.toggle('active');
                 });
             }
+            
+            // Currency display functionality
+            initializeCurrencyDisplay();
+            loadCurrencyData();
         });
+        
+        function initializeCurrencyDisplay() {
+            const currencyDisplay = document.querySelector('.currency-display');
+            if (currencyDisplay) {
+                currencyDisplay.addEventListener('click', function() {
+                    window.location.href = "{{ route('tutor.wallet') }}";
+                });
+            }
+        }
+        
+        // Load currency data from API
+        function loadCurrencyData() {
+            fetch('{{ route("tutor.wallet.balance") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const currencyAmount = document.getElementById('currency-amount');
+                    if (currencyAmount) {
+                        currencyAmount.textContent = '₱' + parseFloat(data.balance).toFixed(2);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wallet balance:', error);
+                });
+        }
     </script>
 </body>
 </html>

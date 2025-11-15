@@ -305,7 +305,8 @@
                 <div class="profile-dropdown-container" style="position: relative;">
                     <div class="profile-icon" id="profile-icon">
                         @if($student->profile_picture)
-                            <img src="{{ asset('storage/' . $student->profile_picture) }}" alt="Profile Picture" class="profile-icon-img">
+                            <img src="{{ route('student.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-icon-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.2rem; border-radius: 50%;">{{ substr($student->first_name, 0, 1) }}{{ substr($student->last_name, 0, 1) }}</div>
                         @else
                             {{ substr($student->first_name, 0, 1) }}{{ substr($student->last_name, 0, 1) }}
                         @endif
@@ -441,7 +442,35 @@
                     navLinks.classList.toggle('active');
                 });
             }
+            
+            // Currency display functionality
+            initializeCurrencyDisplay();
+            loadCurrencyData();
         });
+        
+        function initializeCurrencyDisplay() {
+            const currencyDisplay = document.querySelector('.currency-display');
+            if (currencyDisplay) {
+                currencyDisplay.addEventListener('click', function() {
+                    window.location.href = "{{ route('student.wallet') }}";
+                });
+            }
+        }
+        
+        // Load currency data from API
+        function loadCurrencyData() {
+            fetch('{{ route("student.wallet.balance") }}')
+                .then(response => response.json())
+                .then(data => {
+                    const currencyAmount = document.getElementById('currency-amount');
+                    if (currencyAmount) {
+                        currencyAmount.textContent = '₱' + parseFloat(data.balance).toFixed(2);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wallet balance:', error);
+                });
+        }
     </script>
 </body>
 </html>

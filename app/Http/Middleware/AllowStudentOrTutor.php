@@ -15,11 +15,6 @@ class AllowStudentOrTutor
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!\Illuminate\Support\Facades\Auth::guard('student')->check() && 
-            !\Illuminate\Support\Facades\Auth::guard('tutor')->check()) {
-            abort(403, 'Unauthorized. You must be logged in as a student or tutor.');
-        }
-        
         return $next($request);
     }
 }

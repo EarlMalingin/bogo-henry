@@ -44,7 +44,9 @@ class ChatSocket {
             });
 
             this.socket.on('connect', () => {
-                console.log('Connected to socket server');
+                console.log('=== SOCKET CONNECTED ===');
+                console.log('Socket ID:', this.socket.id);
+                console.log('Socket server URL:', socketServerUrl);
                 this.isConnected = true;
                 this.authenticateUser();
             });
@@ -55,16 +57,37 @@ class ChatSocket {
                 console.log('Local user ID:', this.userId);
                 console.log('Local user type:', this.userType);
                 console.log('Authentication successful!');
+                
+                // Dispatch event to notify that socket is ready
+                const event = new CustomEvent('socket:ready', {
+                    detail: { userId: this.userId, userType: this.userType }
+                });
+                document.dispatchEvent(event);
             });
 
-            this.socket.on('disconnect', () => {
-                console.log('Disconnected from socket server');
+            this.socket.on('disconnect', (reason) => {
+                console.log('=== SOCKET DISCONNECTED ===');
+                console.log('Reason:', reason);
                 this.isConnected = false;
+                
+                // Dispatch event to notify disconnection
+                const event = new CustomEvent('socket:disconnected', {
+                    detail: { reason }
+                });
+                document.dispatchEvent(event);
             });
 
             this.socket.on('connect_error', (error) => {
-                console.error('Socket connection error:', error);
+                console.error('=== SOCKET CONNECTION ERROR ===');
+                console.error('Error:', error);
+                console.error('Socket server URL attempted:', socketServerUrl);
                 this.isConnected = false;
+                
+                // Dispatch event to notify connection error
+                const event = new CustomEvent('socket:error', {
+                    detail: { error: error.message || error }
+                });
+                document.dispatchEvent(event);
             });
 
             // Listen for new messages
