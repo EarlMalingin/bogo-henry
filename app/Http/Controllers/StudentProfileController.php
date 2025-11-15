@@ -37,10 +37,27 @@ class StudentProfileController extends Controller
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
+            // Use the disk specified in .env, or default to 'public'
+            $diskName = env('FILESYSTEM_DISK', 'public');
+            
             if ($student->profile_picture) {
-                \Storage::disk('public')->delete($student->profile_picture);
+                // Try to delete from both disks
+                try {
+                    \Storage::disk('public')->delete($student->profile_picture);
+                } catch (\Exception $e) {
+                    // Ignore if file doesn't exist
+                }
+                if ($diskName !== 'public') {
+                    try {
+                        \Storage::disk($diskName)->delete($student->profile_picture);
+                    } catch (\Exception $e) {
+                        // Ignore if disk doesn't exist or file doesn't exist
+                    }
+                }
             }
-            $path = $request->file('profile_picture')->store('profile-pictures', 'public');
+            
+            // Store in the configured disk
+            $path = $request->file('profile_picture')->store('profile-pictures', $diskName);
             $validated['profile_picture'] = $path;
         }
 
@@ -66,327 +83,172 @@ class StudentProfileController extends Controller
 
     public function profilePicture()
     {
-        // Ultra-safe: catch everything and never throw 500
-        try {
-            $student = null;
-            try {
-                $student = Auth::guard('student')->user();
-            } catch (\Exception $e) {
-                return $this->returnDefaultAvatar('S');
-            }
-            
-            if (!$student || !$student->profile_picture) {
-                return $this->returnDefaultAvatar('S');
-            }
+        $student = Auth::guard('student')->user();
 
-            $profilePicturePath = $student->profile_picture;
-            if (empty($profilePicturePath)) {
-                return $this->returnDefaultAvatar('S');
-            }
-            
-            // Remove storage/ prefix if present
-            $cleanPath = preg_replace('#^storage/#', '', $profilePicturePath);
-            
-            // Try Storage facade first - wrap in try-catch
-            try {
-                if (Storage::disk('public')->exists($cleanPath)) {
-                    $fileContent = Storage::disk('public')->get($cleanPath);
-                    if ($fileContent && strlen($fileContent) > 0) {
-                        $extension = strtolower(pathinfo($cleanPath, PATHINFO_EXTENSION));
-                        $contentType = $this->getContentType($extension);
-                        
-                        return response($fileContent, 200)
-                            ->header('Content-Type', $contentType)
-                            ->header('Content-Length', strlen($fileContent))
-                            ->header('Cache-Control', 'public, max-age=3600');
-                    }
-                }
-            } catch (\Exception $e) {
-                // Storage failed, continue to fallback
-            }
-            
-            // Fallback to file path method
-            try {
-                $filePath = $this->findImageFile($profilePicturePath);
-                if ($filePath) {
-                    $response = $this->serveImageFile($filePath);
-                    if ($response) {
-                        return $response;
-                    }
-                }
-            } catch (\Exception $e) {
-                // File path method failed, continue
-            }
-        } catch (\Throwable $e) {
-            // Catch absolutely everything
-        }
-        
-        // Always return something valid - never throw 500
-        return $this->returnDefaultAvatar('S');
-    }
-
-    private function returnDefaultAvatar($initials)
-    {
-        // Return a 1x1 transparent pixel as default
-        // This will trigger the onerror handler in the view to show initials
-        $transparentPixel = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
-        return response($transparentPixel, 200)
-            ->header('Content-Type', 'image/gif')
-            ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
-    }
-
-    private function findImageFile($profilePicturePath)
-    {
-        if (empty($profilePicturePath)) {
-            return null;
+        if (!$student->profile_picture) {
+            abort(404, 'Profile picture not found');
         }
 
-        // Normalize the path
-        $profilePicturePath = str_replace('\\', '/', trim($profilePicturePath));
-        $filename = basename($profilePicturePath);
-        
-        // Remove storage/ prefix if present
-        $cleanPath = preg_replace('#^storage/#', '', $profilePicturePath);
-        
-        // Build list of paths to try
-        $pathsToTry = [];
-        
-        // Method 1: Try Storage facade (most reliable in Laravel)
-        try {
-            // Try clean path
-            if (Storage::disk('public')->exists($cleanPath)) {
-                $path = Storage::disk('public')->path($cleanPath);
-                if ($path && file_exists($path) && is_file($path)) {
-                    return $path;
-                }
-            }
-            // Try original path
-            if (Storage::disk('public')->exists($profilePicturePath)) {
-                $path = Storage::disk('public')->path($profilePicturePath);
-                if ($path && file_exists($path) && is_file($path)) {
-                    return $path;
-                }
-            }
-            // Try profile-pictures directory
-            $profilePicPath = 'profile-pictures/' . $filename;
-            if (Storage::disk('public')->exists($profilePicPath)) {
-                $path = Storage::disk('public')->path($profilePicPath);
-                if ($path && file_exists($path) && is_file($path)) {
-                    return $path;
-                }
-            }
-        } catch (\Exception $e) {
-            // Storage facade failed, continue to direct paths
+        // Check if file exists
+        if (!Storage::disk('public')->exists($student->profile_picture)) {
+            abort(404, 'Profile picture file not found');
         }
-        
-        // Method 2: Try direct paths using Laravel helpers
-        try {
-            $storageBase = storage_path('app/public');
-            $publicBase = public_path('storage');
-            
-            $pathsToTry[] = $storageBase . '/' . $cleanPath;
-            $pathsToTry[] = $storageBase . '/' . $profilePicturePath;
-            $pathsToTry[] = $storageBase . '/profile-pictures/' . $filename;
-            $pathsToTry[] = $publicBase . '/' . $cleanPath;
-            $pathsToTry[] = $publicBase . '/' . $profilePicturePath;
-            $pathsToTry[] = $publicBase . '/profile-pictures/' . $filename;
-        } catch (\Exception $e) {
-            // If Laravel helpers fail, use __DIR__ as fallback
-        }
-        
-        // Method 3: Use __DIR__ as absolute fallback
-        $storageBase = __DIR__ . '/../../storage/app/public';
-        $publicBase = __DIR__ . '/../../../public/storage';
-        
-        $pathsToTry[] = $storageBase . '/' . $cleanPath;
-        $pathsToTry[] = $storageBase . '/' . $profilePicturePath;
-        $pathsToTry[] = $storageBase . '/profile-pictures/' . $filename;
-        $pathsToTry[] = $publicBase . '/' . $cleanPath;
-        $pathsToTry[] = $publicBase . '/' . $profilePicturePath;
-        $pathsToTry[] = $publicBase . '/profile-pictures/' . $filename;
-        
-        // Check each path
-        foreach ($pathsToTry as $path) {
-            $realPath = realpath($path);
-            if ($realPath && file_exists($realPath) && is_readable($realPath) && is_file($realPath)) {
-                return $realPath;
-            }
-        }
-        
-        return null;
-    }
 
-    private function getContentType($extension)
-    {
+        $filePath = Storage::disk('public')->path($student->profile_picture);
+        $fileName = basename($student->profile_picture);
+        
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
         $contentTypes = [
             'jpg' => 'image/jpeg',
             'jpeg' => 'image/jpeg',
             'png' => 'image/png',
             'gif' => 'image/gif',
-            'webp' => 'image/webp',
         ];
-        return $contentTypes[$extension] ?? 'image/jpeg';
-    }
+        
+        $contentType = $contentTypes[$extension] ?? 'image/jpeg';
 
-    private function serveImageFile($filePath)
-    {
-        try {
-            // Read file content instead of using response()->file()
-            // This is more compatible across different server configurations
-            if (!file_exists($filePath) || !is_readable($filePath)) {
-                return null;
-            }
-
-            $fileContent = file_get_contents($filePath);
-            if ($fileContent === false) {
-                return null;
-            }
-
-            $fileName = basename($filePath);
-            $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-            $contentType = $this->getContentType($extension);
-
-            return response($fileContent, 200)
-                ->header('Content-Type', $contentType)
-                ->header('Content-Length', strlen($fileContent))
-                ->header('Content-Disposition', 'inline; filename="' . $fileName . '"')
-                ->header('Cache-Control', 'public, max-age=3600');
-        } catch (\Exception $e) {
-            \Log::error('Error serving image file', [
-                'file_path' => $filePath,
-                'error' => $e->getMessage()
-            ]);
-            return null;
-        }
+        return response()->file($filePath, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
     }
 
     public function viewStudentPicture($id)
     {
-        // Ultra-safe: catch everything and never throw 500
         try {
-            $student = null;
-            try {
-                $student = Student::find($id);
-            } catch (\Exception $e) {
-                return $this->returnDefaultAvatar('S');
-            }
-            
-            if (!$student || !$student->profile_picture) {
-                return $this->returnDefaultAvatar('S');
+            $student = Student::findOrFail($id);
+
+            if (!$student->profile_picture) {
+                abort(404, 'Profile picture not found');
             }
 
-            $profilePicturePath = $student->profile_picture;
-            if (empty($profilePicturePath)) {
-                return $this->returnDefaultAvatar('S');
-            }
+            // Determine which disk to use based on environment
+            $diskName = env('FILESYSTEM_DISK', 'public');
             
-            $cleanPath = preg_replace('#^storage/#', '', $profilePicturePath);
+            // Try multiple possible paths (for different hosting configurations)
+            // Priority: public_html_storage (Hostinger) > public > standard storage
+            $possiblePaths = [];
             
-            // Try Storage facade first - wrap in try-catch
-            try {
-                if (Storage::disk('public')->exists($cleanPath)) {
-                    $fileContent = Storage::disk('public')->get($cleanPath);
-                    if ($fileContent && strlen($fileContent) > 0) {
-                        $extension = strtolower(pathinfo($cleanPath, PATHINFO_EXTENSION));
-                        $contentType = $this->getContentType($extension);
-                        
-                        return response($fileContent, 200)
-                            ->header('Content-Type', $contentType)
-                            ->header('Content-Length', strlen($fileContent))
-                            ->header('Cache-Control', 'public, max-age=3600');
+            // 1. Check public_html_storage (Hostinger setup)
+            // Try multiple possible locations for public_html/storage
+            $publicHtmlPaths = [
+                base_path('public_html/storage/' . $student->profile_picture), // If Laravel is in public_html
+                base_path('../public_html/storage/' . $student->profile_picture), // If Laravel is in a subdirectory
+                dirname(base_path()) . '/public_html/storage/' . $student->profile_picture, // Parent directory
+            ];
+            
+            if ($diskName === 'public_html_storage') {
+                foreach ($publicHtmlPaths as $path) {
+                    $possiblePaths[] = $path;
+                }
+            } else {
+                // Still check if the directory exists
+                foreach ($publicHtmlPaths as $path) {
+                    if (file_exists(dirname($path))) {
+                        $possiblePaths[] = $path;
+                        break; // Only add one if directory exists
                     }
                 }
-            } catch (\Exception $e) {
-                // Storage failed, continue to fallback
             }
             
-            // Fallback to file path method
-            try {
-                $filePath = $this->findImageFile($profilePicturePath);
-                if ($filePath) {
-                    $response = $this->serveImageFile($filePath);
-                    if ($response) {
-                        return $response;
-                    }
+            // 2. Check public/storage (symlink or direct)
+            $possiblePaths[] = public_path('storage/' . $student->profile_picture);
+            
+            // 3. Check standard Laravel storage
+            $possiblePaths[] = Storage::disk('public')->path($student->profile_picture);
+            $possiblePaths[] = storage_path('app/public/' . $student->profile_picture);
+            $possiblePaths[] = base_path('storage/app/public/' . $student->profile_picture);
+            
+            // 4. Check if using custom disk
+            if ($diskName !== 'public' && $diskName !== 'local') {
+                try {
+                    $possiblePaths[] = Storage::disk($diskName)->path($student->profile_picture);
+                } catch (\Exception $e) {
+                    // Disk doesn't exist, skip
                 }
-            } catch (\Exception $e) {
-                // File path method failed, continue
             }
-        } catch (\Throwable $e) {
-            // Catch absolutely everything
+
+            $filePath = null;
+            foreach ($possiblePaths as $path) {
+                if (file_exists($path) && is_file($path)) {
+                    $filePath = $path;
+                    break;
+                }
+            }
+
+            if (!$filePath) {
+                // Log for debugging
+                \Log::warning('Student profile picture not found', [
+                    'student_id' => $id,
+                    'profile_picture' => $student->profile_picture,
+                    'filesystem_disk' => $diskName,
+                    'tried_paths' => $possiblePaths,
+                ]);
+                abort(404, 'Profile picture file not found');
+            }
+
+            $fileName = basename($student->profile_picture);
+            
+            // Determine content type
+            $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            $contentTypes = [
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'png' => 'image/png',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+            ];
+            
+            $contentType = $contentTypes[$extension] ?? 'image/jpeg';
+
+            return response()->file($filePath, [
+                'Content-Type' => $contentType,
+                'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+                'Cache-Control' => 'public, max-age=3600',
+            ]);
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            $student = Student::find($id);
+            \Log::error('Error loading student profile picture: ' . $e->getMessage(), [
+                'student_id' => $id,
+                'profile_picture' => $student->profile_picture ?? 'not set',
+                'trace' => $e->getTraceAsString()
+            ]);
+            abort(404, 'Profile picture not found');
         }
-        
-        // Always return something valid - never throw 500
-        return $this->returnDefaultAvatar('S');
     }
 
     public function viewTutorPicture($id)
     {
-        // Ultra-safe: catch everything and never throw 500
-        try {
-            $tutor = null;
-            try {
-                $tutor = Tutor::find($id);
-            } catch (\Exception $e) {
-                return $this->returnDefaultAvatar('T');
-            }
-            
-            if (!$tutor || !$tutor->profile_picture) {
-                return $this->returnDefaultAvatar('T');
-            }
+        $tutor = Tutor::findOrFail($id);
 
-            $profilePicturePath = $tutor->profile_picture;
-            if (empty($profilePicturePath)) {
-                return $this->returnDefaultAvatar('T');
-            }
-            
-            // Normalize the path - remove any storage/ prefix
-            $cleanPath = preg_replace('#^storage/#', '', trim($profilePicturePath));
-            
-            // Try multiple path variations
-            $pathsToTry = [
-                $cleanPath,  // Original path from database (e.g., "profile-pictures/filename.jpg")
-                $profilePicturePath,  // Original path with storage/ prefix if present
-            ];
-            
-            // Try Storage facade with each path variation
-            foreach ($pathsToTry as $pathToTry) {
-                try {
-                    if (Storage::disk('public')->exists($pathToTry)) {
-                        $fileContent = Storage::disk('public')->get($pathToTry);
-                        if ($fileContent && strlen($fileContent) > 0) {
-                            $extension = strtolower(pathinfo($pathToTry, PATHINFO_EXTENSION));
-                            $contentType = $this->getContentType($extension);
-                            
-                            return response($fileContent, 200)
-                                ->header('Content-Type', $contentType)
-                                ->header('Content-Length', strlen($fileContent))
-                                ->header('Cache-Control', 'public, max-age=3600');
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // This path failed, try next one
-                    continue;
-                }
-            }
-            
-            // Fallback to file path method - try to find file directly
-            try {
-                $filePath = $this->findImageFile($profilePicturePath);
-                if ($filePath) {
-                    $response = $this->serveImageFile($filePath);
-                    if ($response) {
-                        return $response;
-                    }
-                }
-            } catch (\Exception $e) {
-                // File path method failed, continue
-            }
-        } catch (\Throwable $e) {
-            // Catch absolutely everything
+        if (!$tutor->profile_picture) {
+            abort(404, 'Profile picture not found');
         }
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($tutor->profile_picture)) {
+            abort(404, 'Profile picture file not found');
+        }
+
+        $filePath = Storage::disk('public')->path($tutor->profile_picture);
+        $fileName = basename($tutor->profile_picture);
         
-        // Always return something valid - never throw 500
-        return $this->returnDefaultAvatar('T');
+        // Determine content type
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        $contentTypes = [
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+        ];
+        
+        $contentType = $contentTypes[$extension] ?? 'image/jpeg';
+
+        return response()->file($filePath, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
     }
 } 

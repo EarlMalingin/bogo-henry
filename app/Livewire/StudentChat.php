@@ -81,25 +81,11 @@ class StudentChat extends Component
                 ->where('is_read', false)
                 ->count();
 
-            // Ensure we're getting the correct profile picture using route-based URL
-            $avatar = null;
-            $hasProfilePicture = false;
-            
-            if ($tutor->profile_picture) {
-                // Use route-based URL instead of getAvatar() to avoid symlink dependency
-                $avatar = url('/tutor/profile/picture/' . $tutor->id);
-                $hasProfilePicture = true;
-            } else {
-                $avatar = $tutor->getInitials();
-                $hasProfilePicture = false;
-            }
-
             return [
                 'id' => $tutor->id,
                 'name' => $tutor->getFullName(),
-                'avatar' => $avatar,
-                'initials' => $tutor->getInitials(), // Store initials for error fallback
-                'has_profile_picture' => $hasProfilePicture,
+                'avatar' => $tutor->getAvatar(),
+                'has_profile_picture' => $tutor->profile_picture ? true : false,
                 'last_message' => $lastMessage ? $lastMessage->message : 'No messages yet',
                 'last_message_time' => $lastMessage ? $lastMessage->formatted_time : '',
                 'unread_count' => $unreadCount,
@@ -141,22 +127,25 @@ class StudentChat extends Component
                 // and the chat mate's profile picture for messages from the chat mate
                 if ($isFromCurrentUser) {
                     // Message from current student - show student's profile picture
-                    if ($currentStudent->profile_picture) {
-                        // Generate absolute URL for student's own profile picture
-                        $displayAvatar = url('/student/profile/picture');
-                        $displayHasProfilePicture = true;
-                    } else {
-                        $displayAvatar = $currentStudent->getInitials();
-                        $displayHasProfilePicture = false;
-                    }
+                    $displayAvatar = $currentStudent->profile_picture ? 
+                        asset('storage/' . $currentStudent->profile_picture) : 
+                        $currentStudent->getInitials();
+                    $displayHasProfilePicture = $currentStudent->profile_picture ? true : false;
                 } else {
                     // Message from tutor - show tutor's profile picture
                     // Make sure we're getting the actual tutor data
                     $tutor = $message->sender;
                     
+                    // Debug: Check what's in the tutor sender object
+                    \Log::info('Tutor sender data:', [
+                        'tutor_id' => $tutor ? $tutor->id : 'null',
+                        'tutor_name' => $tutor ? $tutor->getFullName() : 'null',
+                        'profile_picture' => $tutor ? $tutor->profile_picture : 'null',
+                        'getAvatar_result' => $tutor ? $tutor->getAvatar() : 'null'
+                    ]);
+                    
                     if ($tutor && $tutor->profile_picture) {
-                        // Generate absolute URL for tutor profile picture
-                        $displayAvatar = url('/tutor/profile/picture/' . $tutor->id);
+                        $displayAvatar = route('tutor.profile.picture.view', $tutor->id);
                         $displayHasProfilePicture = true;
                     } else {
                         $displayAvatar = $tutor ? $tutor->getInitials() : 'T';

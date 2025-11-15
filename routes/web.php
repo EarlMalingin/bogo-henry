@@ -114,7 +114,6 @@ Route::get('/reset-password', [App\Http\Controllers\PasswordResetController::cla
 Route::post('/reset-password', [App\Http\Controllers\PasswordResetController::class, 'resetPassword'])->name('password.update');
 
 // Shared profile picture routes (accessible by both students and tutors)
-// These routes allow students to view tutor pictures and tutors to view student pictures
 Route::middleware([\App\Http\Middleware\AllowStudentOrTutor::class])->group(function () {
     Route::get('/tutor/profile/picture/{id}', [App\Http\Controllers\TutorProfileController::class, 'viewTutorPicture'])->name('tutor.profile.picture.view');
     Route::get('/student/profile/picture/{id}', [App\Http\Controllers\StudentProfileController::class, 'viewStudentPicture'])->name('student.profile.picture.view');

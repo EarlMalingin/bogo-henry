@@ -47,6 +47,20 @@ return [
             'report' => false,
         ],
 
+        'public_html_storage' => [
+            'driver' => 'local',
+            // Try to find public_html/storage relative to Laravel root
+            'root' => file_exists(base_path('public_html/storage')) 
+                ? base_path('public_html/storage')
+                : (file_exists(base_path('../public_html/storage'))
+                    ? base_path('../public_html/storage')
+                    : base_path('public_html/storage')), // Fallback
+            'url' => env('APP_URL').'/storage',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

@@ -764,8 +764,7 @@
                                     <div class="student-header">
                                         <div class="student-avatar">
                                             @if($student->profile_picture)
-                                                <img src="{{ route('student.profile.picture.view', $student->id) }}" alt="{{ $student->first_name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.5rem;">{{ strtoupper(substr($student->first_name, 0, 1) . substr($student->last_name, 0, 1)) }}</div>
+                                                <img src="{{ route('student.profile.picture.view', $student->id) }}" alt="{{ $student->first_name }}">
                                             @else
                                                 {{ strtoupper(substr($student->first_name, 0, 1) . substr($student->last_name, 0, 1)) }}
                                             @endif
@@ -861,8 +860,7 @@
                                     <div class="student-header">
                                         <div class="student-avatar">
                                             @if($student->profile_picture)
-                                                <img src="{{ route('student.profile.picture.view', $student->id) }}" alt="{{ $student->first_name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.5rem;">{{ strtoupper(substr($student->first_name, 0, 1) . substr($student->last_name, 0, 1)) }}</div>
+                                                <img src="{{ route('student.profile.picture.view', $student->id) }}" alt="{{ $student->first_name }}">
                                             @else
                                                 {{ strtoupper(substr($student->first_name, 0, 1) . substr($student->last_name, 0, 1)) }}
                                             @endif
@@ -958,8 +956,7 @@
                                     <div class="student-header">
                                         <div class="student-avatar">
                                             @if($student->profile_picture)
-                                                <img src="{{ route('student.profile.picture.view', $student->id) }}" alt="{{ $student->first_name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.5rem;">{{ strtoupper(substr($student->first_name, 0, 1) . substr($student->last_name, 0, 1)) }}</div>
+                                                <img src="{{ route('student.profile.picture.view', $student->id) }}" alt="{{ $student->first_name }}">
                                             @else
                                                 {{ strtoupper(substr($student->first_name, 0, 1) . substr($student->last_name, 0, 1)) }}
                                             @endif
