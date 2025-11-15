@@ -795,9 +795,10 @@
                         <div class="tutor-header">
                             <div class="tutor-avatar">
                                 @if($tutor->profile_picture)
-                                    <img src="{{ route('tutor.profile.picture.view', $tutor->id) }}" alt="{{ $tutor->first_name }} {{ $tutor->last_name }}">
+                                    <img src="{{ asset('storage/' . $tutor->profile_picture) }}?v={{ $tutor->updated_at ? $tutor->updated_at->timestamp : time() }}" alt="{{ $tutor->first_name }} {{ $tutor->last_name }}" onerror="this.onerror=null; this.src='{{ route('tutor.profile.picture.view', $tutor->id) }}?v={{ $tutor->updated_at ? $tutor->updated_at->timestamp : time() }}';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                    <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.5rem; border-radius: 50%;">{{ substr($tutor->first_name, 0, 1) }}{{ substr($tutor->last_name, 0, 1) }}</div>
                                 @else
-                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.5rem;">
+                                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 1.5rem; border-radius: 50%;">
                                         {{ substr($tutor->first_name, 0, 1) }}{{ substr($tutor->last_name, 0, 1) }}
                                     </div>
                                 @endif
@@ -1251,8 +1252,9 @@
 
                     const avatarContainer = document.querySelector('#booking-modal .tutor-modal-avatar');
                     if (tutor.profile_picture) {
-                        const tutorPicUrl = `/tutor/profile/picture/${tutor.id}`;
-                        avatarContainer.innerHTML = `<img src="${tutorPicUrl}" alt="${tutor.first_name}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">`;
+                        const storageUrl = `/storage/${tutor.profile_picture}?v=${tutor.updated_at ? new Date(tutor.updated_at).getTime() : Date.now()}`;
+                        const routeUrl = `/tutor/profile/picture/${tutor.id}?v=${tutor.updated_at ? new Date(tutor.updated_at).getTime() : Date.now()}`;
+                        avatarContainer.innerHTML = `<img src="${storageUrl}" alt="${tutor.first_name}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;" onerror="this.onerror=null; this.src='${routeUrl}'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';};"><div style="display: none; width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 2.5rem;">${tutor.first_name.charAt(0)}${tutor.last_name.charAt(0)}</div>`;
                     } else {
                         avatarContainer.innerHTML = `<div style="width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 2.5rem;">
                                         ${tutor.first_name.charAt(0)}${tutor.last_name.charAt(0)}
@@ -1645,10 +1647,11 @@
                     
                     let avatarHtml;
                     if (tutor.profile_picture) {
-                        const tutorPicUrl = `/tutor/profile/picture/${tutor.id}`;
-                        avatarHtml = `<img src="${tutorPicUrl}" alt="${tutor.first_name}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                        const storageUrl = `/storage/${tutor.profile_picture}?v=${tutor.updated_at ? new Date(tutor.updated_at).getTime() : Date.now()}`;
+                        const routeUrl = `/tutor/profile/picture/${tutor.id}?v=${tutor.updated_at ? new Date(tutor.updated_at).getTime() : Date.now()}`;
+                        avatarHtml = `<img src="${storageUrl}" alt="${tutor.first_name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.onerror=null; this.src='${routeUrl}'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='flex';};"><div style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 2.5rem; border-radius: 50%;">${tutor.first_name.charAt(0)}${tutor.last_name.charAt(0)}</div>`;
                     } else {
-                        avatarHtml = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 2.5rem;">
+                        avatarHtml = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: #f5f5f5; color: #666; font-weight: bold; font-size: 2.5rem; border-radius: 50%;">
                                         ${tutor.first_name.charAt(0)}${tutor.last_name.charAt(0)}
                                      </div>`;
                     }
