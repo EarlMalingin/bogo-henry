@@ -563,9 +563,9 @@
                             @if($student->profile_picture)
                                 <img src="{{ route('student.profile.picture') }}?v={{ time() }}" alt="Profile Picture" class="profile-picture" 
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                <div style="background-color: #ff6b6b; color: white; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; font-size: 0.8rem; text-align: center; padding: 10px;">
+                                    <div style="background-color: #ff6b6b; color: white; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; font-size: 0.8rem; text-align: center; padding: 10px;">
                                     Image file not found
-                                </div>
+                                    </div>
                             @else
                                 <div style="background-color: #4a90e2; color: white; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem; font-weight: 600;">
                                     {{ substr($student->first_name, 0, 1) }}{{ substr($student->last_name, 0, 1) }}

@@ -83,12 +83,13 @@ class TutorChat extends Component
                 'avatar_method' => $student->getAvatar()
             ]);
 
-            // Ensure we're getting the correct profile picture
+            // Ensure we're getting the correct profile picture using route-based URL
             $avatar = null;
             $hasProfilePicture = false;
             
             if ($student->profile_picture) {
-                $avatar = asset('storage/' . $student->profile_picture) . '?t=' . time();
+                // Use route-based URL instead of asset() to avoid symlink dependency
+                $avatar = url('/student/profile/picture/' . $student->id);
                 $hasProfilePicture = true;
             } else {
                 $avatar = $student->getInitials();
@@ -99,6 +100,7 @@ class TutorChat extends Component
                 'id' => $student->id,
                 'name' => $student->getFullName(),
                 'avatar' => $avatar,
+                'initials' => $student->getInitials(), // Store initials for error fallback
                 'has_profile_picture' => $hasProfilePicture,
                 'last_message' => $lastMessage ? $lastMessage->message : 'No messages yet',
                 'last_message_time' => $lastMessage ? $lastMessage->formatted_time : '',
@@ -144,7 +146,8 @@ class TutorChat extends Component
                 if ($isFromCurrentUser) {
                     // Message from current tutor - show tutor's profile picture
                     if ($currentTutor->profile_picture) {
-                        $displayAvatar = $baseUrl . route('tutor.profile.picture', [], false);
+                        // Generate absolute URL for tutor's own profile picture
+                        $displayAvatar = url('/tutor/profile/picture');
                         $displayHasProfilePicture = true;
                     } else {
                         $displayAvatar = $currentTutor->getInitials();
@@ -157,7 +160,8 @@ class TutorChat extends Component
                     $student = Student::find($studentId);
                     
                     if ($student && $student->profile_picture) {
-                        $displayAvatar = $baseUrl . route('student.profile.picture.view', ['id' => $student->id], false);
+                        // Generate absolute URL for student profile picture
+                        $displayAvatar = url('/student/profile/picture/' . $student->id);
                         $displayHasProfilePicture = true;
                     } else {
                         // Get the actual student initials from the database

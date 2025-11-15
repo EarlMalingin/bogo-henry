@@ -434,7 +434,7 @@
                         <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $submission->score }}</div>
                             <div style="color: #666; margin-top: 0.5rem;">Your Score</div>
-                        </div>
+                    </div>
                         <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $activity->total_points }}</div>
                             <div style="color: #666; margin-top: 0.5rem;">Total Points</div>
@@ -474,53 +474,53 @@
             @endif
 
             @if(!$submission || $submission->status !== 'graded')
-                <!-- Main Form -->
-                <form id="activity-form" method="POST" action="{{ route('student.activities.save-draft', $activity) }}">
-                    @csrf
-                    
-                    @if($activity->questions && count($activity->questions) > 0)
-                        <!-- Questions Section -->
-                        <div class="questions-section">
-                            <h2 style="margin-bottom: 2rem; color: #333;">Questions</h2>
-                            
-                            @foreach($activity->questions as $index => $question)
-                                <div class="question-item">
-                                    <div class="question-number">Question {{ $index + 1 }}</div>
-                                    <div class="question-text">{{ $question['question'] ?? $question }}</div>
-                                    
-                                    @if(isset($question['type']) && $question['type'] === 'multiple_choice')
-                                        <!-- Multiple Choice -->
-                                        @if(isset($question['options']))
-                                            @foreach($question['options'] as $optionIndex => $option)
-                                                <label style="display: block; margin-bottom: 0.5rem; cursor: pointer;">
-                                                    <input type="radio" 
-                                                           name="answers[{{ $index }}]" 
-                                                           value="{{ $optionIndex }}"
-                                                           {{ ($submission && isset($submission->answers[$index]) && $submission->answers[$index] == $optionIndex) ? 'checked' : '' }}
-                                                           style="margin-right: 0.5rem;">
-                                                    {{ $option }}
-                                                </label>
-                                            @endforeach
-                                        @endif
-                                    @else
-                                        <!-- Text Answer -->
-                                        <textarea name="answers[{{ $index }}]" 
-                                                  class="answer-input answer-textarea" 
-                                                  placeholder="Enter your answer here...">{{ $submission && isset($submission->answers[$index]) ? $submission->answers[$index] : '' }}</textarea>
+            <!-- Main Form -->
+            <form id="activity-form" method="POST" action="{{ route('student.activities.save-draft', $activity) }}">
+                @csrf
+                
+                @if($activity->questions && count($activity->questions) > 0)
+                    <!-- Questions Section -->
+                    <div class="questions-section">
+                        <h2 style="margin-bottom: 2rem; color: #333;">Questions</h2>
+                        
+                        @foreach($activity->questions as $index => $question)
+                            <div class="question-item">
+                                <div class="question-number">Question {{ $index + 1 }}</div>
+                                <div class="question-text">{{ $question['question'] ?? $question }}</div>
+                                
+                                @if(isset($question['type']) && $question['type'] === 'multiple_choice')
+                                    <!-- Multiple Choice -->
+                                    @if(isset($question['options']))
+                                        @foreach($question['options'] as $optionIndex => $option)
+                                            <label style="display: block; margin-bottom: 0.5rem; cursor: pointer;">
+                                                <input type="radio" 
+                                                       name="answers[{{ $index }}]" 
+                                                       value="{{ $optionIndex }}"
+                                                       {{ ($submission && isset($submission->answers[$index]) && $submission->answers[$index] == $optionIndex) ? 'checked' : '' }}
+                                                       style="margin-right: 0.5rem;">
+                                                {{ $option }}
+                                            </label>
+                                        @endforeach
                                     @endif
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
-                    
-                    <!-- Notes Section -->
-                    <div class="notes-section" style="margin-top: 2rem;">
-                        <h3 style="margin-bottom: 1rem; color: #333;">Additional Notes (Optional)</h3>
-                        <textarea name="notes" 
-                                  class="answer-input answer-textarea" 
-                                  placeholder="Add any additional notes or comments here...">{{ $submission && $submission->notes ? $submission->notes : '' }}</textarea>
+                                @else
+                                    <!-- Text Answer -->
+                                    <textarea name="answers[{{ $index }}]" 
+                                              class="answer-input answer-textarea" 
+                                              placeholder="Enter your answer here...">{{ $submission && isset($submission->answers[$index]) ? $submission->answers[$index] : '' }}</textarea>
+                                @endif
+                            </div>
+                        @endforeach
                     </div>
-                </form>
+                @endif
+                
+                <!-- Notes Section -->
+                <div class="notes-section" style="margin-top: 2rem;">
+                    <h3 style="margin-bottom: 1rem; color: #333;">Additional Notes (Optional)</h3>
+                    <textarea name="notes" 
+                              class="answer-input answer-textarea" 
+                              placeholder="Add any additional notes or comments here...">{{ $submission && $submission->notes ? $submission->notes : '' }}</textarea>
+                </div>
+            </form>
             @else
                 <!-- Show submitted answers when graded -->
                 @if($activity->questions && count($activity->questions) > 0)

@@ -15,7 +15,8 @@
                          wire:click="selectTutor({{ $conversation['id'] }})">
                         <div class="conversation-avatar">
                             @if($conversation['has_profile_picture'])
-                                <img src="{{ $conversation['avatar'] }}" alt="{{ $conversation['name'] }}" class="avatar-image">
+                                <img src="{{ $conversation['avatar'] }}" alt="{{ $conversation['name'] }}" class="avatar-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #4a90e2; color: white; font-weight: bold; border-radius: 50%;">{{ $conversation['initials'] ?? 'T' }}</div>
                             @else
                                 {{ $conversation['avatar'] }}
                             @endif
@@ -50,7 +51,8 @@
                     <div class="chat-user-info">
                         <div class="chat-avatar">
                             @if($selectedConversation['has_profile_picture'] ?? false)
-                                <img src="{{ $selectedConversation['avatar'] }}" alt="{{ $selectedConversation['name'] }}" class="avatar-image">
+                                <img src="{{ $selectedConversation['avatar'] }}" alt="{{ $selectedConversation['name'] }}" class="avatar-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; background-color: #4a90e2; color: white; font-weight: bold; border-radius: 50%;">{{ $selectedConversation['initials'] ?? 'T' }}</div>
                             @else
                                 {{ $selectedConversation['avatar'] ?? 'T' }}
                             @endif

@@ -544,7 +544,7 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         }
     </style>
-
+    
     <script>
         const gradeForm = document.getElementById('grade-form');
         if (gradeForm) {
