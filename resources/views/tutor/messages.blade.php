@@ -7,8 +7,8 @@
     <title>MentorHub - Messages</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @livewireStyles
-    <!-- Socket.IO Client -->
-    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <!-- Pusher Client -->
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     <script>
         // Pass user data to frontend - use unified user ID
         @php
@@ -17,28 +17,13 @@
         window.currentUserId = {{ $unifiedUser ? $unifiedUser->id : Auth::guard('tutor')->id() }};
         window.currentUserType = 'tutor';
         
-        // Socket server configuration
+        // Pusher configuration
         @php
-            $socketUrl = env('SOCKET_URL', null);
-            $socketPort = env('SOCKET_PORT', '3001');
-            $appUrl = env('APP_URL', 'http://localhost:8000');
-            $isProduction = env('APP_ENV') === 'production';
-            
-            // If SOCKET_URL is set, use it; otherwise construct from APP_URL
-            if ($socketUrl) {
-                $finalSocketUrl = $socketUrl;
-            } elseif ($isProduction && str_starts_with($appUrl, 'https://')) {
-                // Production HTTPS - use proxied path
-                $finalSocketUrl = $appUrl . '/socket.io';
-            } else {
-                // Development or HTTP - use port
-                $host = parse_url($appUrl, PHP_URL_HOST);
-                $protocol = str_starts_with($appUrl, 'https://') ? 'https://' : 'http://';
-                $finalSocketUrl = $protocol . $host . ':' . $socketPort;
-            }
+            $pusherKey = env('PUSHER_APP_KEY');
+            $pusherCluster = env('PUSHER_APP_CLUSTER', 'mt1');
         @endphp
-        window.socketServerUrl = @json($finalSocketUrl ?? null);
-        window.socketPort = @json($socketPort);
+        window.pusherKey = @json($pusherKey);
+        window.pusherCluster = @json($pusherCluster);
     </script>
     <style>
         * {

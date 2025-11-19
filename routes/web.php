@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\StudentSessionController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\CallController;
+use App\Http\Controllers\Api\WebRTCController;
 
 Route::get('/', [homeController::class, 'homePage'])->name('home');
 
@@ -319,5 +322,23 @@ Route::get('/wallet/payment/failed', [App\Http\Controllers\SecureWalletControlle
 
 // Webhook routes (no auth required)
 Route::post('/webhooks/paymongo', [App\Http\Controllers\WebhookController::class, 'handlePayMongoWebhook'])->name('webhooks.paymongo');
+
+// API routes for Pusher messaging and calls (protected routes)
+Route::middleware(['auth:student,tutor', 'web'])->prefix('api')->group(function () {
+    // Message routes
+    Route::post('/messages/send', [MessageController::class, 'send'])->name('api.messages.send');
+    Route::post('/messages/typing', [MessageController::class, 'typing'])->name('api.messages.typing');
+    Route::post('/messages/mark-read', [MessageController::class, 'markRead'])->name('api.messages.mark-read');
+    
+    // Call routes
+    Route::post('/calls/initiate', [CallController::class, 'initiate'])->name('api.calls.initiate');
+    Route::post('/calls/answer', [CallController::class, 'answer'])->name('api.calls.answer');
+    Route::post('/calls/end', [CallController::class, 'end'])->name('api.calls.end');
+    
+    // WebRTC signaling routes
+    Route::post('/webrtc/offer', [WebRTCController::class, 'offer'])->name('api.webrtc.offer');
+    Route::post('/webrtc/answer', [WebRTCController::class, 'answer'])->name('api.webrtc.answer');
+    Route::post('/webrtc/ice-candidate', [WebRTCController::class, 'iceCandidate'])->name('api.webrtc.ice-candidate');
+});
 
 

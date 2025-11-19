@@ -1,273 +1,255 @@
-// Socket.IO Client for Laravel Application
+// Pusher Client for Laravel Application (Replaces Socket.IO)
 class ChatSocket {
     constructor() {
-        this.socket = null;
+        this.pusher = null;
         this.isConnected = false;
         this.userId = null;
         this.userType = null;
         this.currentChatRoom = null;
         this.callHandlers = new Map();
+        this.channels = new Map();
+        this.apiBaseUrl = window.location.origin;
     }
 
-    // Initialize socket connection
+    // Initialize Pusher connection
     connect() {
         try {
-            // Get the current host and protocol
-            const currentHost = window.location.hostname;
-            const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-            const port = window.location.port ? `:${window.location.port}` : '';
-            const isHttps = protocol === 'https:';
-            const isProduction = !currentHost.includes('localhost') && !currentHost.includes('127.0.0.1');
-            
-            // For production, use the same domain and protocol as the main app
-            // Socket server should be proxied through the same domain or use a subdomain
-            // If using a proxy, use the same origin; otherwise use port 3001
-            let socketServerUrl;
-            
-            // Check if we have a custom socket URL from Laravel config (highest priority)
-            if (window.socketServerUrl) {
-                socketServerUrl = window.socketServerUrl;
-                console.log('Using custom socket URL from config:', socketServerUrl);
-            } else if (isProduction && isHttps) {
-                // HTTPS production - socket should be on same domain (proxied) or use wss
-                // Try same origin first (if proxied), then fallback to wss on same domain
-                socketServerUrl = `${protocol}//${currentHost}${port}/socket.io`;
-                console.log('Production HTTPS detected, using proxied socket URL:', socketServerUrl);
-            } else if (isProduction && !isHttps) {
-                // HTTP production - use same domain with socket port or proxied path
-                const socketPort = window.socketPort || '3001';
-                socketServerUrl = `${protocol}//${currentHost}:${socketPort}`;
-                console.log('Production HTTP detected, using socket URL:', socketServerUrl);
-            } else {
-                // Development - use port 3001
-                const socketPort = window.socketPort || '3001';
-                socketServerUrl = `${protocol}//${currentHost}:${socketPort}`;
-                console.log('Development mode, using socket URL:', socketServerUrl);
+            const pusherKey = window.pusherKey;
+            const pusherCluster = window.pusherCluster || 'mt1';
+
+            if (!pusherKey) {
+                console.error('Pusher key not found. Please configure PUSHER_APP_KEY in .env');
+                this.showConnectionError(new Error('Pusher not configured'));
+                return;
             }
-            
-            console.log('Connecting to socket server:', socketServerUrl);
-            
-            this.socket = io(socketServerUrl, {
-                transports: ['websocket', 'polling'],
-                timeout: 20000,
-                reconnection: true,
-                reconnectionDelay: 1000,
-                reconnectionAttempts: 10,
-                reconnectionDelayMax: 5000,
-                forceNew: false,
-                autoConnect: true
+
+            console.log('Initializing Pusher connection...', { key: pusherKey, cluster: pusherCluster });
+
+            this.pusher = new Pusher(pusherKey, {
+                cluster: pusherCluster,
+                encrypted: true,
+                forceTLS: true,
+                enabledTransports: ['ws', 'wss']
             });
 
-            this.socket.on('connect', () => {
-                console.log('Connected to socket server');
+            // Connection state handlers
+            this.pusher.connection.bind('connected', () => {
+                console.log('✅ Connected to Pusher');
                 this.isConnected = true;
                 this.authenticateUser();
+                this.hideConnectionError();
             });
 
-            this.socket.on('authenticated', (data) => {
-                console.log('=== AUTHENTICATION CONFIRMED BY SERVER ===');
-                console.log('Server response:', data);
-                console.log('Local user ID:', this.userId);
-                console.log('Local user type:', this.userType);
-                console.log('Authentication successful!');
-            });
-
-            this.socket.on('disconnect', () => {
-                console.log('Disconnected from socket server');
+            this.pusher.connection.bind('disconnected', () => {
+                console.log('⚠️ Disconnected from Pusher');
                 this.isConnected = false;
             });
 
-            this.socket.on('connect_error', (error) => {
-                console.error('Socket connection error:', error);
-                console.error('Error details:', {
-                    message: error.message,
-                    description: error.description,
-                    type: error.type,
-                    context: error.context
-                });
+            this.pusher.connection.bind('error', (error) => {
+                console.error('❌ Pusher connection error:', error);
                 this.isConnected = false;
-                
-                // Show user-friendly error message
                 this.showConnectionError(error);
             });
-            
-            this.socket.on('reconnect_error', (error) => {
-                console.error('Socket reconnection error:', error);
-            });
-            
-            this.socket.on('reconnect_failed', () => {
-                console.error('Socket reconnection failed after all attempts');
-                this.showConnectionError(new Error('Unable to connect to server. Please refresh the page.'));
-            });
 
-            // Listen for new messages
-            this.socket.on('new_message', (data) => {
-                this.handleNewMessage(data);
-            });
-
-            // Listen for typing indicators
-            this.socket.on('user_typing', (data) => {
-                this.handleTypingIndicator(data);
-            });
-
-            // Listen for read receipts
-            this.socket.on('message_read', (data) => {
-                this.handleReadReceipt(data);
-            });
-
-            // Listen for incoming calls
-            this.socket.on('incoming_call', (data) => {
-                this.handleIncomingCall(data);
-            });
-
-            // Listen for incoming call debug (fallback broadcast)
-            this.socket.on('incoming_call_debug', (data) => {
-                console.log('=== INCOMING CALL DEBUG RECEIVED ===');
-                console.log('Debug call data:', data);
-                console.log('Current user ID:', this.userId);
-                console.log('Current user type:', this.userType);
-                
-                // Dispatch as a DOM event for the CallManager to listen to
-                const event = new CustomEvent('socket:incoming-call-debug', {
-                    detail: data
-                });
-                document.dispatchEvent(event);
-                
-                // Only handle if this is actually for us
-                if (data.receiverId == this.userId && data.receiverType == this.userType) {
-                    console.log('This debug call is for us, handling as incoming call');
-                    this.handleIncomingCall(data);
-                } else {
-                    console.log('This debug call is not for us, ignoring');
-                }
-            });
-
-            // Listen for call answered
-            this.socket.on('call_answered', (data) => {
-                this.handleCallAnswered(data);
-            });
-
-            // Listen for call ended
-            this.socket.on('call_ended', (data) => {
-                this.handleCallEnded(data);
-            });
-
-            // Listen for call declined
-            this.socket.on('call_declined', (data) => {
-                this.handleCallDeclined(data);
-            });
-
-            // WebRTC signaling events
-            this.socket.on('webrtc_offer', (data) => {
-                this.handleWebRTCOffer(data);
-            });
-
-            this.socket.on('webrtc_answer', (data) => {
-                this.handleWebRTCAnswer(data);
-            });
-
-            this.socket.on('webrtc_ice_candidate', (data) => {
-                this.handleWebRTCIceCandidate(data);
+            this.pusher.connection.bind('state_change', (states) => {
+                console.log('Pusher state changed:', states);
             });
 
         } catch (error) {
-            console.error('Failed to initialize socket:', error);
+            console.error('Failed to initialize Pusher:', error);
+            this.showConnectionError(error);
         }
     }
 
-    // Authenticate user with socket server
+    // Authenticate user and subscribe to personal channel
     authenticateUser() {
-        // Get user data from page (you'll need to set these in your Laravel views)
         const userId = window.currentUserId;
         const userType = window.currentUserType;
 
-        console.log('=== AUTHENTICATING USER WITH SOCKET SERVER ===');
-        console.log('User ID from window:', userId);
-        console.log('User type from window:', userType);
-        console.log('Socket connected:', this.isConnected);
-        console.log('Socket instance:', this.socket);
+        console.log('=== AUTHENTICATING USER ===');
+        console.log('User ID:', userId);
+        console.log('User type:', userType);
 
         if (userId && userType) {
             this.userId = userId;
             this.userType = userType;
-            
-            console.log('Sending authentication to socket server...');
-            this.socket.emit('authenticate', {
-                userId: userId,
-                userType: userType
+
+            // Subscribe to user's personal channel for notifications
+            const personalChannel = `private-user-${userType}-${userId}`;
+            this.subscribeToChannel(personalChannel, (channel) => {
+                // Listen for incoming calls
+                channel.bind('incoming-call', (data) => {
+                    console.log('Incoming call received:', data);
+                    this.handleIncomingCall(data);
+                });
+
+                channel.bind('incoming-call-debug', (data) => {
+                    console.log('=== INCOMING CALL DEBUG RECEIVED ===');
+                    if (data.receiverId == this.userId && data.receiverType == this.userType) {
+                        this.handleIncomingCall(data);
+                    }
+                });
+
+                channel.bind('call-answered', (data) => {
+                    this.handleCallAnswered(data);
+                });
+
+                channel.bind('call-ended', (data) => {
+                    this.handleCallEnded(data);
+                });
+
+                channel.bind('call-declined', (data) => {
+                    this.handleCallDeclined(data);
+                });
             });
-            console.log('Authentication sent to socket server');
+
+            console.log('✅ User authenticated and subscribed to personal channel');
         } else {
-            console.error('Missing user data for authentication:', { userId, userType });
+            console.error('Missing user data for authentication');
         }
+    }
+
+    // Subscribe to a Pusher channel
+    subscribeToChannel(channelName, callback) {
+        if (!this.pusher) {
+            console.error('Pusher not initialized');
+            return null;
+        }
+
+        if (this.channels.has(channelName)) {
+            return this.channels.get(channelName);
+        }
+
+        const channel = this.pusher.subscribe(channelName);
+        this.channels.set(channelName, channel);
+
+        channel.bind('pusher:subscription_succeeded', () => {
+            console.log('✅ Subscribed to channel:', channelName);
+            if (callback) callback(channel);
+        });
+
+        channel.bind('pusher:subscription_error', (error) => {
+            console.error('❌ Subscription error for channel:', channelName, error);
+        });
+
+        return channel;
     }
 
     // Join a chat room
     joinChat(studentId, tutorId) {
-        if (!this.isConnected) return;
+        if (!this.isConnected) {
+            console.warn('Not connected to Pusher');
+            return;
+        }
 
         this.currentChatRoom = { studentId, tutorId };
-        
-        this.socket.emit('join_chat', {
-            studentId: studentId,
-            tutorId: tutorId
+        const roomId = `chat-${Math.min(studentId, tutorId)}-${Math.max(studentId, tutorId)}`;
+        const channelName = `private-${roomId}`;
+
+        this.subscribeToChannel(channelName, (channel) => {
+            // Listen for new messages
+            channel.bind('new-message', (data) => {
+                this.handleNewMessage(data);
+            });
+
+            // Listen for typing indicators
+            channel.bind('user-typing', (data) => {
+                this.handleTypingIndicator(data);
+            });
+
+            // Listen for read receipts
+            channel.bind('message-read', (data) => {
+                this.handleReadReceipt(data);
+            });
         });
     }
 
-    // Send a message
-    sendMessage(receiverId, receiverType, message, fileData = null) {
-        if (!this.isConnected || !this.userId) return;
+    // Send a message via Laravel API (which will broadcast via Pusher)
+    async sendMessage(receiverId, receiverType, message, fileData = null) {
+        if (!this.userId) return;
 
-        const messageData = {
-            senderId: this.userId,
-            senderType: this.userType,
-            receiverId: receiverId,
-            receiverType: receiverType,
-            message: message,
-            fileData: fileData
-        };
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/api/messages/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    senderId: this.userId,
+                    senderType: this.userType,
+                    receiverId: receiverId,
+                    receiverType: receiverType,
+                    message: message,
+                    fileData: fileData
+                })
+            });
 
-        this.socket.emit('send_message', messageData);
+            const data = await response.json();
+            if (data.success) {
+                console.log('Message sent successfully');
+            } else {
+                console.error('Failed to send message:', data.error);
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
     }
 
     // Start typing indicator
-    startTyping(receiverId, receiverType) {
-        if (!this.isConnected) return;
-
-        this.socket.emit('typing_start', {
-            senderId: this.userId,
-            senderType: this.userType,
-            receiverId: receiverId,
-            receiverType: receiverType
-        });
+    async startTyping(receiverId, receiverType) {
+        await this.sendTypingEvent(receiverId, receiverType, true);
     }
 
     // Stop typing indicator
-    stopTyping(receiverId, receiverType) {
-        if (!this.isConnected) return;
+    async stopTyping(receiverId, receiverType) {
+        await this.sendTypingEvent(receiverId, receiverType, false);
+    }
 
-        this.socket.emit('typing_stop', {
-            senderId: this.userId,
-            senderType: this.userType,
-            receiverId: receiverId,
-            receiverType: receiverType
-        });
+    // Send typing event
+    async sendTypingEvent(receiverId, receiverType, isTyping) {
+        try {
+            await fetch(`${this.apiBaseUrl}/api/messages/typing`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    senderId: this.userId,
+                    senderType: this.userType,
+                    receiverId: receiverId,
+                    receiverType: receiverType,
+                    isTyping: isTyping
+                })
+            });
+        } catch (error) {
+            console.error('Error sending typing event:', error);
+        }
     }
 
     // Mark message as read
-    markMessageAsRead(messageId) {
-        if (!this.isConnected) return;
-
-        this.socket.emit('mark_read', {
-            messageId: messageId,
-            readerId: this.userId,
-            readerType: this.userType
-        });
+    async markMessageAsRead(messageId) {
+        try {
+            await fetch(`${this.apiBaseUrl}/api/messages/mark-read`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    messageId: messageId,
+                    readerId: this.userId,
+                    readerType: this.userType
+                })
+            });
+        } catch (error) {
+            console.error('Error marking message as read:', error);
+        }
     }
 
     // Handle new message received
     handleNewMessage(data) {
-        // Dispatch custom event that Livewire can listen to
         const event = new CustomEvent('socket:new-message', {
             detail: data
         });
@@ -294,19 +276,15 @@ class ChatSocket {
     handleIncomingCall(data) {
         console.log('Incoming call received:', data);
         
-        // Dispatch custom event that Livewire can listen to
         const event = new CustomEvent('socket:incoming-call', {
             detail: data
         });
         document.dispatchEvent(event);
         
-        // Also dispatch a global event for the CallManager component
         const globalEvent = new CustomEvent('socket:incoming-call-global', {
             detail: data
         });
         document.dispatchEvent(globalEvent);
-        
-        console.log('Incoming call events dispatched');
     }
 
     // Handle call answered
@@ -364,80 +342,152 @@ class ChatSocket {
     }
 
     // Initiate a call
-    initiateCall(callType, receiverId, receiverType, roomId) {
-        if (!this.isConnected || !this.userId) return;
+    async initiateCall(callType, receiverId, receiverType, roomId) {
+        if (!this.userId) return;
 
-        const callData = {
-            callType,
-            callerId: this.userId,
-            callerName: this.getCurrentUserName(),
-            receiverId,
-            receiverType,
-            roomId
-        };
-
-        console.log('Initiating call:', callData);
-        this.socket.emit('call_initiated', callData);
+        try {
+            await fetch(`${this.apiBaseUrl}/api/calls/initiate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    callType,
+                    callerId: this.userId,
+                    callerName: this.getCurrentUserName(),
+                    receiverId,
+                    receiverType,
+                    roomId
+                })
+            });
+        } catch (error) {
+            console.error('Error initiating call:', error);
+        }
     }
 
     // Answer a call
-    answerCall(roomId, receiverId, receiverType) {
-        if (!this.isConnected) return;
-
-        const callData = {
-            roomId,
-            receiverId,
-            receiverType
-        };
-
-        console.log('Answering call:', callData);
-        this.socket.emit('call_answered', callData);
+    async answerCall(roomId, receiverId, receiverType) {
+        try {
+            await fetch(`${this.apiBaseUrl}/api/calls/answer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    roomId,
+                    receiverId,
+                    receiverType
+                })
+            });
+        } catch (error) {
+            console.error('Error answering call:', error);
+        }
     }
 
     // End a call
-    endCall(roomId, endedBy) {
-        if (!this.isConnected) return;
-
-        const callData = {
-            roomId,
-            endedBy
-        };
-
-        console.log('Ending call:', callData);
-        this.socket.emit('call_ended', callData);
+    async endCall(roomId, endedBy) {
+        try {
+            await fetch(`${this.apiBaseUrl}/api/calls/end`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    roomId,
+                    endedBy
+                })
+            });
+        } catch (error) {
+            console.error('Error ending call:', error);
+        }
     }
 
     // Join call room for WebRTC signaling
     joinCallRoom(roomId) {
         if (!this.isConnected) return;
 
-        this.socket.emit('join_call_room', { roomId });
+        const channelName = `private-call-${roomId}`;
+        this.subscribeToChannel(channelName, (channel) => {
+            // Listen for WebRTC signaling events
+            channel.bind('webrtc-offer', (data) => {
+                this.handleWebRTCOffer(data);
+            });
+
+            channel.bind('webrtc-answer', (data) => {
+                this.handleWebRTCAnswer(data);
+            });
+
+            channel.bind('webrtc-ice-candidate', (data) => {
+                this.handleWebRTCIceCandidate(data);
+            });
+        });
     }
 
     // Send WebRTC offer
-    sendWebRTCOffer(roomId, offer, from) {
-        if (!this.isConnected) return;
-
-        this.socket.emit('webrtc_offer', { roomId, offer, from });
+    async sendWebRTCOffer(roomId, offer, from) {
+        try {
+            await fetch(`${this.apiBaseUrl}/api/webrtc/offer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    roomId,
+                    offer,
+                    from
+                })
+            });
+        } catch (error) {
+            console.error('Error sending WebRTC offer:', error);
+        }
     }
 
     // Send WebRTC answer
-    sendWebRTCAnswer(roomId, answer, from) {
-        if (!this.isConnected) return;
-
-        this.socket.emit('webrtc_answer', { roomId, answer, from });
+    async sendWebRTCAnswer(roomId, answer, from) {
+        try {
+            await fetch(`${this.apiBaseUrl}/api/webrtc/answer`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    roomId,
+                    answer,
+                    from
+                })
+            });
+        } catch (error) {
+            console.error('Error sending WebRTC answer:', error);
+        }
     }
 
     // Send WebRTC ICE candidate
-    sendWebRTCIceCandidate(roomId, candidate, from) {
-        if (!this.isConnected) return;
-
-        this.socket.emit('webrtc_ice_candidate', { roomId, candidate, from });
+    async sendWebRTCIceCandidate(roomId, candidate, from) {
+        try {
+            await fetch(`${this.apiBaseUrl}/api/webrtc/ice-candidate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    roomId,
+                    candidate,
+                    from
+                })
+            });
+        } catch (error) {
+            console.error('Error sending WebRTC ICE candidate:', error);
+        }
     }
 
-    // Get current user name (you can customize this)
+    // Get current user name
     getCurrentUserName() {
-        // Try to get from page elements or set a default
         const nameElement = document.querySelector('.profile-icon');
         if (nameElement && nameElement.textContent) {
             return nameElement.textContent.trim();
@@ -447,9 +497,7 @@ class ChatSocket {
 
     // Show connection error to user
     showConnectionError(error) {
-        // Only show error if we're on a page that uses calls/messaging
         if (document.querySelector('.messaging-container') || document.querySelector('[wire\\:id*="call-manager"]')) {
-            // Create or update error notification
             let errorDiv = document.getElementById('socket-connection-error');
             if (!errorDiv) {
                 errorDiv = document.createElement('div');
@@ -473,48 +521,74 @@ class ChatSocket {
             errorDiv.innerHTML = `
                 <strong>Connection Error</strong><br>
                 Unable to connect to server. Calls and real-time messaging may not work.<br>
-                <small>Error: ${error.message || 'Unknown error'}</small>
+                <small>Error: ${error.message || 'websocket error'}</small>
             `;
-            
-            // Auto-hide after 10 seconds
-            setTimeout(() => {
-                if (errorDiv && errorDiv.parentNode) {
-                    errorDiv.style.opacity = '0';
-                    errorDiv.style.transition = 'opacity 0.5s';
-                    setTimeout(() => {
-                        if (errorDiv && errorDiv.parentNode) {
-                            errorDiv.parentNode.removeChild(errorDiv);
-                        }
-                    }, 500);
-                }
-            }, 10000);
         }
     }
 
-    // Disconnect socket
-    disconnect() {
-        if (this.socket) {
-            this.socket.disconnect();
-            this.isConnected = false;
+    // Hide connection error
+    hideConnectionError() {
+        const errorDiv = document.getElementById('socket-connection-error');
+        if (errorDiv) {
+            errorDiv.style.opacity = '0';
+            errorDiv.style.transition = 'opacity 0.5s';
+            setTimeout(() => {
+                if (errorDiv && errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 500);
         }
+    }
+
+    // Disconnect Pusher
+    disconnect() {
+        if (this.pusher) {
+            this.pusher.disconnect();
+            this.isConnected = false;
+            this.channels.clear();
+        }
+    }
+
+    // Compatibility: Expose socket property for existing code
+    get socket() {
+        return {
+            emit: (event, data) => {
+                console.warn('socket.emit() called. Use API methods instead:', event, data);
+                // Route to appropriate API method
+                if (event === 'send_message') {
+                    this.sendMessage(data.receiverId, data.receiverType, data.message, data.fileData);
+                } else if (event === 'join_chat') {
+                    this.joinChat(data.studentId, data.tutorId);
+                } else if (event === 'webrtc_offer') {
+                    this.sendWebRTCOffer(data.roomId, data.offer, data.from);
+                } else if (event === 'webrtc_answer') {
+                    this.sendWebRTCAnswer(data.roomId, data.answer, data.from);
+                } else if (event === 'webrtc_ice_candidate') {
+                    this.sendWebRTCIceCandidate(data.roomId, data.candidate, data.from);
+                } else if (event === 'join_call_room') {
+                    this.joinCallRoom(data.roomId);
+                }
+            },
+            on: () => {}, // Events are handled via Pusher channels
+            disconnect: () => this.disconnect()
+        };
     }
 }
 
-    // Initialize socket when DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, checking for messaging container or CallManager...');
-        
-        // Initialize if we're on a chat page (has messaging container) or has CallManager component
-        if (document.querySelector('.messaging-container') || document.querySelector('[wire\\:id*="call-manager"]')) {
-            console.log('Chat page or CallManager found, initializing socket...');
-            window.chatSocket = new ChatSocket();
-            window.chatSocket.connect();
-        } else {
-            console.log('Neither messaging container nor CallManager found, socket not initialized');
-        }
-    });
+// Initialize socket when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, checking for messaging container or CallManager...');
+    
+    if (document.querySelector('.messaging-container') || document.querySelector('[wire\\:id*="call-manager"]')) {
+        console.log('Chat page or CallManager found, initializing Pusher...');
+        window.chatSocket = new ChatSocket();
+        window.chatSocket.connect();
+    } else {
+        console.log('Neither messaging container nor CallManager found, Pusher not initialized');
+    }
+});
 
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ChatSocket;
-} 
+}
