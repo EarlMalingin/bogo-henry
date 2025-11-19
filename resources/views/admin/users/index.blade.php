@@ -29,8 +29,19 @@
         .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px}
         .green{background:#e7f8ef;color:#0f9d58}
         .red{background:#fde7ea;color:#b00020}
-        .btn{border:none;background:var(--primary);color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
+        .btn{border:none;background:var(--primary);color:#fff;padding:8px 12px;border-radius:10px;cursor:pointer;font-size:13px}
         .btn.alt{background:#ef4444}
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+        .modal-content{background:#fff;padding:24px;border-radius:14px;width:90%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+        .modal-title{font-size:18px;font-weight:600;color:#111827}
+        .close-modal{background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280}
+        .form-group{margin-bottom:16px}
+        .form-group label{display:block;margin-bottom:6px;font-weight:500;color:#374151}
+        .form-group textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;min-height:100px}
+        .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+        .btn-primary{background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:500}
+        .btn-secondary{background:#6b7280;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer}
     </style>
 </head>
 <body>
@@ -94,12 +105,15 @@
                                 <span class="badge {{ $isActive ? 'green' : 'red' }}">{{ $isActive ? 'Active' : 'Deactivated' }}</span>
                             </td>
                             <td>
-                                <form method="POST" action="{{ route('admin.users.toggle') }}" style="display:inline">
-                                    @csrf
-                                    <input type="hidden" name="id" value="{{ data_get($u,'id') }}">
-                                    <input type="hidden" name="type" value="{{ data_get($u,'type') }}">
-                                    <button class="btn {{ $isActive ? 'alt' : '' }}" type="submit">{{ $isActive ? 'Deactivate' : 'Activate' }}</button>
-                                </form>
+                                <div style="display:flex;gap:8px;align-items:center">
+                                    <button type="button" class="btn" style="background:#4a90e2" onclick="openMessageModal({{ data_get($u,'id') }}, '{{ data_get($u,'type') }}', '{{ addslashes(data_get($u,'name')) }}')">Send Message</button>
+                                    <form method="POST" action="{{ route('admin.users.toggle') }}" style="display:inline">
+                                        @csrf
+                                        <input type="hidden" name="id" value="{{ data_get($u,'id') }}">
+                                        <input type="hidden" name="type" value="{{ data_get($u,'type') }}">
+                                        <button class="btn {{ $isActive ? 'alt' : '' }}" type="submit">{{ $isActive ? 'Deactivate' : 'Activate' }}</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -119,6 +133,32 @@
                 <button class="btn" onclick="closeUserModal()" style="background:#ef4444">Close</button>
             </div>
             <div id="userContent" style="padding:16px"></div>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Send Message</h3>
+                <button class="close-modal" onclick="closeMessageModal()">&times;</button>
+            </div>
+            <form id="messageForm" onsubmit="sendMessage(event)">
+                <input type="hidden" id="userId" name="user_id">
+                <input type="hidden" id="userType" name="user_type">
+                <div class="form-group">
+                    <label for="userName">Recipient:</label>
+                    <input type="text" id="userName" readonly style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;background:#f9fafb">
+                </div>
+                <div class="form-group">
+                    <label for="messageText">Message:</label>
+                    <textarea id="messageText" name="message" required placeholder="Enter your message..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeMessageModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Send Message</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -160,6 +200,59 @@
         function closeUserModal(){
             document.getElementById('userModal').style.display = 'none';
             document.getElementById('userContent').innerHTML = '';
+        }
+
+        function openMessageModal(userId, userType, userName) {
+            document.getElementById('userId').value = userId;
+            document.getElementById('userType').value = userType;
+            document.getElementById('userName').value = userName;
+            document.getElementById('messageModal').style.display = 'flex';
+        }
+
+        function closeMessageModal() {
+            document.getElementById('messageModal').style.display = 'none';
+            document.getElementById('messageForm').reset();
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+            const userId = document.getElementById('userId').value;
+            const userType = document.getElementById('userType').value;
+            const message = document.getElementById('messageText').value;
+
+            fetch('{{ route("admin.message.send") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    user_type: userType,
+                    message: message
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Message sent successfully!');
+                    closeMessageModal();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to send message'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while sending the message');
+            });
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const messageModal = document.getElementById('messageModal');
+            if (event.target == messageModal) {
+                closeMessageModal();
+            }
         }
     </script>
 </body>

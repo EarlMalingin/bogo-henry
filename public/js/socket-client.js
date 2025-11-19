@@ -16,21 +16,33 @@ class ChatSocket {
             const currentHost = window.location.hostname;
             const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
             const port = window.location.port ? `:${window.location.port}` : '';
+            const isHttps = protocol === 'https:';
+            const isProduction = !currentHost.includes('localhost') && !currentHost.includes('127.0.0.1');
             
             // For production, use the same domain and protocol as the main app
             // Socket server should be proxied through the same domain or use a subdomain
             // If using a proxy, use the same origin; otherwise use port 3001
             let socketServerUrl;
             
-            // Check if we have a custom socket URL from Laravel config
+            // Check if we have a custom socket URL from Laravel config (highest priority)
             if (window.socketServerUrl) {
                 socketServerUrl = window.socketServerUrl;
-            } else if (window.location.port === '443' || window.location.port === '' && protocol === 'https:') {
+                console.log('Using custom socket URL from config:', socketServerUrl);
+            } else if (isProduction && isHttps) {
                 // HTTPS production - socket should be on same domain (proxied) or use wss
+                // Try same origin first (if proxied), then fallback to wss on same domain
                 socketServerUrl = `${protocol}//${currentHost}${port}/socket.io`;
+                console.log('Production HTTPS detected, using proxied socket URL:', socketServerUrl);
+            } else if (isProduction && !isHttps) {
+                // HTTP production - use same domain with socket port or proxied path
+                const socketPort = window.socketPort || '3001';
+                socketServerUrl = `${protocol}//${currentHost}:${socketPort}`;
+                console.log('Production HTTP detected, using socket URL:', socketServerUrl);
             } else {
-                // Development or HTTP - use port 3001
-                socketServerUrl = `${protocol}//${currentHost}:3001`;
+                // Development - use port 3001
+                const socketPort = window.socketPort || '3001';
+                socketServerUrl = `${protocol}//${currentHost}:${socketPort}`;
+                console.log('Development mode, using socket URL:', socketServerUrl);
             }
             
             console.log('Connecting to socket server:', socketServerUrl);
@@ -40,13 +52,14 @@ class ChatSocket {
                 timeout: 20000,
                 reconnection: true,
                 reconnectionDelay: 1000,
-                reconnectionAttempts: 5
+                reconnectionAttempts: 10,
+                reconnectionDelayMax: 5000,
+                forceNew: false,
+                autoConnect: true
             });
 
             this.socket.on('connect', () => {
-                console.log('=== SOCKET CONNECTED ===');
-                console.log('Socket ID:', this.socket.id);
-                console.log('Socket server URL:', socketServerUrl);
+                console.log('Connected to socket server');
                 this.isConnected = true;
                 this.authenticateUser();
             });
@@ -57,37 +70,34 @@ class ChatSocket {
                 console.log('Local user ID:', this.userId);
                 console.log('Local user type:', this.userType);
                 console.log('Authentication successful!');
-                
-                // Dispatch event to notify that socket is ready
-                const event = new CustomEvent('socket:ready', {
-                    detail: { userId: this.userId, userType: this.userType }
-                });
-                document.dispatchEvent(event);
             });
 
-            this.socket.on('disconnect', (reason) => {
-                console.log('=== SOCKET DISCONNECTED ===');
-                console.log('Reason:', reason);
+            this.socket.on('disconnect', () => {
+                console.log('Disconnected from socket server');
                 this.isConnected = false;
-                
-                // Dispatch event to notify disconnection
-                const event = new CustomEvent('socket:disconnected', {
-                    detail: { reason }
-                });
-                document.dispatchEvent(event);
             });
 
             this.socket.on('connect_error', (error) => {
-                console.error('=== SOCKET CONNECTION ERROR ===');
-                console.error('Error:', error);
-                console.error('Socket server URL attempted:', socketServerUrl);
+                console.error('Socket connection error:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    description: error.description,
+                    type: error.type,
+                    context: error.context
+                });
                 this.isConnected = false;
                 
-                // Dispatch event to notify connection error
-                const event = new CustomEvent('socket:error', {
-                    detail: { error: error.message || error }
-                });
-                document.dispatchEvent(event);
+                // Show user-friendly error message
+                this.showConnectionError(error);
+            });
+            
+            this.socket.on('reconnect_error', (error) => {
+                console.error('Socket reconnection error:', error);
+            });
+            
+            this.socket.on('reconnect_failed', () => {
+                console.error('Socket reconnection failed after all attempts');
+                this.showConnectionError(new Error('Unable to connect to server. Please refresh the page.'));
             });
 
             // Listen for new messages
@@ -433,6 +443,52 @@ class ChatSocket {
             return nameElement.textContent.trim();
         }
         return 'User';
+    }
+
+    // Show connection error to user
+    showConnectionError(error) {
+        // Only show error if we're on a page that uses calls/messaging
+        if (document.querySelector('.messaging-container') || document.querySelector('[wire\\:id*="call-manager"]')) {
+            // Create or update error notification
+            let errorDiv = document.getElementById('socket-connection-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'socket-connection-error';
+                errorDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #ff4757;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    z-index: 10000;
+                    max-width: 400px;
+                    font-size: 14px;
+                `;
+                document.body.appendChild(errorDiv);
+            }
+            
+            errorDiv.innerHTML = `
+                <strong>Connection Error</strong><br>
+                Unable to connect to server. Calls and real-time messaging may not work.<br>
+                <small>Error: ${error.message || 'Unknown error'}</small>
+            `;
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (errorDiv && errorDiv.parentNode) {
+                    errorDiv.style.opacity = '0';
+                    errorDiv.style.transition = 'opacity 0.5s';
+                    setTimeout(() => {
+                        if (errorDiv && errorDiv.parentNode) {
+                            errorDiv.parentNode.removeChild(errorDiv);
+                        }
+                    }, 500);
+                }
+            }, 10000);
+        }
     }
 
     // Disconnect socket

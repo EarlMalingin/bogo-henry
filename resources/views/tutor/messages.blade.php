@@ -16,6 +16,29 @@
         @endphp
         window.currentUserId = {{ $unifiedUser ? $unifiedUser->id : Auth::guard('tutor')->id() }};
         window.currentUserType = 'tutor';
+        
+        // Socket server configuration
+        @php
+            $socketUrl = env('SOCKET_URL', null);
+            $socketPort = env('SOCKET_PORT', '3001');
+            $appUrl = env('APP_URL', 'http://localhost:8000');
+            $isProduction = env('APP_ENV') === 'production';
+            
+            // If SOCKET_URL is set, use it; otherwise construct from APP_URL
+            if ($socketUrl) {
+                $finalSocketUrl = $socketUrl;
+            } elseif ($isProduction && str_starts_with($appUrl, 'https://')) {
+                // Production HTTPS - use proxied path
+                $finalSocketUrl = $appUrl . '/socket.io';
+            } else {
+                // Development or HTTP - use port
+                $host = parse_url($appUrl, PHP_URL_HOST);
+                $protocol = str_starts_with($appUrl, 'https://') ? 'https://' : 'http://';
+                $finalSocketUrl = $protocol . $host . ':' . $socketPort;
+            }
+        @endphp
+        window.socketServerUrl = @json($finalSocketUrl ?? null);
+        window.socketPort = @json($socketPort);
     </script>
     <style>
         * {
@@ -483,7 +506,12 @@
     <!-- Main Content -->
     <main>
         @livewire('tutor-chat')
-        @livewire(\App\Livewire\CallManager::class)
+        @php
+            $callManagerExists = class_exists('App\Livewire\CallManager');
+        @endphp
+        @if($callManagerExists)
+            @livewire('call-manager')
+        @endif
     </main>
 
     @include('layouts.footer-modals')

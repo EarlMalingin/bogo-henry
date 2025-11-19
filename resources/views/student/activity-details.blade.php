@@ -422,28 +422,33 @@
                 @endif
             </div>
 
-            @if($submission && $submission->status === 'graded')
+            @if($submission && ($submission->status === 'graded' || ($submission->status === 'submitted' && $submission->score !== null)))
                 <!-- Graded Results -->
-                <div class="grading-section" style="background-color: #e8f5e9; border: 2px solid #4caf50; margin-bottom: 2rem;">
+                <div class="grading-section" style="background-color: #e8f5e9; margin-bottom: 2rem; border-radius: 8px; padding: 2rem;">
                     <h3 style="margin-bottom: 1.5rem; color: #2e7d32;">
                         <i class="fas fa-check-circle" style="color: #4caf50; margin-right: 0.5rem;"></i>
-                        Activity Graded
+                        Activity Automatically Graded
                     </h3>
+                    <p style="color: #2e7d32; margin-bottom: 1rem; font-size: 0.95rem;">
+                        <i class="fas fa-info-circle"></i> Your answers have been automatically graded. See your score below.
+                    </p>
                     
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                        <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $submission->score }}</div>
-                            <div style="color: #666; margin-top: 0.5rem;">Your Score</div>
-                    </div>
-                        <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $activity->total_points }}</div>
-                            <div style="color: #666; margin-top: 0.5rem;">Total Points</div>
+                    @if($submission->score !== null)
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $submission->score }}</div>
+                                <div style="color: #666; margin-top: 0.5rem;">Your Score</div>
+                            </div>
+                            <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $activity->total_points }}</div>
+                                <div style="color: #666; margin-top: 0.5rem;">Total Points</div>
+                            </div>
+                            <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px;">
+                                <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $activity->total_points > 0 ? round(($submission->score / $activity->total_points) * 100) : 0 }}%</div>
+                                <div style="color: #666; margin-top: 0.5rem;">Percentage</div>
+                            </div>
                         </div>
-                        <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ round(($submission->score / $activity->total_points) * 100) }}%</div>
-                            <div style="color: #666; margin-top: 0.5rem;">Percentage</div>
-                        </div>
-                    </div>
+                    @endif
                     
                     @if($submission->feedback)
                         <div style="background-color: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -456,11 +461,11 @@
                     @endif
                 </div>
             @elseif($submission && $submission->status === 'submitted')
-                <!-- Submitted Status -->
-                <div class="progress-info">
-                    <i class="fas fa-clock progress-icon"></i>
-                    <div class="progress-text">
-                        Activity submitted and waiting for grading.
+                <!-- Submitted Status (should not appear with auto-grading, but kept as fallback) -->
+                <div class="progress-info" style="background-color: #fff3cd; border: 1px solid #ffc107;">
+                    <i class="fas fa-clock progress-icon" style="color: #856404;"></i>
+                    <div class="progress-text" style="color: #856404;">
+                        Activity submitted. Processing your score...
                     </div>
                 </div>
             @else
@@ -491,16 +496,22 @@
                                 @if(isset($question['type']) && $question['type'] === 'multiple_choice')
                                     <!-- Multiple Choice -->
                                     @if(isset($question['options']))
-                                        @foreach($question['options'] as $optionIndex => $option)
-                                            <label style="display: block; margin-bottom: 0.5rem; cursor: pointer;">
-                                                <input type="radio" 
-                                                       name="answers[{{ $index }}]" 
-                                                       value="{{ $optionIndex }}"
-                                                       {{ ($submission && isset($submission->answers[$index]) && $submission->answers[$index] == $optionIndex) ? 'checked' : '' }}
-                                                       style="margin-right: 0.5rem;">
-                                                {{ $option }}
-                                            </label>
-                                        @endforeach
+                                        <div style="margin-top: 1rem;">
+                                            @foreach($question['options'] as $optionIndex => $option)
+                                                @php
+                                                    $optionLabel = chr(65 + $optionIndex); // A, B, C, D, etc.
+                                                @endphp
+                                                <label style="display: flex; align-items: center; margin-bottom: 0.75rem; padding: 0.75rem; background-color: #f8f9fa; border-radius: 5px; cursor: pointer; transition: background-color 0.2s;">
+                                                    <input type="radio" 
+                                                           name="answers[{{ $index }}]" 
+                                                           value="{{ $optionIndex }}"
+                                                           {{ ($submission && isset($submission->answers[$index]) && $submission->answers[$index] == $optionIndex) ? 'checked' : '' }}
+                                                           style="margin-right: 0.75rem; cursor: pointer;">
+                                                    <span style="font-weight: 600; color: #2d7dd2; min-width: 25px; margin-right: 0.5rem;">{{ $optionLabel }}.</span>
+                                                    <span style="flex: 1; font-size: 1rem;">{{ $option }}</span>
+                                                </label>
+                                            @endforeach
+                                        </div>
                                     @endif
                                 @else
                                     <!-- Text Answer -->
@@ -525,27 +536,86 @@
                 <!-- Show submitted answers when graded -->
                 @if($activity->questions && count($activity->questions) > 0)
                     <div class="questions-section">
-                        <h2 style="margin-bottom: 2rem; color: #333;">Your Answers</h2>
+                        <h2 style="margin-bottom: 2rem; color: #333;">Questions and Your Answers</h2>
                         
                         @foreach($activity->questions as $index => $question)
-                            <div class="question-item">
-                                <div class="question-number">Question {{ $index + 1 }}</div>
-                                <div class="question-text">{{ $question['question'] ?? $question }}</div>
-                                
-                                <div style="margin-top: 1rem; padding: 1rem; background-color: #f8f9fa; border-radius: 5px;">
-                                    <strong style="color: #333;">Your Answer:</strong>
-                                    <p style="color: #666; margin-top: 0.5rem; white-space: pre-wrap;">
-                                        @if(isset($question['type']) && $question['type'] === 'multiple_choice' && isset($question['options']))
-                                            @if($submission && isset($submission->answers[$index]))
-                                                {{ $question['options'][$submission->answers[$index]] ?? 'No answer selected' }}
-                                            @else
-                                                No answer provided
-                                            @endif
-                                        @else
-                                            {{ $submission && isset($submission->answers[$index]) ? $submission->answers[$index] : 'No answer provided' }}
-                                        @endif
-                                    </p>
+                            @php
+                                $questionText = $question['question'] ?? $question;
+                                $studentAnswerIndex = isset($submission->answers[$index]) ? (int)$submission->answers[$index] : null;
+                                $correctAnswerIndex = isset($question['correct_answer']) ? (int)$question['correct_answer'] : null;
+                                $isCorrect = $studentAnswerIndex !== null && $correctAnswerIndex !== null && $studentAnswerIndex === $correctAnswerIndex;
+                            @endphp
+                            
+                            <div class="question-item" style="margin-bottom: 1.5rem; padding: 1.5rem; background-color: {{ $isCorrect ? '#e8f5e9' : '#ffebee' }}; border-left: 4px solid {{ $isCorrect ? '#4caf50' : '#f44336' }}; border-radius: 5px;">
+                                <div class="question-number" style="font-weight: 600; color: #333; margin-bottom: 0.75rem; font-size: 1.1rem;">
+                                    Question {{ $index + 1 }}
+                                    @if($isCorrect)
+                                        <span style="color: #4caf50; margin-left: 0.5rem;">
+                                            <i class="fas fa-check-circle"></i> Correct
+                                        </span>
+                                    @else
+                                        <span style="color: #f44336; margin-left: 0.5rem;">
+                                            <i class="fas fa-times-circle"></i> Incorrect
+                                        </span>
+                                    @endif
                                 </div>
+                                
+                                <div style="margin-bottom: 1rem; color: #555; line-height: 1.6;">
+                                    <strong>Question:</strong> {{ $questionText }}
+                                </div>
+                                
+                                @if(isset($question['type']) && $question['type'] === 'multiple_choice' && isset($question['options']))
+                                    <div style="margin-bottom: 0.75rem;">
+                                        <strong style="color: #333;">Options:</strong>
+                                        <div style="margin-top: 0.5rem;">
+                                            @foreach($question['options'] as $optIndex => $option)
+                                                @php
+                                                    $optionLabel = chr(65 + $optIndex); // A, B, C, D, etc.
+                                                    $isStudentAnswer = $studentAnswerIndex === $optIndex;
+                                                    $isCorrectAnswer = $correctAnswerIndex === $optIndex;
+                                                @endphp
+                                                <div style="padding: 0.5rem; margin-bottom: 0.5rem; background-color: white; border-radius: 3px; border: 2px solid {{ $isStudentAnswer ? ($isCorrect ? '#4caf50' : '#f44336') : ($isCorrectAnswer ? '#4caf50' : '#e0e0e0') }};">
+                                                    <span style="font-weight: 600; color: #2d7dd2; margin-right: 0.5rem;">{{ $optionLabel }}.</span>
+                                                    <span style="color: #333;">{{ $option }}</span>
+                                                    @if($isStudentAnswer)
+                                                        <span style="color: {{ $isCorrect ? '#4caf50' : '#f44336' }}; margin-left: 0.5rem; font-weight: 600;">
+                                                            <i class="fas fa-arrow-left"></i> Your Answer
+                                                        </span>
+                                                    @endif
+                                                    @if($isCorrectAnswer && !$isStudentAnswer)
+                                                        <span style="color: #4caf50; margin-left: 0.5rem; font-weight: 600;">
+                                                            <i class="fas fa-check"></i> Correct Answer
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    
+                                    @if($studentAnswerIndex !== null)
+                                        <div style="padding: 0.75rem; background-color: white; border-radius: 3px; margin-top: 0.5rem;">
+                                            <strong style="color: #333;">You Selected:</strong>
+                                            <span style="color: #2d7dd2; font-weight: 600; margin-left: 0.5rem;">
+                                                {{ chr(65 + $studentAnswerIndex) }}. {{ $question['options'][$studentAnswerIndex] ?? 'N/A' }}
+                                            </span>
+                                        </div>
+                                    @else
+                                        <div style="padding: 0.75rem; background-color: #fff3cd; border-radius: 3px; margin-top: 0.5rem; color: #856404;">
+                                            <i class="fas fa-exclamation-triangle"></i> No answer provided
+                                        </div>
+                                    @endif
+                                @else
+                                    @if(isset($submission->answers[$index]))
+                                        <div style="padding: 0.75rem; background-color: white; border-radius: 3px; margin-top: 0.5rem;">
+                                            <strong style="color: #333;">Your Answer:</strong>
+                                            <div style="color: #555; margin-top: 0.5rem; white-space: pre-wrap;">{{ $submission->answers[$index] }}</div>
+                                        </div>
+                                    @else
+                                        <div style="padding: 0.75rem; background-color: #fff3cd; border-radius: 3px; margin-top: 0.5rem; color: #856404;">
+                                            <i class="fas fa-exclamation-triangle"></i> No answer provided
+                                        </div>
+                                    @endif
+                                @endif
                             </div>
                         @endforeach
                     </div>
@@ -583,43 +653,6 @@
                 </div>
             @endif
 
-            @if(!$submission || $submission->status !== 'graded')
-                <!-- Student Attachments Section -->
-                <div class="attachments-section">
-                    <h2 style="margin-bottom: 1.5rem; color: #333;">Your Attachments</h2>
-                    
-                    <!-- File Upload Area -->
-                    <div class="file-upload-area" id="file-upload-area">
-                        <div class="upload-content">
-                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                            <p class="upload-text">Drag and drop files here or click to browse</p>
-                            <p class="upload-hint">Supported formats: PDF, DOC, DOCX, TXT, JPG, JPEG, PNG (Max 10MB each)</p>
-                            <input type="file" id="student-attachments" name="student_attachments[]" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png" style="display: none;">
-                            <button type="button" class="btn btn-secondary" onclick="document.getElementById('student-attachments').click()">
-                                <i class="fas fa-plus"></i> Choose Files
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- File List -->
-                    <div class="file-list" id="file-list">
-                        @if($submission && $submission->attachments)
-                            @foreach($submission->attachments as $attachment)
-                                <div class="file-item" data-filename="{{ basename($attachment) }}">
-                                    <i class="fas fa-file file-icon"></i>
-                                    <div class="file-info">
-                                        <div class="file-name">{{ basename($attachment) }}</div>
-                                        <div class="file-size">Uploaded file</div>
-                                    </div>
-                                    <button type="button" class="remove-file-btn" onclick="removeFile('{{ basename($attachment) }}')">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            @endforeach
-                        @endif
-                    </div>
-                </div>
-            @endif
 
             <!-- Activity Actions -->
             <div class="activity-actions">
@@ -664,143 +697,9 @@
     </footer>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // File upload functionality
-            initializeFileUpload();
-            
-            // Initialize existing files if any
-            initializeExistingFiles();
-        });
-
-        function initializeExistingFiles() {
-            // This function will be called to handle existing files from the server
-            // For now, we'll just ensure the uploadedFiles array is ready
-        }
-
-        function initializeFileUpload() {
-            const fileInput = document.getElementById('student-attachments');
-            const uploadArea = document.getElementById('file-upload-area');
-            const fileList = document.getElementById('file-list');
-
-            // Drag and drop functionality
-            uploadArea.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', function(e) {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                handleFiles(files);
-            });
-
-            // File input change
-            fileInput.addEventListener('change', function(e) {
-                handleFiles(e.target.files);
-            });
-
-            // Click to upload
-            uploadArea.addEventListener('click', function(e) {
-                if (e.target === uploadArea || e.target.closest('.upload-content')) {
-                    fileInput.click();
-                }
-            });
-        }
-
-        // Store uploaded files globally
-        let uploadedFiles = [];
-
-        function handleFiles(files) {
-            const fileList = document.getElementById('file-list');
-            
-            Array.from(files).forEach(file => {
-                // Validate file size (10MB max)
-                if (file.size > 10 * 1024 * 1024) {
-                    alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
-                    return;
-                }
-
-                // Validate file type
-                const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/jpeg', 'image/jpg', 'image/png'];
-                if (!allowedTypes.includes(file.type)) {
-                    alert(`File "${file.name}" is not a supported format.`);
-                    return;
-                }
-
-                // Check if file already exists
-                const existingFile = fileList.querySelector(`[data-filename="${file.name}"]`);
-                if (existingFile) {
-                    alert(`File "${file.name}" is already uploaded.`);
-                    return;
-                }
-
-                // Add file to global array and list
-                uploadedFiles.push(file);
-                addFileToList(file);
-            });
-        }
-
-        function addFileToList(file) {
-            const fileList = document.getElementById('file-list');
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            fileItem.setAttribute('data-filename', file.name);
-            
-            const fileSize = formatFileSize(file.size);
-            
-            fileItem.innerHTML = `
-                <i class="fas fa-file file-icon"></i>
-                <div class="file-info">
-                    <div class="file-name">${file.name}</div>
-                    <div class="file-size">${fileSize}</div>
-                </div>
-                <button type="button" class="remove-file-btn" onclick="removeFile('${file.name}')">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            fileList.appendChild(fileItem);
-        }
-
-        function removeFile(filename) {
-            const fileItem = document.querySelector(`[data-filename="${filename}"]`);
-            if (fileItem) {
-                fileItem.remove();
-                // Remove from global array
-                uploadedFiles = uploadedFiles.filter(file => file.name !== filename);
-            }
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
         function saveDraft() {
             const form = document.getElementById('activity-form');
             const formData = new FormData(form);
-            
-            // Add student attachments to form data
-            const fileInput = document.getElementById('student-attachments');
-            if (fileInput.files.length > 0) {
-                Array.from(fileInput.files).forEach(file => {
-                    formData.append('student_attachments[]', file);
-                });
-            }
-            
-            // Add uploaded files from drag & drop
-            uploadedFiles.forEach(file => {
-                formData.append('student_attachments[]', file);
-            });
             
             fetch(form.action, {
                 method: 'POST',
@@ -843,19 +742,6 @@
                 const form = document.getElementById('activity-form');
                 const formData = new FormData(form);
                 
-                // Add student attachments to form data
-                const fileInput = document.getElementById('student-attachments');
-                if (fileInput.files.length > 0) {
-                    Array.from(fileInput.files).forEach(file => {
-                        formData.append('student_attachments[]', file);
-                    });
-                }
-                
-                // Add uploaded files from drag & drop
-                uploadedFiles.forEach(file => {
-                    formData.append('student_attachments[]', file);
-                });
-                
                 fetch('{{ route("student.activities.submit", $activity) }}', {
                     method: 'POST',
                     body: formData,
@@ -866,8 +752,16 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Activity submitted successfully!');
-                        location.reload();
+                        // Show success message with score
+                        const scoreMessage = data.score !== undefined 
+                            ? `Activity submitted and automatically graded!\n\nYour Score: ${data.score} / ${data.total_points} (${Math.round((data.score / data.total_points) * 100)}%)`
+                            : 'Activity submitted successfully!';
+                        alert(scoreMessage);
+                        // Small delay to ensure database update is committed, then reload
+                        setTimeout(function() {
+                            // Force reload with cache bypass
+                            window.location.href = window.location.href + (window.location.href.indexOf('?') > -1 ? '&' : '?') + '_=' + new Date().getTime();
+                        }, 500);
                     } else {
                         alert('Error submitting activity: ' + (data.message || 'Unknown error'));
                         // Re-enable button on error

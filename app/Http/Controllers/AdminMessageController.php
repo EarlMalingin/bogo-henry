@@ -3,35 +3,40 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Message;
+use App\Models\Notification;
 use App\Models\Tutor;
+use App\Models\Student;
 
 class AdminMessageController extends Controller
 {
     public function send(Request $request)
     {
         $request->validate([
-            'tutor_id' => 'required|exists:tutors,id',
+            'user_id' => 'required|integer',
+            'user_type' => 'required|in:student,tutor',
             'message' => 'required|string|min:1',
         ]);
 
         try {
-            $tutor = Tutor::findOrFail($request->tutor_id);
+            if ($request->user_type === 'tutor') {
+                $user = Tutor::findOrFail($request->user_id);
+            } else {
+                $user = Student::findOrFail($request->user_id);
+            }
 
-            Message::create([
-                'chat_room_id' => null,
-                'conversation_id' => 'admin_' . $tutor->id,
-                'sender_id' => 0, // Admin doesn't have an ID in the system
-                'sender_type' => 'admin',
-                'receiver_id' => $tutor->id,
-                'receiver_type' => 'tutor',
+            // Create notification instead of message
+            Notification::create([
+                'user_id' => $user->id,
+                'user_type' => $request->user_type,
+                'type' => 'admin_message',
+                'title' => 'Message from MentorHub Admin',
                 'message' => $request->message,
                 'is_read' => false,
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Message sent successfully to ' . $tutor->getFullName(),
+                'message' => 'Message sent successfully to ' . $user->getFullName(),
             ]);
         } catch (\Exception $e) {
             return response()->json([

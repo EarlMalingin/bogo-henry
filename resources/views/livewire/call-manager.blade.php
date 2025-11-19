@@ -5,12 +5,18 @@
             <div class="call-container">
                 <!-- Call Header -->
                 <div class="call-header">
-                    <h3>{{ $callType === 'video' ? 'Video Call' : 'Voice Call' }}</h3>
-                    <p>
-                        @if($isCaller)
-                            Calling {{ $receiverName }}
+                    <h3>
+                        @if(isset($callType) && $callType === 'video')
+                            Video Call
                         @else
-                            {{ $callerName }} is calling you
+                            Voice Call
+                        @endif
+                    </h3>
+                    <p>
+                        @if(isset($isCaller) && $isCaller)
+                            Calling {{ $receiverName ?? 'User' }}
+                        @else
+                            {{ $callerName ?? 'Someone' }} is calling you
                         @endif
                     </p>
                 </div>
@@ -28,19 +34,19 @@
 
                 <!-- Video/Audio Elements -->
                 <div class="media-container">
-                    @if($callType === 'video')
+                    @if(isset($callType) && $callType === 'video')
                         <div class="video-grid">
                             <div class="local-video-container">
                                 <video id="localVideo" autoplay muted playsinline style="display: none;"></video>
                                 <div class="profile-placeholder" id="localProfilePlaceholder" style="display: flex;">
-                                    @if($callerProfilePicture)
+                                    @if(isset($callerProfilePicture) && $callerProfilePicture)
                                         <img src="{{ asset('storage/' . $callerProfilePicture) }}" alt="You" class="profile-image" 
                                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                              onload="this.style.display='block'; this.nextElementSibling.style.display='none';"
                                              style="display: block;">
-                                        <div class="profile-initials" style="display: none;">{{ substr($callerName ?? 'You', 0, 2) }}</div>
+                                        <div class="profile-initials" style="display: none;">{{ strtoupper(substr($callerName ?? 'You', 0, 2)) }}</div>
                                     @else
-                                        <div class="profile-initials">{{ substr($callerName ?? 'You', 0, 2) }}</div>
+                                        <div class="profile-initials">{{ strtoupper(substr($callerName ?? 'You', 0, 2)) }}</div>
                                     @endif
                                 </div>
                                 <div class="video-label">You</div>
@@ -48,33 +54,33 @@
                             <div class="remote-video-container">
                                 <video id="remoteVideo" autoplay playsinline style="display: none;"></video>
                                 <div class="profile-placeholder" id="remoteProfilePlaceholder" style="display: flex;">
-                                    @if($isCaller)
-                                        @if($receiverProfilePicture)
-                                            <img src="{{ asset('storage/' . $receiverProfilePicture) }}" alt="{{ $receiverName }}" class="profile-image" 
+                                    @if(isset($isCaller) && $isCaller)
+                                        @if(isset($receiverProfilePicture) && $receiverProfilePicture)
+                                            <img src="{{ asset('storage/' . $receiverProfilePicture) }}" alt="{{ $receiverName ?? 'User' }}" class="profile-image" 
                                                  onerror=" this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                                  onload=" this.style.display='block'; this.nextElementSibling.style.display='none';"
                                                  style="display: block;">
-                                            <div class="profile-initials" style="display: none;">{{ substr($receiverName ?? 'RU', 0, 2) }}</div>
+                                            <div class="profile-initials" style="display: none;">{{ strtoupper(substr($receiverName ?? 'RU', 0, 2)) }}</div>
                                         @else
-                                            <div class="profile-initials">{{ substr($receiverName ?? 'RU', 0, 2) }}</div>
+                                            <div class="profile-initials">{{ strtoupper(substr($receiverName ?? 'RU', 0, 2)) }}</div>
                                         @endif
                                     @else
-                                        @if($callerProfilePicture)
-                                            <img src="{{ asset('storage/' . $callerProfilePicture) }}" alt="{{ $callerName }}" class="profile-image" 
+                                        @if(isset($callerProfilePicture) && $callerProfilePicture)
+                                            <img src="{{ asset('storage/' . $callerProfilePicture) }}" alt="{{ $callerName ?? 'User' }}" class="profile-image" 
                                                  onerror=" this.style.display='none'; this.nextElementSibling.style.display='flex';"
                                                  onload=" this.style.display='block'; this.nextElementSibling.style.display='none';"
                                                  style="display: block;">
-                                            <div class="profile-initials" style="display: none;">{{ substr($callerName ?? 'CU', 0, 2) }}</div>
+                                            <div class="profile-initials" style="display: none;">{{ strtoupper(substr($callerName ?? 'CU', 0, 2)) }}</div>
                                         @else
-                                            <div class="profile-initials">{{ substr($callerName ?? 'CU', 0, 2) }}</div>
+                                            <div class="profile-initials">{{ strtoupper(substr($callerName ?? 'CU', 0, 2)) }}</div>
                                         @endif
                                     @endif
                                 </div>
                                 <div class="video-label">
-                                    @if($isCaller)
-                                        {{ $receiverName }}
+                                    @if(isset($isCaller) && $isCaller)
+                                        {{ $receiverName ?? 'User' }}
                                     @else
-                                        {{ $callerName }}
+                                        {{ $callerName ?? 'User' }}
                                     @endif
                                 </div>
                             </div>
@@ -82,10 +88,10 @@
                     @else
                         <div class="audio-call-interface">
                             <div class="caller-avatar">
-                                @if($isCaller)
-                                    <div class="avatar-circle">{{ substr($receiverName, 0, 1) }}</div>
+                                @if(isset($isCaller) && $isCaller)
+                                    <div class="avatar-circle">{{ strtoupper(substr($receiverName ?? 'U', 0, 1)) }}</div>
                                 @else
-                                    <div class="avatar-circle">{{ substr($callerName, 0, 1) }}</div>
+                                    <div class="avatar-circle">{{ strtoupper(substr($callerName ?? 'U', 0, 1)) }}</div>
                                 @endif
                             </div>
                             <div class="call-status">
@@ -104,7 +110,7 @@
                         </svg>
                     </button>
                     
-                    @if($callType === 'video')
+                    @if(isset($callType) && $callType === 'video')
                         <button class="control-btn camera-btn" id="cameraBtn" title="Toggle Camera">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
@@ -540,45 +546,14 @@
             console.log('Current user type:', window.currentUserType);
             console.log('Window location:', window.location.href);
             
-            // Check if socket client is available and ensure it's connected
+            // Check if socket client is available
             if (window.chatSocket) {
                 console.log('Socket client found:', window.chatSocket);
                 console.log('Socket connected:', window.chatSocket.socket?.connected);
                 console.log('Socket ID:', window.chatSocket.socket?.id);
-                
-                // If socket exists but not connected, try to connect
-                if (!window.chatSocket.isConnected && !window.chatSocket.socket?.connected) {
-                    console.log('Socket not connected, attempting to connect...');
-                    try {
-                        window.chatSocket.connect();
-                    } catch (e) {
-                        console.error('Error connecting socket:', e);
-                    }
-                }
             } else {
-                console.log('Socket client NOT found - initializing...');
-                // Initialize socket client if it doesn't exist
-                if (typeof ChatSocket !== 'undefined') {
-                    window.chatSocket = new ChatSocket();
-                    window.chatSocket.connect();
-                    console.log('Socket client initialized');
-                } else {
-                    console.error('ChatSocket class not found - socket-client.js may not be loaded');
-                }
+                console.log('Socket client NOT found - this is the problem!');
             }
-            
-            // Listen for socket ready event
-            document.addEventListener('socket:ready', (event) => {
-                console.log('=== SOCKET READY EVENT RECEIVED ===');
-                console.log('Socket is now ready for calls');
-            });
-            
-            // Listen for socket errors
-            document.addEventListener('socket:error', (event) => {
-                console.error('=== SOCKET ERROR EVENT ===');
-                console.error('Error:', event.detail);
-                console.error('Please check if socket server is running on port 3001');
-            });
             
             // Listen for incoming calls (only for receivers)
             Livewire.on('callIncoming', (data) => {
@@ -771,23 +746,8 @@
             console.log('Current user type:', window.currentUserType);
             const data = event.detail;
             
-            // Convert IDs to strings for comparison (in case one is number and other is string)
-            const receiverId = String(data.receiverId || '');
-            const currentUserId = String(window.currentUserId || '');
-            const receiverType = String(data.receiverType || '').toLowerCase();
-            const currentUserType = String(window.currentUserType || '').toLowerCase();
-            
-            console.log('Comparison:', {
-                receiverId: receiverId,
-                currentUserId: currentUserId,
-                receiverType: receiverType,
-                currentUserType: currentUserType,
-                idMatch: receiverId === currentUserId,
-                typeMatch: receiverType === currentUserType
-            });
-            
             // Show incoming call only if this user+role is the receiver
-            if (receiverId === currentUserId && receiverType === currentUserType) {
+            if (data.receiverId == window.currentUserId && data.receiverType == window.currentUserType) {
                 console.log('Showing incoming call modal for user:', window.currentUserId);
                 console.log('Call data:', data);
                 // Update the CallManager component with the incoming call data
@@ -795,8 +755,6 @@
                 showIncomingCallModal(data);
             } else {
                 console.log('Incoming call not targeted at this user/role, ignoring');
-                console.log('Expected receiverId:', receiverId, 'Current userId:', currentUserId);
-                console.log('Expected receiverType:', receiverType, 'Current userType:', currentUserType);
             }
         });
 
@@ -806,21 +764,13 @@
             console.log('Debug event detail:', event.detail);
             const data = event.detail;
             
-            // Convert IDs to strings for comparison
-            const receiverId = String(data.receiverId || '');
-            const currentUserId = String(window.currentUserId || '');
-            const receiverType = String(data.receiverType || '').toLowerCase();
-            const currentUserType = String(window.currentUserType || '').toLowerCase();
-            
             // Only handle if this is actually for us
-            if (receiverId === currentUserId && receiverType === currentUserType) {
+            if (data.receiverId == window.currentUserId && data.receiverType == window.currentUserType) {
                 console.log('This debug call is for us, handling as incoming call');
                 @this.call('handleIncomingCall', data);
                 showIncomingCallModal(data);
             } else {
                 console.log('This debug call is not for us, ignoring');
-                console.log('Expected receiverId:', receiverId, 'Current userId:', currentUserId);
-                console.log('Expected receiverType:', receiverType, 'Current userType:', currentUserType);
             }
         });
 
@@ -2025,37 +1975,18 @@
             console.log('Data type:', typeof data);
             console.log('Is array:', Array.isArray(data));
             
-            // Handle array data (Livewire sometimes passes arrays)
-            if (Array.isArray(data)) {
-                if (data.length > 0) {
+            if (Array.isArray(data) && data.length > 0) {
                 data = data[0]; // Extract first element if it's an array
                 console.log('Extracted data from array:', data);
-                } else {
-                    console.error('Empty array received in sendCallToSocket');
-                    return;
-                }
-            }
-            
-            // Handle nested data structures
-            if (data && typeof data === 'object' && data.data) {
-                data = data.data;
-                console.log('Extracted nested data:', data);
             }
             
             console.log('Processed data:', data);
-            console.log('Data keys:', Object.keys(data || {}));
             console.log('window.currentUserType:', window.currentUserType);
             
             // Validate required fields
-            if (!data || typeof data !== 'object') {
-                console.error('Invalid data received:', data);
-                return;
-            }
-            
             if (!data.roomId) {
                 console.error('Missing roomId in call data');
                 console.error('Data object:', data);
-                console.error('Available keys:', Object.keys(data));
                 return;
             }
             if (!data.callType) {
@@ -2078,26 +2009,11 @@
             const emitCall = () => {
                 const sock = window.chatSocket ? window.chatSocket.socket : null;
                 if (!sock || !sock.connected) {
-                    console.log('Socket not ready for emit:', {
-                        socketExists: !!sock,
-                        isConnected: sock ? sock.connected : false,
-                        socketId: sock?.id
-                    });
                     return false;
                 }
-                
-                console.log('=== EMITTING CALL TO SOCKET ===');
-                console.log('Call data:', callData);
-                console.log('Socket ID:', sock.id);
-                
-                try {
                 sock.emit('call_initiated', callData);
-                    console.log('✅ Call notification sent to Socket.IO successfully');
+                console.log('Call notification sent to Socket.IO successfully');
                 return true;
-                } catch (error) {
-                    console.error('❌ Error emitting call:', error);
-                    return false;
-                }
             };
 
             // Send call notification to the specific receiver
@@ -2108,76 +2024,29 @@
                 callerId: data.callerId,
                 callerName: data.callerName || 'Unknown Caller',
                 receiverId: data.receiverId,
-                callerType: data.callerType || window.currentUserType || 'tutor', // Use data.callerType from CallManager
+                callerType: window.currentUserType || 'tutor',
                 receiverType: data.receiverType || 'student' // Default to student if not specified
             };
             
             console.log('Final call data being sent to Socket.IO:', callData);
-            console.log('Socket connection status:', {
-                socketExists: !!globalSocket,
-                isConnected: globalSocket ? globalSocket.connected : false,
-                chatSocketExists: !!window.chatSocket,
-                chatSocketConnected: window.chatSocket ? window.chatSocket.isConnected : false
-            });
             
-            // Check socket connection status
             const socketReady = globalSocket && globalSocket.connected;
-            
             if (!socketReady) {
                 console.warn('Socket not connected yet. Will retry to emit call.');
-                
-                // Try to initialize socket if it doesn't exist
-                if (!window.chatSocket) {
-                    console.log('Socket client not found, initializing...');
-                    if (typeof ChatSocket !== 'undefined') {
-                        window.chatSocket = new ChatSocket();
-                        window.chatSocket.connect();
-                    } else {
-                        console.error('ChatSocket class not available');
-                        alert('Socket client not loaded. Please refresh the page.');
-                        return;
-                    }
+                if (window.chatSocket && !window.chatSocket.isConnected) {
+                    try { window.chatSocket.connect(); } catch (e) {}
                 }
-                
-                // Try to connect if not connected
-                if (!window.chatSocket.isConnected && !window.chatSocket.socket?.connected) {
-                    try { 
-                        console.log('Attempting to connect socket...');
-                        window.chatSocket.connect();
-                    } catch (e) {
-                        console.error('Error connecting socket:', e);
-                    }
-                }
-                
-                // Wait for connection with retries
-                let retries = 40; // ~10 seconds total (more time for connection)
+                let retries = 20; // ~5 seconds total
                 const interval = setInterval(() => {
-                    const sock = window.chatSocket ? window.chatSocket.socket : null;
-                    const isConnected = sock && sock.connected;
-                    
-                    console.log(`Retry ${40 - retries + 1}/${40}: Socket connected = ${isConnected}`);
-                    
-                    if (isConnected && emitCall()) {
-                        console.log('Call sent successfully after retry');
+                    if (emitCall() || --retries <= 0) {
                         clearInterval(interval);
-                    } else if (--retries <= 0) {
-                        clearInterval(interval);
-                        console.error('Failed to send call: socket never connected after all retries.');
-                        console.error('Socket status:', {
-                            chatSocketExists: !!window.chatSocket,
-                            socketExists: !!sock,
-                            isConnected: isConnected,
-                            socketId: sock?.id
-                        });
-                        alert('Unable to connect to call server. Please check:\n1. Socket server is running\n2. No firewall blocking port 3001\n3. Refresh the page and try again');
+                        if (retries <= 0) {
+                            console.error('Failed to send call: socket never connected.');
+                        }
                     }
                 }, 250);
             } else {
-                console.log('Socket is ready, sending call immediately');
-                const result = emitCall();
-                if (!result) {
-                    console.error('Failed to emit call even though socket appears connected');
-                }
+                emitCall();
             }
         }
 

@@ -6,18 +6,48 @@ import cors from 'cors';
 const app = express();
 const server = http.createServer(app);
 
+// Get allowed origins from environment or use defaults
+const getAllowedOrigins = () => {
+    const envOrigins = process.env.ALLOWED_ORIGINS;
+    if (envOrigins) {
+        return envOrigins.split(',').map(origin => origin.trim());
+    }
+    
+    // Default origins for development
+    const defaultOrigins = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000"
+    ];
+    
+    // In production, allow all origins if ALLOW_ALL_ORIGINS is set
+    if (process.env.ALLOW_ALL_ORIGINS === 'true' || process.env.NODE_ENV === 'production') {
+        return true; // Allow all origins in production
+    }
+    
+    return defaultOrigins;
+};
+
+const allowedOrigins = getAllowedOrigins();
+
 // Configure CORS
 app.use(cors({
-    origin: ["http://localhost:8000", "http://127.0.0.1:8000"], // Allow both localhost and 127.0.0.1
-    methods: ["GET", "POST"]
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "OPTIONS"],
+    credentials: true,
+    optionsSuccessStatus: 200
 }));
 
-// Create Socket.IO server
+// Create Socket.IO server with proper CORS configuration
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:8000", "http://127.0.0.1:8000"], // Allow both localhost and 127.0.0.1
-        methods: ["GET", "POST"]
-    }
+        origin: allowedOrigins,
+        methods: ["GET", "POST", "OPTIONS"],
+        credentials: true
+    },
+    transports: ['websocket', 'polling'],
+    allowEIO3: true
 });
 
 // Store connected users
@@ -355,7 +385,18 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.SOCKET_PORT || 3001;
 
+// Error handling for server
+server.on('error', (error) => {
+    console.error('Socket server error:', error);
+    if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Please use a different port.`);
+        process.exit(1);
+    }
+});
+
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Socket.IO server running on port ${PORT}`);
     console.log(`Health check available at http://localhost:${PORT}/health`);
+    console.log(`Allowed origins:`, allowedOrigins === true ? 'All origins' : allowedOrigins);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

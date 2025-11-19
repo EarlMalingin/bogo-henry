@@ -15,6 +15,7 @@ class Session extends Model
         'student_id',
         'tutor_id',
         'session_type',
+        'booking_type',
         'date',
         'start_time',
         'end_time',

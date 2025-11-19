@@ -423,7 +423,7 @@
         <div class="price-info">
             <i class="fas fa-info-circle"></i>
             <div class="price-info-text">
-                <strong>How it works:</strong> Post your assignment question. Multiple tutors will provide answers. You can compare answers and choose based on ratings. Pay <strong>₱70.00</strong> to view your selected answer.
+                <strong>How it works:</strong> Post your assignment question. Multiple tutors will provide answers. You can compare answers and choose based on ratings. Pay <strong>₱70.00</strong> to view your selected answer. <strong>Note:</strong> You need a minimum balance of <strong>₱70.00</strong> in your wallet to post an assignment.
             </div>
         </div>
 
@@ -435,7 +435,7 @@
 
         <!-- Post New Assignment Tab -->
         <div id="post-tab">
-        <form action="{{ route('student.assignments.store') }}" method="POST" enctype="multipart/form-data" class="assignment-form" style="background: white; border-radius: 12px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); padding: 2rem;">
+        <form action="{{ route('student.assignments.store') }}" method="POST" class="assignment-form" style="background: white; border-radius: 12px; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08); padding: 2rem;">
             @csrf
 
             <div class="form-group">
@@ -448,17 +448,6 @@
                 <label for="question">Question *</label>
                 <textarea id="question" name="question" required placeholder="Enter your assignment question here...">{{ old('question') }}</textarea>
                 <div class="form-help">Minimum 10 characters required</div>
-            </div>
-
-            <div class="form-group">
-                <label for="description">Additional Details (Optional)</label>
-                <textarea id="description" name="description" placeholder="Any additional context or requirements...">{{ old('description') }}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="file">Attachment (Optional)</label>
-                <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                <div class="form-help">Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB)</div>
             </div>
 
             <button type="submit" class="btn-submit">

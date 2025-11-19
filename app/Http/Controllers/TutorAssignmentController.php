@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Assignment;
 use App\Models\AssignmentAnswer;
+use App\Services\AIValidationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -54,7 +55,7 @@ class TutorAssignmentController extends Controller
     public function storeAnswer(Request $request, $id)
     {
         $request->validate([
-            'answer' => 'required|string|min:10',
+            'answer' => 'required|string',
             'file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // 10MB max
         ]);
 
@@ -73,6 +74,59 @@ class TutorAssignmentController extends Controller
 
         if ($hasAnswered) {
             return back()->with('error', 'You have already submitted an answer for this assignment.');
+        }
+
+        // AI Validation: Check if answer is relevant AND correct
+        try {
+            $aiService = new AIValidationService();
+            $validation = $aiService->validateAnswerRelevance(
+                $assignment->question,
+                $request->answer,
+                $assignment->subject
+            );
+
+            // Log validation result for debugging
+            \Log::info('AI validation result', [
+                'assignment_id' => $assignment->id,
+                'tutor_id' => $tutor->id,
+                'question' => substr($assignment->question, 0, 100),
+                'answer_preview' => substr($request->answer, 0, 100),
+                'is_relevant' => $validation['is_relevant'],
+                'confidence' => $validation['confidence'],
+                'reason' => $validation['reason']
+            ]);
+
+            // Reject if answer is not relevant/correct with confidence >= 0.6
+            // This will catch wrong answers like "36" for "1+1" or "400" for "1+1"
+            if (!$validation['is_relevant'] && $validation['confidence'] >= 0.6) {
+                // Always use generic message - never reveal correct answers
+                $rejectionMessage = 'Answer rejected. Please take the answer more seriously or we will take immediate action.';
+                return back()
+                    ->with('error', $rejectionMessage)
+                    ->withInput();
+            }
+            
+            // Accept answers with low confidence if they passed basic checks (API unavailable but answer seems valid)
+            // Only reject if confidence is very low (< 0.3) which indicates clear problems
+            if ($validation['is_relevant'] && $validation['confidence'] < 0.3) {
+                // Very low confidence - likely a problem with the answer
+                return back()
+                    ->with('error', 'Answer rejected. Please provide a more complete and accurate answer.')
+                    ->withInput();
+            }
+        } catch (\Exception $e) {
+            // Log error and reject answer if validation fails
+            \Log::error('AI validation error in assignment answer submission', [
+                'assignment_id' => $assignment->id,
+                'tutor_id' => $tutor->id,
+                'error' => $e->getMessage(),
+                'trace' => substr($e->getTraceAsString(), 0, 500)
+            ]);
+            
+            // Reject answer if validation service fails - require proper validation
+            return back()
+                ->with('error', 'Answer rejected. AI validation service encountered an error. Please try again later or contact support.')
+                ->withInput();
         }
 
         $filePath = null;

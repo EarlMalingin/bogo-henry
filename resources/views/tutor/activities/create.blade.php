@@ -357,7 +357,7 @@
         .question-item {
             border: 1px solid #ddd;
             border-radius: 5px;
-            padding: 1rem;
+            padding: 1.5rem;
             margin-bottom: 1rem;
             background-color: #f9f9f9;
         }
@@ -372,16 +372,22 @@
         .question-number {
             font-weight: 600;
             color: #2d7dd2;
+            font-size: 1.1rem;
         }
 
         .remove-question {
             background-color: #dc3545;
             color: white;
             border: none;
-            padding: 0.3rem 0.8rem;
+            padding: 0.4rem 0.8rem;
             border-radius: 3px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
+            transition: background-color 0.3s;
+        }
+
+        .remove-question:hover {
+            background-color: #c82333;
         }
 
         .add-question {
@@ -392,6 +398,136 @@
             border-radius: 5px;
             cursor: pointer;
             margin-bottom: 1rem;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .add-question:hover {
+            background-color: #218838;
+        }
+
+        .question-input-group {
+            margin-bottom: 1rem;
+        }
+
+        .question-input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .question-input-group input[type="text"],
+        .question-input-group textarea {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95rem;
+        }
+
+        .options-container {
+            margin-top: 1rem;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .option-label {
+            min-width: 30px;
+            font-weight: 600;
+            color: #2d7dd2;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .option-item input[type="text"] {
+            flex: 1;
+            min-width: 300px;
+            padding: 0.85rem 1rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            background-color: white;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            width: 100%;
+        }
+
+        .option-item input[type="text"]:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+            background-color: #fff;
+        }
+
+        .option-item input[type="text"]:hover {
+            border-color: #4a90e2;
+        }
+
+        .option-item input[type="text"]::placeholder {
+            color: #999;
+            opacity: 1;
+        }
+
+        .option-item input[type="radio"] {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .option-item label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .remove-option {
+            background-color: #ffc107;
+            color: #333;
+            border: none;
+            padding: 0.3rem 0.6rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.3s;
+        }
+
+        .remove-option:hover {
+            background-color: #e0a800;
+        }
+
+        .add-option {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            transition: background-color 0.3s;
+        }
+
+        .add-option:hover {
+            background-color: #138496;
+        }
+
+        .correct-answer-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.5rem;
+            display: block;
         }
 
         /* Footer */
@@ -634,7 +770,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('tutor.activities.store') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('tutor.activities.store') }}" method="POST" id="activity-form">
                 @csrf
                 
                 <div class="form-row">
@@ -709,19 +845,20 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Attachments</label>
-                    <div class="file-upload" id="file-upload-area">
-                        <label for="attachments" class="file-upload-label">
-                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
-                            Click to upload files or drag and drop
-                            <br>
-                            <small>PDF, DOC, DOCX, TXT, JPG, PNG (Max 10MB each)</small>
-                        </label>
-                        <input type="file" id="attachments" name="attachments[]" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png">
+                    <label>Multiple Choice Questions</label>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Add multiple choice questions for this activity</p>
+                    
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <button type="button" class="add-question" id="add-question-btn">
+                            <i class="fas fa-plus"></i> Add Question
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="test-btn" style="background-color: #17a2b8; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: background-color 0.3s; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-flask"></i> Fill Test Data (5 Questions)
+                        </button>
                     </div>
-                    <div id="file-list" class="file-list" style="margin-top: 1rem; display: none;">
-                        <h4>Selected Files:</h4>
-                        <ul id="file-items"></ul>
+                    
+                    <div id="questions-container">
+                        <!-- Questions will be dynamically added here -->
                     </div>
                 </div>
 
@@ -785,101 +922,347 @@
                 });
             }
 
-            // Enhanced file upload functionality
-            const fileInput = document.getElementById('attachments');
-            const fileUpload = document.getElementById('file-upload-area');
-            const fileList = document.getElementById('file-list');
-            const fileItems = document.getElementById('file-items');
-            let selectedFiles = [];
+            // Multiple choice questions functionality
+            const questionsContainer = document.getElementById('questions-container');
+            const addQuestionBtn = document.getElementById('add-question-btn');
+            let questionCount = 0;
 
-            // File input change handler
-            fileInput.addEventListener('change', function() {
-                handleFiles(this.files);
+            // Add new question
+            addQuestionBtn.addEventListener('click', function() {
+                addQuestion();
             });
 
-            // Drag and drop functionality
-            fileUpload.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                fileUpload.style.borderColor = '#4a90e2';
-                fileUpload.style.backgroundColor = '#f0f8ff';
-            });
+            // Test button - fill with sample questions
+            const testBtn = document.getElementById('test-btn');
+            testBtn.addEventListener('click', function() {
+                // Clear existing questions
+                questionsContainer.innerHTML = '';
+                questionCount = 0;
 
-            fileUpload.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                fileUpload.style.borderColor = '#ddd';
-                fileUpload.style.backgroundColor = 'transparent';
-            });
-
-            fileUpload.addEventListener('drop', function(e) {
-                e.preventDefault();
-                fileUpload.style.borderColor = '#ddd';
-                fileUpload.style.backgroundColor = 'transparent';
-                handleFiles(e.dataTransfer.files);
-            });
-
-            function handleFiles(files) {
-                const maxSize = 10 * 1024 * 1024; // 10MB
-                const allowedTypes = ['.pdf', '.doc', '.docx', '.txt', '.jpg', '.jpeg', '.png'];
-                
-                for (let file of files) {
-                    // Check file size
-                    if (file.size > maxSize) {
-                        alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
-                        continue;
+                // Sample questions data
+                const testQuestions = [
+                    {
+                        question: 'What is 2 + 2?',
+                        options: ['3', '4', '5', '6'],
+                        correctAnswer: 1 // B (index 1)
+                    },
+                    {
+                        question: 'What is the capital of France?',
+                        options: ['London', 'Berlin', 'Paris', 'Madrid'],
+                        correctAnswer: 2 // C (index 2)
+                    },
+                    {
+                        question: 'Which planet is known as the Red Planet?',
+                        options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
+                        correctAnswer: 1 // B (index 1)
+                    },
+                    {
+                        question: 'What is the largest ocean on Earth?',
+                        options: ['Atlantic Ocean', 'Indian Ocean', 'Arctic Ocean', 'Pacific Ocean'],
+                        correctAnswer: 3 // D (index 3)
+                    },
+                    {
+                        question: 'Who wrote "Romeo and Juliet"?',
+                        options: ['Charles Dickens', 'William Shakespeare', 'Jane Austen', 'Mark Twain'],
+                        correctAnswer: 1 // B (index 1)
                     }
-                    
-                    // Check file type
-                    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-                    if (!allowedTypes.includes(fileExtension)) {
-                        alert(`File "${file.name}" is not a supported file type.`);
-                        continue;
-                    }
-                    
-                    // Add file to list
-                    selectedFiles.push(file);
-                }
-                
-                updateFileList();
-            }
+                ];
 
-            function updateFileList() {
-                fileItems.innerHTML = '';
-                
-                if (selectedFiles.length > 0) {
-                    fileList.style.display = 'block';
+                // Add each test question
+                testQuestions.forEach(function(testQ) {
+                    questionCount++;
+                    const questionIndex = questionCount;
                     
-                    selectedFiles.forEach((file, index) => {
-                        const fileItem = document.createElement('li');
-                        fileItem.className = 'file-item';
-                        fileItem.innerHTML = `
-                            <div>
-                                <div class="file-name">${file.name}</div>
-                                <div class="file-size">${formatFileSize(file.size)}</div>
+                    const questionItem = document.createElement('div');
+                    questionItem.className = 'question-item';
+                    questionItem.setAttribute('data-question-index', questionIndex);
+                    
+                    questionItem.innerHTML = `
+                        <div class="question-header">
+                            <span class="question-number">Question ${questionIndex}</span>
+                            <button type="button" class="remove-question" onclick="removeQuestion(this)">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                        <div class="question-input-group">
+                            <label>Question Text *</label>
+                            <textarea name="questions[${questionIndex}][question]" required placeholder="Enter your question here...">${testQ.question}</textarea>
+                        </div>
+                        <div class="options-container">
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Options *</label>
+                            <div class="options-list" data-question-index="${questionIndex}">
+                                <!-- Options will be added here -->
                             </div>
-                            <button type="button" class="remove-file" onclick="removeFile(${index})">Remove</button>
+                            <button type="button" class="add-option" onclick="addOptionToQuestion(this, ${questionIndex})">
+                                <i class="fas fa-plus"></i> Add Option
+                            </button>
+                            <span class="correct-answer-label">Select the correct answer below:</span>
+                        </div>
+                    `;
+                    
+                    questionsContainer.appendChild(questionItem);
+                    
+                    // Add options for this question
+                    const optionsList = questionItem.querySelector('.options-list');
+                    testQ.options.forEach(function(option, optIndex) {
+                        const optionLabel = String.fromCharCode(65 + optIndex); // A, B, C, D, etc.
+                        const isCorrect = optIndex === testQ.correctAnswer;
+                        
+                        const optionItem = document.createElement('div');
+                        optionItem.className = 'option-item';
+                        optionItem.innerHTML = `
+                            <input type="radio" name="questions[${questionIndex}][correct_answer]" value="${optIndex}" ${isCorrect ? 'checked' : ''} required>
+                            <span class="option-label">${optionLabel}.</span>
+                            <input type="text" name="questions[${questionIndex}][options][${optIndex}]" placeholder="Enter option text" value="${option}" required autocomplete="off">
+                            <button type="button" class="remove-option" onclick="removeOption(this)">
+                                <i class="fas fa-times"></i>
+                            </button>
                         `;
-                        fileItems.appendChild(fileItem);
+                        
+                        optionsList.appendChild(optionItem);
                     });
-                } else {
-                    fileList.style.display = 'none';
+                });
+            });
+
+            function addQuestion() {
+                questionCount++;
+                const questionIndex = questionCount;
+                
+                const questionItem = document.createElement('div');
+                questionItem.className = 'question-item';
+                questionItem.setAttribute('data-question-index', questionIndex);
+                
+                questionItem.innerHTML = `
+                    <div class="question-header">
+                        <span class="question-number">Question ${questionIndex}</span>
+                        <button type="button" class="remove-question" onclick="removeQuestion(this)">
+                            <i class="fas fa-trash"></i> Remove
+                        </button>
+                    </div>
+                    <div class="question-input-group">
+                        <label>Question Text *</label>
+                        <textarea name="questions[${questionIndex}][question]" required placeholder="Enter your question here..."></textarea>
+                    </div>
+                    <div class="options-container">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333;">Options *</label>
+                        <div class="options-list" data-question-index="${questionIndex}">
+                            <!-- Options will be added here -->
+                        </div>
+                        <button type="button" class="add-option" onclick="addOptionToQuestion(this, ${questionIndex})">
+                            <i class="fas fa-plus"></i> Add Option
+                        </button>
+                        <span class="correct-answer-label">Select the correct answer below:</span>
+                    </div>
+                `;
+                
+                questionsContainer.appendChild(questionItem);
+                
+                // Add initial 4 options
+                const optionsList = questionItem.querySelector('.options-list');
+                for (let i = 0; i < 4; i++) {
+                    addOptionToQuestionList(optionsList, questionIndex);
                 }
             }
 
-            function formatFileSize(bytes) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            function addOptionToQuestion(button, questionIndex) {
+                const questionItem = button.closest('.question-item');
+                const optionsList = questionItem.querySelector('.options-list');
+                addOptionToQuestionList(optionsList, questionIndex);
             }
 
-            // Global function to remove files
-            window.removeFile = function(index) {
-                selectedFiles.splice(index, 1);
-                updateFileList();
-            };
+            function addOptionToQuestionList(optionsList, questionIndex) {
+                if (!optionsList) {
+                    console.error('Options list not found');
+                    return;
+                }
+                
+                const optionCount = optionsList.children.length;
+                const optionIndex = optionCount;
+                const optionLabel = String.fromCharCode(65 + optionIndex); // A, B, C, D, etc.
+                
+                const optionItem = document.createElement('div');
+                optionItem.className = 'option-item';
+                optionItem.innerHTML = `
+                    <input type="radio" name="questions[${questionIndex}][correct_answer]" value="${optionIndex}" required>
+                    <span class="option-label">${optionLabel}.</span>
+                    <input type="text" name="questions[${questionIndex}][options][${optionIndex}]" placeholder="Type your answer option here..." required autocomplete="off">
+                    <button type="button" class="remove-option" onclick="removeOption(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                optionsList.appendChild(optionItem);
+            }
+
+            function removeOption(button) {
+                const optionItem = button.closest('.option-item');
+                const optionsList = optionItem.parentElement;
+                
+                // Don't allow removing if only one option remains
+                if (optionsList.children.length <= 1) {
+                    alert('Each question must have at least one option.');
+                    return;
+                }
+                
+                optionItem.remove();
+                
+                // Re-index remaining options
+                reindexOptions(optionsList);
+            }
+
+            function reindexOptions(optionsList) {
+                const questionItem = optionsList.closest('.question-item');
+                const questionIndex = questionItem.getAttribute('data-question-index');
+                const options = optionsList.querySelectorAll('.option-item');
+                
+                options.forEach((option, newIndex) => {
+                    const radio = option.querySelector('input[type="radio"]');
+                    const textInput = option.querySelector('input[type="text"]');
+                    const labelSpan = option.querySelector('.option-label');
+                    
+                    if (radio) {
+                        radio.value = newIndex;
+                        radio.name = `questions[${questionIndex}][correct_answer]`;
+                    }
+                    if (textInput) {
+                        textInput.name = `questions[${questionIndex}][options][${newIndex}]`;
+                        textInput.placeholder = `Enter option text`;
+                    }
+                    if (labelSpan) {
+                        const optionLabel = String.fromCharCode(65 + newIndex); // A, B, C, D, etc.
+                        labelSpan.textContent = optionLabel + '.';
+                    }
+                });
+            }
+
+            function removeQuestion(button) {
+                const questionItem = button.closest('.question-item');
+                questionItem.remove();
+                
+                // Re-number remaining questions
+                renumberQuestions();
+            }
+            
+            // Make functions globally accessible
+            window.removeQuestion = removeQuestion;
+            window.removeOption = removeOption;
+            window.addOptionToQuestion = addOptionToQuestion;
+
+            function renumberQuestions() {
+                const questions = questionsContainer.querySelectorAll('.question-item');
+                questions.forEach((question, index) => {
+                    const questionNumber = question.querySelector('.question-number');
+                    if (questionNumber) {
+                        questionNumber.textContent = `Question ${index + 1}`;
+                    }
+                    const newQuestionIndex = index + 1;
+                    question.setAttribute('data-question-index', newQuestionIndex);
+                    
+                    // Update all input names
+                    const textarea = question.querySelector('textarea[name^="questions"]');
+                    if (textarea) {
+                        textarea.name = `questions[${newQuestionIndex}][question]`;
+                    }
+                    
+                    const optionsList = question.querySelector('.options-list');
+                    if (optionsList) {
+                        optionsList.setAttribute('data-question-index', newQuestionIndex);
+                        const options = optionsList.querySelectorAll('.option-item');
+                        options.forEach((option, optIndex) => {
+                            const radio = option.querySelector('input[type="radio"]');
+                            const textInput = option.querySelector('input[type="text"]');
+                            const labelSpan = option.querySelector('.option-label');
+                            
+                            if (radio) {
+                                radio.name = `questions[${newQuestionIndex}][correct_answer]`;
+                            }
+                            if (textInput) {
+                                textInput.name = `questions[${newQuestionIndex}][options][${optIndex}]`;
+                            }
+                            if (labelSpan) {
+                                const optionLabel = String.fromCharCode(65 + optIndex); // A, B, C, D, etc.
+                                labelSpan.textContent = optionLabel + '.';
+                            }
+                        });
+                        
+                        // Update add option button
+                        const addOptionBtn = question.querySelector('.add-option');
+                        if (addOptionBtn) {
+                            addOptionBtn.setAttribute('onclick', `addOptionToQuestion(this, ${newQuestionIndex})`);
+                        }
+                    }
+                });
+                
+                questionCount = questions.length;
+            }
+
+            // Form submission - prepare questions data
+            const activityForm = document.getElementById('activity-form');
+            activityForm.addEventListener('submit', function(e) {
+                const questions = [];
+                const questionItems = questionsContainer.querySelectorAll('.question-item');
+                
+                questionItems.forEach((questionItem) => {
+                    const questionTextarea = questionItem.querySelector('textarea[name^="questions"]');
+                    if (!questionTextarea) return;
+                    
+                    const questionText = questionTextarea.value.trim();
+                    if (!questionText) return;
+                    
+                    const options = [];
+                    const optionItems = questionItem.querySelectorAll('.option-item');
+                    
+                    optionItems.forEach((optionItem, optIndex) => {
+                        const optionInput = optionItem.querySelector('input[type="text"]');
+                        if (optionInput && optionInput.value.trim()) {
+                            options.push(optionInput.value.trim());
+                        }
+                    });
+                    
+                    if (options.length < 2) {
+                        e.preventDefault();
+                        alert('Each question must have at least 2 options.');
+                        return;
+                    }
+                    
+                    const correctAnswerRadio = questionItem.querySelector('input[type="radio"]:checked');
+                    if (!correctAnswerRadio) {
+                        e.preventDefault();
+                        alert('Please select the correct answer for all questions.');
+                        return;
+                    }
+                    
+                    // Find the index of the correct answer
+                    const correctIndex = Array.from(optionItems).findIndex(item => {
+                        const radio = item.querySelector('input[type="radio"]');
+                        return radio && radio.checked;
+                    });
+                    
+                    questions.push({
+                        question: questionText,
+                        type: 'multiple_choice',
+                        options: options,
+                        correct_answer: correctIndex >= 0 ? correctIndex : null
+                    });
+                });
+                
+                // Remove any existing hidden input
+                const existingInput = document.getElementById('questions-json');
+                if (existingInput) {
+                    existingInput.remove();
+                }
+                
+                // Add hidden input with questions JSON
+                const questionsInput = document.createElement('input');
+                questionsInput.type = 'hidden';
+                questionsInput.id = 'questions-json';
+                questionsInput.name = 'questions';
+                questionsInput.value = JSON.stringify(questions);
+                activityForm.appendChild(questionsInput);
+            });
         });
     </script>
     @include('layouts.footer-js')
 </body>
 </html>
+

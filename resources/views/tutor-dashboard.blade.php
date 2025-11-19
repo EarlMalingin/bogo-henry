@@ -591,6 +591,23 @@
             color: #999;
         }
 
+        .notification-card.unread {
+            background-color: #f0f8ff;
+            border-left: 3px solid #4a90e2;
+        }
+
+        .notification-card.read {
+            opacity: 0.8;
+        }
+
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #4a90e2;
+            margin-left: 0.5rem;
+        }
+
         .no-notifications {
             padding: 2rem;
             text-align: center;
@@ -1165,6 +1182,53 @@
             </div>
             <div class="date-time" id="current-date-time">Tuesday, May 13, 2025</div>
         </div>
+        
+        <!-- Streak Display Section -->
+        <div class="streaks-section" style="margin: 2rem 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <!-- Login Streak -->
+            <div class="streak-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: white;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="font-size: 2rem;">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Daily Login Streak</div>
+                        <div style="font-size: 2rem; font-weight: bold;">{{ $loginStreak ?? 0 }}</div>
+                    </div>
+                </div>
+                @if(isset($longestLoginStreak) && $longestLoginStreak > 0)
+                    <div style="font-size: 0.85rem; opacity: 0.8;">Longest: {{ $longestLoginStreak }} days</div>
+                @endif
+                @if(($loginStreak ?? 0) >= 3)
+                    <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.9;">
+                        <i class="fas fa-trophy"></i> Keep it up!
+                    </div>
+                @endif
+            </div>
+            
+            <!-- Activity Created Streak -->
+            @if(($activityCreatedStreak ?? 0) > 0)
+            <div class="streak-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: white;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="font-size: 2rem;">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Activity Creation Streak</div>
+                        <div style="font-size: 2rem; font-weight: bold;">{{ $activityCreatedStreak ?? 0 }}</div>
+                    </div>
+                </div>
+                @if(isset($longestActivityStreak) && $longestActivityStreak > 0)
+                    <div style="font-size: 0.85rem; opacity: 0.8;">Longest: {{ $longestActivityStreak }} days</div>
+                @endif
+                @if(($activityCreatedStreak ?? 0) >= 3)
+                    <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.9;">
+                        <i class="fas fa-star"></i> Great consistency!
+                    </div>
+                @endif
+            </div>
+            @endif
+        </div>
 
         <h2 class="section-title">Today's Sessions</h2>
         <div class="sessions-container" id="sessions-container">
@@ -1192,6 +1256,10 @@
             <div class="action-card" onclick="viewWallet()">
                 <div class="action-icon"><i class="fas fa-wallet"></i></div>
                 <div>Wallet</div>
+            </div>
+            <div class="action-card" onclick="window.location.href='{{ route('tutor.transactions.index') }}'">
+                <div class="action-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                <div>Transaction Log</div>
             </div>
         </div>
 
@@ -1547,7 +1615,7 @@
         }
 
         function loadNotifications() {
-            fetch('{{ route("tutor.notifications.pending") }}')
+            fetch('{{ route("tutor.notifications.all") }}')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1560,25 +1628,44 @@
 
                     if (notifications.length > 0) {
                         notifications.forEach(notification => {
-                            const timeString = new Date('1970-01-01T' + notification.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                            const sessionType = notification.session_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                            // Determine icon and color based on notification type
+                            let iconClass = 'fas fa-bell';
+                            let iconBgColor = '#4a90e2';
                             
-                            // Format the date nicely
-                            const dateObj = new Date(notification.date);
-                            const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                            if (notification.type === 'payment_received') {
+                                iconClass = 'fas fa-dollar-sign';
+                                iconBgColor = '#28a745';
+                            } else if (notification.type === 'booking_request' || notification.type === 'booking_pending') {
+                                iconClass = 'fas fa-calendar-check';
+                                iconBgColor = '#ffc107';
+                            } else if (notification.type === 'booking_confirmed' || notification.type === 'booking_accepted') {
+                                iconClass = 'fas fa-check-circle';
+                                iconBgColor = '#28a745';
+                            } else if (notification.type === 'assignment_submitted') {
+                                iconClass = 'fas fa-file-alt';
+                                iconBgColor = '#17a2b8';
+                            } else if (notification.type === 'problem_report_response') {
+                                iconClass = 'fas fa-reply';
+                                iconBgColor = '#6f42c1';
+                            } else if (notification.type === 'admin_message') {
+                                iconClass = 'fas fa-user-shield';
+                                iconBgColor = '#1976d2';
+                            }
                             
+                            const isRead = notification.is_read ? 'read' : 'unread';
                             const notificationCard = `
-                                <div class="notification-card" onclick="window.location.href='/tutor/bookings/${notification.id}'">
-                                    <div class="notification-icon booking-pending">
-                                        <i class="fas fa-calendar-check"></i>
+                                <div class="notification-card ${isRead}" onclick="markNotificationAsRead(${notification.id})" style="cursor: pointer;">
+                                    <div class="notification-icon" style="background-color: ${iconBgColor};">
+                                        <i class="${iconClass}"></i>
                                     </div>
                                     <div class="notification-info">
-                                        <div class="notification-title">New Booking Request from ${notification.student_name}</div>
-                                        <div class="notification-message">${sessionType} - ${formattedDate} at ${timeString}</div>
+                                        <div class="notification-title">${notification.title}</div>
+                                        <div class="notification-message">${notification.message}</div>
                                     </div>
                                     <div class="notification-time">
                                         <i class="fas fa-clock"></i> ${notification.created_at}
                                     </div>
+                                    ${!notification.is_read ? '<div class="notification-dot"></div>' : ''}
                                 </div>
                             `;
                             notificationsContainer.innerHTML += notificationCard;
@@ -1601,6 +1688,27 @@
                             <p>Error loading notifications</p>
                         </div>
                     `;
+                });
+        }
+
+        function markNotificationAsRead(notificationId) {
+            const url = `/tutor/notifications/${notificationId}/mark-read`;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload notifications to update read status
+                    loadNotifications();
+                }
+            })
+            .catch(error => {
+                console.error('Error marking notification as read:', error);
                 });
         }
 
@@ -1774,6 +1882,13 @@
             const sessionDate = new Date(session.date);
             const formattedDate = !isNaN(sessionDate) ? sessionDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Invalid Date';
             
+            // Calculate end date (for monthly subscriptions, it's 1 month from start date)
+            let endDate = new Date(sessionDate);
+            if (session.booking_type === 'monthly') {
+                endDate.setMonth(endDate.getMonth() + 1);
+            }
+            const formattedEndDate = !isNaN(endDate) ? endDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Invalid Date';
+            
             const startTime = new Date(`1970-01-01T${session.start_time}`);
             const formattedStartTime = !isNaN(startTime) ? startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Invalid Time';
 
@@ -1808,6 +1923,7 @@
                 <p><strong>Student:</strong> ${session.student ? `${session.student.first_name} ${session.student.last_name}` : 'N/A'}</p>
                 <p><strong>Email:</strong> ${session.student && session.student.email ? session.student.email : 'N/A'}</p>
                 <p><strong>Date:</strong> ${formattedDate}</p>
+                ${session.booking_type === 'monthly' ? `<p><strong>End Date:</strong> ${formattedEndDate}</p>` : ''}
                 <p><strong>Time:</strong> ${formattedStartTime} - ${formattedEndTime}</p>
                 <p><strong>Type:</strong> ${formattedSessionType}</p>
                 <p><strong>Status:</strong> <span class="status-badge ${statusClass}">${session.status}</span></p>

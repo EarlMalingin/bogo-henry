@@ -82,7 +82,7 @@ class StudentActivityController extends Controller
 
         $activity->load(['tutor', 'session']);
         
-        // Get or create submission
+        // Get or create submission - refresh to get latest data
         $submission = $activity->studentSubmission($student->id);
         if (!$submission) {
             $submission = ActivitySubmission::create([
@@ -90,7 +90,13 @@ class StudentActivityController extends Controller
                 'student_id' => $student->id,
                 'status' => 'draft'
             ]);
+        } else {
+            // Refresh to ensure we have the latest data
+            $submission->refresh();
         }
+        
+        // Refresh activity to get latest status
+        $activity->refresh();
 
         return view('student.activity-details', compact('activity', 'submission', 'student'));
     }
@@ -248,34 +254,94 @@ class StudentActivityController extends Controller
             }
         }
 
+        // Auto-grade multiple choice questions
+        $score = 0;
+        $questions = $activity->questions ?? [];
+        $answers = $request->answers ?? [];
+        
+        if (!empty($questions) && is_array($questions)) {
+            // Count only multiple choice questions
+            $multipleChoiceQuestions = array_filter($questions, function($q) {
+                return isset($q['type']) && $q['type'] === 'multiple_choice';
+            });
+            $totalMCQuestions = count($multipleChoiceQuestions);
+            
+            if ($totalMCQuestions > 0) {
+                // Calculate points per question (distribute total points evenly)
+                $pointsPerQuestion = $activity->total_points / $totalMCQuestions;
+                
+                foreach ($questions as $index => $question) {
+                    // Only grade multiple choice questions
+                    if (isset($question['type']) && $question['type'] === 'multiple_choice') {
+                        // Get student's answer for this question
+                        $studentAnswer = isset($answers[$index]) ? (int)$answers[$index] : null;
+                        
+                        // Get correct answer from question
+                        $correctAnswer = isset($question['correct_answer']) ? (int)$question['correct_answer'] : null;
+                        
+                        // Check if answer is correct
+                        if ($studentAnswer !== null && $correctAnswer !== null && $studentAnswer === $correctAnswer) {
+                            $score += $pointsPerQuestion;
+                        }
+                    }
+                }
+            }
+            
+            // Round score to nearest integer
+            $score = round($score);
+        }
+
+        // Update submission with auto-graded score
         $submission->update([
             'answers' => $request->answers,
             'notes' => $request->notes,
             'attachments' => $attachments,
-            'status' => 'submitted',
-            'submitted_at' => now()
+            'status' => 'graded', // Auto-graded, so set to graded immediately
+            'score' => $score,
+            'submitted_at' => now(),
+            'graded_at' => now()
         ]);
 
-        // Update activity status
-        $activity->update(['status' => 'completed']);
+        // Refresh the submission to ensure we have the latest data
+        $submission->refresh();
 
-        // Create notification for tutor
-        $tutor = $activity->tutor;
-        if ($tutor) {
-            \App\Models\Notification::create([
-                'user_id' => $tutor->id,
-                'user_type' => 'tutor',
-                'type' => 'activity_submitted',
-                'title' => 'Activity Submitted',
-                'message' => $student->first_name . ' ' . $student->last_name . ' has submitted the activity "' . $activity->title . '".',
-            ]);
-        }
+        // Update activity status
+        $activity->update([
+            'status' => 'graded',
+            'graded_at' => now()
+        ]);
+        
+        // Refresh the activity as well
+        $activity->refresh();
+
+        // Create notification for student about grading
+        \App\Models\Notification::create([
+            'user_id' => $student->id,
+            'user_type' => 'student',
+            'type' => 'activity_graded',
+            'title' => 'Activity Graded',
+            'message' => 'Your activity "' . $activity->title . '" has been automatically graded. Score: ' . $score . '/' . $activity->total_points,
+        ]);
 
         // Check achievements for student
         $achievementService = new \App\Services\AchievementNotificationService();
         $achievementService->checkAndNotifyProgress($student, 'student', 'activities_submitted');
 
-        return response()->json(['success' => true, 'message' => 'Activity submitted successfully!']);
+        // Update streaks
+        $streakService = new \App\Services\StreakService();
+        $streakService->checkActivitySubmissionStreak($student, 'student');
+        
+        // Check for perfect score streak
+        if ($score === $activity->total_points) {
+            $streakService->checkPerfectScoreStreak($student, 'student', $score, $activity->total_points);
+        }
+
+        return response()->json([
+            'success' => true, 
+            'message' => 'Activity submitted and automatically graded! Your score: ' . $score . '/' . $activity->total_points,
+            'score' => $score,
+            'total_points' => $activity->total_points
+        ]);
     }
 
     // Get student's progress statistics

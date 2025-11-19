@@ -585,18 +585,8 @@
                         <span class="payment-method-title">GCash Payment</span>
                     </div>
                     <div class="payment-method-desc">
-                        Pay securely using your GCash account via QR code or mobile app
+                        Pay securely using your GCash account via mobile app
                     </div>
-                </div>
-
-                <div style="text-align: center; margin: 2rem 0; padding: 1.5rem; background: #f8f9fa; border-radius: 10px;">
-                    <p style="font-weight: 600; color: #333; margin-bottom: 1rem;">Scan QR Code to Pay</p>
-                    <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
-                        <img src="{{ asset('images/QR-Code.png') }}" alt="GCash QR Code" style="max-width: 300px; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                    </div>
-                    <p style="font-size: 0.9rem; color: #666; margin-top: 1rem;">
-                        Transfer fees may apply.
-                    </p>
                 </div>
 
                 <div class="form-actions">

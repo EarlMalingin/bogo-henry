@@ -66,6 +66,7 @@ Route::middleware('web')->group(function () {
         // Admin wallet management
         Route::get('/admin/wallet', [App\Http\Controllers\AdminWalletController::class, 'index'])->name('admin.wallet.index');
         Route::get('/admin/wallet/transactions', [App\Http\Controllers\AdminWalletController::class, 'transactions'])->name('admin.wallet.transactions');
+        Route::get('/admin/wallet/transactions/download', [App\Http\Controllers\AdminWalletController::class, 'downloadPdf'])->name('admin.wallet.transactions.download');
         Route::get('/admin/wallet/pending-payouts', [App\Http\Controllers\AdminWalletController::class, 'pendingPayouts'])->name('admin.wallet.pending-payouts');
         Route::post('/admin/wallet/payouts/{id}/approve', [App\Http\Controllers\AdminWalletController::class, 'approvePayout'])->name('admin.wallet.approve-payout');
         Route::post('/admin/wallet/payouts/{id}/reject', [App\Http\Controllers\AdminWalletController::class, 'rejectPayout'])->name('admin.wallet.reject-payout');
@@ -120,12 +121,27 @@ Route::get('/student/profile/picture/{id}', [App\Http\Controllers\TutorProfileCo
 // Protected student routes
 Route::middleware(['auth:student'])->group(function () {
     Route::get('/student/dashboard', function () {
-        $notifications = \App\Models\Notification::where('user_id', Auth::guard('student')->id())
+        $student = Auth::guard('student')->user();
+        
+        // Check for expiring subscriptions and create notifications
+        $subscriptionService = new \App\Services\SubscriptionNotificationService();
+        $subscriptionService->checkExpiringSubscriptions($student->id);
+        
+        $notifications = \App\Models\Notification::where('user_id', $student->id)
             ->where('user_type', 'student')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
-        return view('student-dashboard', compact('notifications'));
+        
+        // Get streak data
+        $streakService = new \App\Services\StreakService();
+        $loginStreak = $streakService->getCurrentStreak($student, 'student', 'daily_login');
+        $activityStreak = $streakService->getCurrentStreak($student, 'student', 'activity_submission');
+        $perfectScoreStreak = $streakService->getCurrentStreak($student, 'student', 'perfect_score');
+        $longestLoginStreak = $streakService->getLongestStreak($student, 'student', 'daily_login');
+        $longestActivityStreak = $streakService->getLongestStreak($student, 'student', 'activity_submission');
+        
+        return view('student-dashboard', compact('notifications', 'loginStreak', 'activityStreak', 'perfectScoreStreak', 'longestLoginStreak', 'longestActivityStreak'));
     })->name('student.dashboard');
 
     Route::get('/student/find-tutor', function () {
@@ -185,6 +201,7 @@ Route::middleware(['auth:student'])->group(function () {
     Route::get('/student/assignments', [App\Http\Controllers\StudentAssignmentController::class, 'myAssignments'])->name('student.assignments.my-assignments');
     Route::get('/student/assignments/{id}', [App\Http\Controllers\StudentAssignmentController::class, 'show'])->name('student.assignments.show');
     Route::post('/student/assignments/{id}/pay', [App\Http\Controllers\StudentAssignmentController::class, 'payAndView'])->name('student.assignments.pay');
+    Route::post('/student/assignments/answers/{answerId}/rate', [App\Http\Controllers\StudentAssignmentController::class, 'rateAnswer'])->name('student.assignments.rate');
     Route::get('/student/assignments/{id}/download', [App\Http\Controllers\StudentAssignmentController::class, 'downloadFile'])->name('student.assignments.download');
     
     // Student problem report routes
@@ -197,6 +214,7 @@ Route::middleware(['auth:student'])->group(function () {
     Route::get('/student/notifications', [App\Http\Controllers\StudentNotificationController::class, 'index'])->name('student.notifications');
     Route::delete('/student/notifications/{id}', [App\Http\Controllers\StudentNotificationController::class, 'destroy'])->name('student.notifications.destroy');
     Route::post('/student/notifications/{id}/mark-read', [App\Http\Controllers\StudentNotificationController::class, 'markAsRead'])->name('student.notifications.mark-read');
+    Route::post('/student/notifications/mark-all-read', [App\Http\Controllers\StudentNotificationController::class, 'markAllAsRead'])->name('student.notifications.mark-all-read');
     
     // Student rate tutor route
     Route::post('/student/rate-tutor', [App\Http\Controllers\StudentActivityController::class, 'rateTutor'])->name('student.rate-tutor');
@@ -205,9 +223,16 @@ Route::middleware(['auth:student'])->group(function () {
 // Protected tutor routes
 Route::middleware(['auth:tutor'])->group(function () {
     Route::get('/tutor/dashboard', function () {
-        return view('tutor-dashboard', [
-            'tutor' => Auth::guard('tutor')->user()
-        ]);
+        $tutor = Auth::guard('tutor')->user();
+        
+        // Get streak data
+        $streakService = new \App\Services\StreakService();
+        $loginStreak = $streakService->getCurrentStreak($tutor, 'tutor', 'daily_login');
+        $activityCreatedStreak = $streakService->getCurrentStreak($tutor, 'tutor', 'activity_created');
+        $longestLoginStreak = $streakService->getLongestStreak($tutor, 'tutor', 'daily_login');
+        $longestActivityStreak = $streakService->getLongestStreak($tutor, 'tutor', 'activity_created');
+        
+        return view('tutor-dashboard', compact('tutor', 'loginStreak', 'activityCreatedStreak', 'longestLoginStreak', 'longestActivityStreak'));
     })->name('tutor.dashboard');
 
     Route::get('/tutor/profile/edit', [App\Http\Controllers\TutorProfileController::class, 'edit'])->name('tutor.profile.edit');
@@ -259,6 +284,13 @@ Route::middleware(['auth:tutor'])->group(function () {
             Route::post('/tutor/wallet/upload-payment-proof', [App\Http\Controllers\SecureWalletController::class, 'uploadPaymentProof'])->name('tutor.wallet.upload-payment-proof');
         });
 
+        // Tutor transaction log routes
+        Route::middleware(['auth:tutor'])->group(function () {
+            Route::get('/tutor/transactions', [App\Http\Controllers\TutorTransactionController::class, 'index'])->name('tutor.transactions.index');
+            Route::get('/tutor/transactions/download', [App\Http\Controllers\TutorTransactionController::class, 'downloadPdf'])->name('tutor.transactions.download');
+            Route::post('/tutor/transactions/clean', [App\Http\Controllers\TutorTransactionController::class, 'clean'])->name('tutor.transactions.clean');
+        });
+
     // Tutor assignment routes
     Route::get('/tutor/assignments', [App\Http\Controllers\TutorAssignmentController::class, 'index'])->name('tutor.assignments.index');
     Route::get('/tutor/assignments/{id}', [App\Http\Controllers\TutorAssignmentController::class, 'show'])->name('tutor.assignments.show');
@@ -273,8 +305,11 @@ Route::middleware(['auth:tutor'])->group(function () {
     })->name('tutor.report-problem');
     Route::post('/tutor/report-problem', [App\Http\Controllers\ProblemReportController::class, 'storeTutor'])->name('tutor.report-problem.store');
     
-    // Tutor notifications route
+    // Tutor notifications routes
     Route::get('/tutor/notifications', [App\Http\Controllers\TutorNotificationController::class, 'index'])->name('tutor.notifications');
+    Route::get('/tutor/notifications/all', [App\Http\Controllers\TutorNotificationController::class, 'getAll'])->name('tutor.notifications.all');
+    Route::post('/tutor/notifications/{id}/mark-read', [App\Http\Controllers\TutorNotificationController::class, 'markAsRead'])->name('tutor.notifications.mark-read');
+    Route::post('/tutor/notifications/mark-all-read', [App\Http\Controllers\TutorNotificationController::class, 'markAllAsRead'])->name('tutor.notifications.mark-all-read');
     Route::delete('/tutor/notifications/{id}', [App\Http\Controllers\TutorNotificationController::class, 'destroy'])->name('tutor.notifications.destroy');
 });
 

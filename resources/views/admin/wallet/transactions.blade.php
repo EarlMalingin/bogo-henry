@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallet Transactions | MentorHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary:#4a90e2; --secondary:#5637d9; --card:#ffffff; --muted:#6b7280; }
         *{box-sizing:border-box;margin:0;padding:0}
@@ -113,6 +114,11 @@
                     </div>
                 </div>
             </form>
+            <div style="margin-top: 12px; text-align: right;">
+                <a href="{{ route('admin.wallet.transactions.download', request()->query()) }}" class="btn btn-primary" style="background: #28a745;">
+                    <i class="fas fa-download"></i> Download PDF
+                </a>
+            </div>
         </div>
 
         <div class="table">

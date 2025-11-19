@@ -38,6 +38,11 @@ class LoginController extends Controller
             }
             
             $request->session()->regenerate();
+            
+            // Update login streak
+            $streakService = new \App\Services\StreakService();
+            $streakService->checkLoginStreak($student, 'student');
+            
             return redirect()->intended(route('student.dashboard'));
         }
 
@@ -83,6 +88,11 @@ class LoginController extends Controller
             }
             
             $request->session()->regenerate();
+            
+            // Update login streak
+            $streakService = new \App\Services\StreakService();
+            $streakService->checkLoginStreak($tutor, 'tutor');
+            
             return redirect()->intended('/tutor/dashboard');
         }
 

@@ -184,6 +184,7 @@ class CallManager extends Component
         
         // Dispatch to JavaScript to send through socket
         // Ensure all data is properly serialized for JavaScript
+        try {
         $this->dispatch('sendCallToReceiver', $dispatchData);
         
         // Also try direct JavaScript method call as backup
@@ -195,6 +196,22 @@ class CallManager extends Component
             'isCaller' => true,
             'callType' => $this->callType
         ]);
+        } catch (\Exception $e) {
+            \Log::error('CallManager::handleInitiateCall - Error dispatching events:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'callData' => $dispatchData
+            ]);
+            
+            // Reset call state on error
+            $this->resetCall();
+            
+            // Dispatch error event to frontend
+            $this->dispatch('callError', [
+                'message' => 'Failed to initiate call. Please check your connection and try again.',
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     public function handleIncomingCall($data)
@@ -251,9 +268,14 @@ class CallManager extends Component
     public function answerCall()
     {
         if (!$this->isInCall || !$this->isReceiver) {
+            \Log::warning('CallManager::answerCall - Invalid call state', [
+                'isInCall' => $this->isInCall,
+                'isReceiver' => $this->isReceiver
+            ]);
             return;
         }
 
+        try {
         // Log call answered
         $webRTCService = new WebRTCService();
         $webRTCService->logCallActivity(
@@ -273,6 +295,17 @@ class CallManager extends Component
             'roomId' => $this->roomId,
             'receiverId' => $this->receiverId
         ]);
+        } catch (\Exception $e) {
+            \Log::error('CallManager::answerCall - Error:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $this->dispatch('callError', [
+                'message' => 'Failed to answer call. Please try again.',
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     public function declineCall()
@@ -325,6 +358,7 @@ class CallManager extends Component
     public function endCall()
     {
         if ($this->isInCall) {
+            try {
             // Get current user ID from appropriate guard
             $currentUserId = null;
             if (Auth::guard('student')->check()) {
@@ -352,8 +386,15 @@ class CallManager extends Component
                 'roomId' => $this->roomId,
                 'endedBy' => $currentUserId
             ]);
-            
+            } catch (\Exception $e) {
+                \Log::error('CallManager::endCall - Error:', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            } finally {
+                // Always reset call state, even if there was an error
             $this->resetCall();
+            }
         }
     }
 

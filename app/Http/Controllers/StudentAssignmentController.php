@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Assignment;
 use App\Models\AssignmentAnswer;
+use App\Models\AnswerRating;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
 use App\Models\Notification;
@@ -39,28 +40,39 @@ class StudentAssignmentController extends Controller
         $request->validate([
             'subject' => 'required|string|max:255',
             'question' => 'required|string|min:10',
-            'description' => 'nullable|string|max:1000',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // 10MB max
         ]);
 
         $student = Auth::guard('student')->user();
 
-        $filePath = null;
-        $fileName = null;
+        // Get or create wallet
+        $wallet = Wallet::where('user_id', $student->id)
+            ->where('user_type', 'student')
+            ->first();
 
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $fileName = $file->getClientOriginalName();
-            $filePath = $file->store('assignments', 'public');
+        if (!$wallet) {
+            $wallet = Wallet::create([
+                'user_id' => $student->id,
+                'user_type' => 'student',
+                'balance' => 0.00,
+                'currency' => 'PHP',
+            ]);
+        }
+
+        // Check if student has minimum balance of 70 pesos
+        $requiredBalance = 70.00;
+        if (!$wallet->canAfford($requiredBalance)) {
+            return redirect()->route('student.assignments.post')
+                ->withErrors(['balance' => 'You need a minimum balance of ₱' . number_format($requiredBalance, 2) . ' to post an assignment. Your current balance is ₱' . number_format($wallet->balance, 2) . '. Please add funds to your wallet.'])
+                ->withInput();
         }
 
         $assignment = Assignment::create([
             'student_id' => $student->id,
             'subject' => $request->subject,
             'question' => $request->question,
-            'description' => $request->description,
-            'file_path' => $filePath,
-            'file_name' => $fileName,
+            'description' => null,
+            'file_path' => null,
+            'file_name' => null,
             'status' => 'pending',
             'price' => 70.00,
         ]);
@@ -113,19 +125,22 @@ class StudentAssignmentController extends Controller
         // If assignment is paid, get the selected answer
         $answer = null;
         if ($assignment->status === 'paid' && $assignment->selected_answer_id) {
-            $answer = $assignment->selectedAnswer()->with('tutor')->first();
+            $answer = $assignment->selectedAnswer()->with(['tutor', 'ratings'])->first();
         }
         
         $answers = $assignment->answers()->with('tutor')->get()->map(function($answerItem) {
             $tutor = $answerItem->tutor;
+            // Get tutor's overall rating (includes both session reviews and assignment answer ratings)
+            $tutorOverallRating = $tutor->getAverageRating();
+            $tutorOverallRatingCount = $tutor->getRatingCount();
             return [
                 'id' => $answerItem->id,
                 'tutor_id' => $tutor->id,
                 'tutor_name' => $tutor->getFullName(),
                 'tutor_specialization' => $tutor->specialization,
                 'answer_preview' => 'This answer is locked. Pay to view the full solution.',
-                'rating' => $tutor->getAverageRating(),
-                'rating_count' => $tutor->getRatingCount(),
+                'rating' => $tutorOverallRating,
+                'rating_count' => $tutorOverallRatingCount,
                 'created_at' => $answerItem->created_at,
             ];
         })->sortByDesc('rating')->values(); // Sort by highest rating
@@ -249,6 +264,60 @@ class StudentAssignmentController extends Controller
             return redirect()->route('student.assignments.show', $assignment->id)
                 ->with('error', 'Payment failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Rate an answer
+     */
+    public function rateAnswer($answerId, Request $request)
+    {
+        $student = Auth::guard('student')->user();
+        
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $answer = AssignmentAnswer::with('assignment')->findOrFail($answerId);
+        
+        // Check if student owns the assignment
+        if ($answer->assignment->student_id !== $student->id) {
+            return redirect()->back()
+                ->with('error', 'You can only rate answers for your own assignments.');
+        }
+
+        // Check if assignment is paid
+        if ($answer->assignment->status !== 'paid') {
+            return redirect()->back()
+                ->with('error', 'You can only rate answers after purchasing them.');
+        }
+
+        // Check if this is the selected answer
+        if ($answer->assignment->selected_answer_id !== $answer->id) {
+            return redirect()->back()
+                ->with('error', 'You can only rate the answer you purchased.');
+        }
+
+        // Check if student has already rated this answer
+        $existingRating = AnswerRating::where('answer_id', $answerId)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if ($existingRating) {
+            return redirect()->back()
+                ->with('error', 'You have already rated this answer. You can only rate once.');
+        }
+
+        // Create rating (only once, no updates allowed)
+        $rating = AnswerRating::create([
+            'answer_id' => $answerId,
+            'student_id' => $student->id,
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+        ]);
+
+        return redirect()->route('student.assignments.show', $answer->assignment->id)
+            ->with('success', 'Thank you for rating this answer!');
     }
 
     /**

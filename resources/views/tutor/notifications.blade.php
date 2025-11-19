@@ -321,6 +321,11 @@
             color: #f57c00;
         }
 
+        .notification-icon.admin {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
         .notification-icon.alert {
             background-color: #ffebee;
             color: #d32f2f;
@@ -599,7 +604,7 @@
             <div id="notifications-list">
                 @forelse($notifications as $notification)
                     <div class="notification-card {{ !$notification->is_read ? 'unread' : '' }}" data-id="{{ $notification->id }}">
-                        <div class="notification-icon {{ $notification->type === 'activity_submitted' ? 'booking' : ($notification->type === 'activity_posted' ? 'activity' : ($notification->type === 'payment_received' ? 'payment' : ($notification->type === 'booking_request' ? 'booking' : 'alert'))) }}">
+                        <div class="notification-icon {{ $notification->type === 'activity_submitted' ? 'booking' : ($notification->type === 'activity_posted' ? 'activity' : ($notification->type === 'payment_received' ? 'payment' : ($notification->type === 'booking_request' ? 'booking' : ($notification->type === 'admin_message' ? 'admin' : 'alert')))) }}">
                             @if($notification->type === 'problem_report_response')
                                 <i class="fas fa-exclamation-circle"></i>
                             @elseif($notification->type === 'booking_request')
@@ -618,6 +623,8 @@
                                 <i class="fas fa-chart-line" style="color: #4a90e2;"></i>
                             @elseif($notification->type === 'new_message')
                                 <i class="fas fa-envelope"></i>
+                            @elseif($notification->type === 'admin_message')
+                                <i class="fas fa-user-shield"></i>
                             @elseif($notification->type === 'new_review')
                                 <i class="fas fa-star"></i>
                             @else

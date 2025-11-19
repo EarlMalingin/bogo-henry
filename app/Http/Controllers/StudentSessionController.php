@@ -16,13 +16,100 @@ class StudentSessionController extends Controller
     // Show all tutors and booking form
     public function index()
     {
+        $student = Auth::guard('student')->user();
+        
         // Only show approved tutors that are active
         $tutors = Tutor::where('registration_status', 'approved')
             ->where('is_active', true)
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->get();
-        return view('student.book-session', compact('tutors'));
+        
+        // Smart match: Prioritize tutors whose specialization matches student's subjects of interest
+        if ($student && $student->subjects_interest) {
+            $studentInterests = $this->parseSubjects($student->subjects_interest);
+            
+            // Add match score to each tutor
+            $tutors = $tutors->map(function($tutor) use ($studentInterests) {
+                $tutor->match_score = $this->calculateMatchScore($tutor, $studentInterests);
+                $tutor->is_matched = $tutor->match_score > 0;
+                return $tutor;
+            });
+            
+            // Sort by match score (matched tutors first), then by rating
+            $tutors = $tutors->sortByDesc(function($tutor) {
+                // Primary sort: match score (matched tutors first)
+                // Secondary sort: average rating
+                $rating = $tutor->reviews_avg_rating ?? 0;
+                return [$tutor->match_score, $rating];
+            })->values();
+        } else {
+            // If no subjects of interest, just sort by rating
+            $tutors = $tutors->map(function($tutor) {
+                $tutor->match_score = 0;
+                $tutor->is_matched = false;
+                return $tutor;
+            })->sortByDesc('reviews_avg_rating')->values();
+        }
+        
+        return view('student.book-session', compact('tutors', 'student'));
+    }
+    
+    /**
+     * Parse subjects from text (handles comma-separated, newline-separated, etc.)
+     */
+    private function parseSubjects($subjectsText)
+    {
+        if (empty($subjectsText)) {
+            return [];
+        }
+        
+        // Split by comma, newline, or semicolon, then trim and filter
+        $subjects = preg_split('/[,;\n\r]+/', $subjectsText);
+        $subjects = array_map('trim', $subjects);
+        $subjects = array_filter($subjects, function($subject) {
+            return !empty($subject);
+        });
+        
+        // Convert to lowercase for case-insensitive matching
+        return array_map('strtolower', $subjects);
+    }
+    
+    /**
+     * Calculate match score between tutor specialization and student interests
+     */
+    private function calculateMatchScore($tutor, $studentInterests)
+    {
+        if (empty($tutor->specialization) || empty($studentInterests)) {
+            return 0;
+        }
+        
+        // Parse tutor specialization (can be comma-separated)
+        $tutorSpecializations = $this->parseSubjects($tutor->specialization);
+        
+        if (empty($tutorSpecializations)) {
+            return 0;
+        }
+        
+        // Count matches (case-insensitive)
+        $matches = 0;
+        foreach ($studentInterests as $interest) {
+            foreach ($tutorSpecializations as $specialization) {
+                // Exact match
+                if ($interest === $specialization) {
+                    $matches++;
+                    break;
+                }
+                // Partial match (contains)
+                if (str_contains($specialization, $interest) || str_contains($interest, $specialization)) {
+                    $matches += 0.5;
+                    break;
+                }
+            }
+        }
+        
+        // Return match score (higher is better)
+        return $matches;
     }
 
     // Handle booking submission
@@ -181,6 +268,7 @@ class StudentSessionController extends Controller
                 'student_id' => $studentId,
                 'tutor_id' => $request->tutor_id,
                 'session_type' => $request->session_type,
+                'booking_type' => $request->booking_type,
                 'date' => $request->date,
                 'start_time' => $request->start_time,
                 'end_time' => $request->end_time,
@@ -218,6 +306,11 @@ class StudentSessionController extends Controller
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->firstOrFail();
+        
+        // Add calculated ratings that include both session reviews and assignment answer ratings
+        $tutor->average_rating = $tutor->getAverageRating();
+        $tutor->rating_count = $tutor->getRatingCount();
+        
         return response()->json($tutor);
     }
 

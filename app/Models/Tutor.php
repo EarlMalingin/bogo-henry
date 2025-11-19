@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Session;
 use App\Models\Review;
+use App\Models\AssignmentAnswer;
+use App\Models\AnswerRating;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tutor extends Authenticatable
@@ -70,15 +72,51 @@ class Tutor extends Authenticatable
         return $this->hasMany(Review::class);
     }
 
+    public function assignmentAnswers()
+    {
+        return $this->hasMany(AssignmentAnswer::class);
+    }
+
+    // Get all ratings from assignment answers
+    public function getAssignmentAnswerRatings()
+    {
+        return AnswerRating::whereHas('answer', function($query) {
+            $query->where('tutor_id', $this->id);
+        })->get();
+    }
+
     // Helper methods
     public function getAverageRating()
     {
-        return $this->reviews()->avg('rating') ?: 0;
+        // Get ratings from sessions (reviews)
+        $sessionRatings = $this->reviews()->pluck('rating');
+        
+        // Get ratings from assignment answers
+        $answerRatings = AnswerRating::whereHas('answer', function($query) {
+            $query->where('tutor_id', $this->id);
+        })->pluck('rating');
+        
+        // Combine all ratings
+        $allRatings = $sessionRatings->merge($answerRatings);
+        
+        if ($allRatings->isEmpty()) {
+            return 0;
+        }
+        
+        return round($allRatings->avg(), 2);
     }
 
     public function getRatingCount()
     {
-        return $this->reviews()->count();
+        // Count ratings from sessions
+        $sessionRatingCount = $this->reviews()->count();
+        
+        // Count ratings from assignment answers
+        $answerRatingCount = AnswerRating::whereHas('answer', function($query) {
+            $query->where('tutor_id', $this->id);
+        })->count();
+        
+        return $sessionRatingCount + $answerRatingCount;
     }
     public function getFullName()
     {

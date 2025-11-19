@@ -389,6 +389,11 @@
                             @if($activity->due_date)
                                 <span><i class="fas fa-clock"></i> Due: {{ $activity->due_date->format('M d, Y g:i A') }}</span>
                             @endif
+                            @if($submission && ($submission->status === 'graded' || ($submission->status === 'submitted' && $submission->score !== null)))
+                                <span style="color: #4a90e2; font-weight: 600;">
+                                    <i class="fas fa-star"></i> Score: {{ $submission->score }}/{{ $activity->total_points }}
+                                </span>
+                            @endif
                             <span class="status-badge status-{{ $submission ? $submission->status : 'sent' }}">
                                 {{ ucfirst($submission ? $submission->status : 'sent') }}
                             </span>

@@ -771,6 +771,12 @@
                                 @if($day['isCurrentMonth'] && $day['sessions']->count() > 0)
                                     <div class="session-list">
                                         @foreach($day['sessions']->take(3) as $session)
+                                            @php
+                                                $endDate = null;
+                                                if ($session->booking_type === 'monthly') {
+                                                    $endDate = \Carbon\Carbon::parse($session->date)->addMonth();
+                                                }
+                                            @endphp
                                             <div class="session-item" onclick="showSessionDetails({{ $session->id }})">
                                                 <div class="session-time">
                                                     {{ \Carbon\Carbon::parse($session->start_time)->format('g:i A') }}
@@ -778,6 +784,11 @@
                                                 <div class="session-tutor">
                                                     With {{ $session->tutor->first_name }} {{ $session->tutor->last_name }}
                                                 </div>
+                                                @if($endDate)
+                                                    <div class="session-end-date" style="font-size: 0.7rem; color: #666; margin-top: 0.2rem;">
+                                                        Ends: {{ $endDate->format('M j, Y') }}
+                                                    </div>
+                                                @endif
                                                 <div class="session-type {{ $session->session_type }}">
                                                     {{ ucfirst(str_replace('_', ' ', $session->session_type)) }}
                                                 </div>
@@ -809,6 +820,12 @@
                                 </h4>
                                 
                                 @foreach($daySessions as $session)
+                                    @php
+                                        $endDate = null;
+                                        if ($session->booking_type === 'monthly') {
+                                            $endDate = \Carbon\Carbon::parse($session->date)->addMonth();
+                                        }
+                                    @endphp
                                     <div style="background: #f8f9fa; padding: 1rem; margin-bottom: 0.5rem; border-radius: 8px; border-left: 4px solid #2d7dd2;">
                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                                             <div style="font-weight: 600; color: #2d7dd2;">
@@ -822,6 +839,11 @@
                                         <div style="color: #2c3e50; font-weight: 500;">
                                             With {{ $session->tutor->first_name }} {{ $session->tutor->last_name }}
                                         </div>
+                                        @if($endDate)
+                                            <div style="color: #666; font-size: 0.9rem; margin-top: 0.25rem;">
+                                                <i class="fas fa-calendar-alt"></i> Ends: {{ $endDate->format('l, F j, Y') }}
+                                            </div>
+                                        @endif
                                         <div style="color: #666; font-size: 0.9rem;">
                                             {{ $session->tutor->email }}
                                         </div>
@@ -979,6 +1001,12 @@
                             <span class="session-info-label">Date:</span>
                             <span class="session-info-value">${sessionData.date}</span>
                         </div>
+                        ${sessionData.endDate ? `
+                        <div class="session-info-item">
+                            <span class="session-info-label">End Date:</span>
+                            <span class="session-info-value">${sessionData.endDate}</span>
+                        </div>
+                        ` : ''}
                         <div class="session-info-item">
                             <span class="session-info-label">Time:</span>
                             <span class="session-info-value">${sessionData.time}</span>
@@ -1036,16 +1064,33 @@
             const session = sessions.find(s => s.id == sessionId);
             
             if (session) {
-                return {
-                    tutorName: `${session.tutor.first_name} ${session.tutor.last_name}`,
-                    tutorEmail: session.tutor.email,
-                    subject: session.tutor.specialization ? session.tutor.specialization.split(',')[0] : 'General Tutoring',
-                    date: new Date(session.date).toLocaleDateString('en-US', { 
+                const sessionDate = new Date(session.date);
+                const formattedDate = sessionDate.toLocaleDateString('en-US', { 
                         weekday: 'long', 
                         year: 'numeric', 
                         month: 'long', 
                         day: 'numeric' 
-                    }),
+                });
+                
+                // Calculate end date (for monthly subscriptions, it's 1 month from start date)
+                let endDate = new Date(sessionDate);
+                if (session.booking_type === 'monthly') {
+                    endDate.setMonth(endDate.getMonth() + 1);
+                }
+                const formattedEndDate = endDate.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                return {
+                    tutorName: `${session.tutor.first_name} ${session.tutor.last_name}`,
+                    tutorEmail: session.tutor.email,
+                    subject: session.tutor.specialization ? session.tutor.specialization.split(',')[0] : 'General Tutoring',
+                    date: formattedDate,
+                    endDate: session.booking_type === 'monthly' ? formattedEndDate : null,
+                    bookingType: session.booking_type || null,
                     time: `${new Date('1970-01-01T' + session.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date('1970-01-01T' + session.end_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`,
                     type: session.session_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
                     status: session.status.charAt(0).toUpperCase() + session.status.slice(1),

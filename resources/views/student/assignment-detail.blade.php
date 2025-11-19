@@ -551,6 +551,86 @@
                     <strong>Answered by:</strong> {{ $answer->tutor->first_name }} {{ $answer->tutor->last_name }}<br>
                     <strong>Date:</strong> {{ $answer->created_at->format('M d, Y h:i A') }}
                 </div>
+
+                <!-- Rating Section -->
+                <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #eee;">
+                    @php
+                        $studentId = Auth::guard('student')->id();
+                        $hasRated = $answer->hasRatingFromStudent($studentId);
+                        $studentRating = $answer->getStudentRating($studentId);
+                        $averageRating = $answer->average_rating;
+                        $ratingCount = $answer->rating_count;
+                    @endphp
+                    
+                    <h4 style="color: #333; margin-bottom: 1rem;">
+                        <i class="fas fa-star"></i> Rate This Answer
+                    </h4>
+                    
+                    @if($hasRated)
+                        <div style="background: #d4edda; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 2px solid #28a745;">
+                            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                                <div style="display: flex; gap: 0.25rem;">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <i class="fas fa-star" style="color: {{ $i <= $studentRating->rating ? '#ffc107' : '#ccc' }};"></i>
+                                    @endfor
+                                </div>
+                                <strong style="color: #155724; font-size: 1.1rem;">Your Rating: {{ $studentRating->rating }}/5</strong>
+                            </div>
+                            @if($studentRating->comment)
+                                <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #c3e6cb;">
+                                    <p style="margin: 0; color: #155724;"><strong>Your Comment:</strong> {{ $studentRating->comment }}</p>
+                                </div>
+                            @endif
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #c3e6cb;">
+                                <p style="margin: 0; font-size: 0.9rem; color: #155724;">
+                                    <i class="fas fa-check-circle"></i> <strong>Thank you for your rating!</strong> You have already rated this answer.
+                                </p>
+                            </div>
+                        </div>
+                    @else
+                        <form action="{{ route('student.assignments.rate', $answer->id) }}" method="POST" id="ratingForm">
+                            @csrf
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; margin-bottom: 0.5rem; color: #333; font-weight: 600;">Rating:</label>
+                                <div class="star-rating" style="display: flex; gap: 0.5rem; align-items: center;">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <input type="radio" name="rating" value="{{ $i }}" id="star{{ $i }}" required style="display: none;">
+                                        <label for="star{{ $i }}" class="star-label" data-rating="{{ $i }}" style="font-size: 2rem; color: #ccc; cursor: pointer; transition: color 0.2s;">
+                                            <i class="far fa-star"></i>
+                                        </label>
+                                    @endfor
+                                    <span id="rating-text" style="margin-left: 1rem; color: #666; font-weight: 600;"></span>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 1rem;">
+                                <label for="comment" style="display: block; margin-bottom: 0.5rem; color: #333; font-weight: 600;">Comment (Optional):</label>
+                                <textarea name="comment" id="comment" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; resize: vertical;" placeholder="Share your thoughts about this answer..."></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn-rate" style="background: linear-gradient(135deg, #ffc107, #ff9800); color: white; padding: 0.75rem 2rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                                <i class="fas fa-star"></i> Submit Rating
+                            </button>
+                            <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+                                <i class="fas fa-info-circle"></i> You can only rate this answer once.
+                            </p>
+                        </form>
+                    @endif
+
+                    @if($ratingCount > 0)
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: #666;">
+                                <div style="display: flex; gap: 0.25rem;">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <i class="fas fa-star {{ $i <= round($averageRating) ? 'text-warning' : 'text-muted' }}" style="color: {{ $i <= round($averageRating) ? '#ffc107' : '#ccc' }}; font-size: 0.9rem;"></i>
+                                    @endfor
+                                </div>
+                                <strong style="color: #333;">{{ number_format($averageRating, 1) }}</strong>
+                                <span style="color: #999;">({{ $ratingCount }} {{ $ratingCount == 1 ? 'rating' : 'ratings' }})</span>
+                            </div>
+                        </div>
+                    @endif
+                </div>
             </div>
         @elseif(isset($answers) && count($answers) > 0)
             <div class="answers-section">
@@ -716,6 +796,79 @@
                     console.error('Error loading wallet balance:', error);
                 });
         }
+
+        // Star Rating Interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            const starLabels = document.querySelectorAll('.star-label');
+            const ratingInputs = document.querySelectorAll('input[name="rating"]');
+            const ratingText = document.getElementById('rating-text');
+            
+            if (starLabels.length > 0) {
+                // Update stars on hover
+                starLabels.forEach(label => {
+                    label.addEventListener('mouseenter', function() {
+                        const rating = parseInt(this.getAttribute('data-rating'));
+                        updateStarDisplay(rating);
+                    });
+                });
+
+                // Update stars on click
+                ratingInputs.forEach(input => {
+                    input.addEventListener('change', function() {
+                        const rating = parseInt(this.value);
+                        updateStarDisplay(rating);
+                        updateRatingText(rating);
+                    });
+                });
+
+                // Reset stars when mouse leaves
+                document.querySelector('.star-rating')?.addEventListener('mouseleave', function() {
+                    const checkedInput = document.querySelector('input[name="rating"]:checked');
+                    if (checkedInput) {
+                        const rating = parseInt(checkedInput.value);
+                        updateStarDisplay(rating);
+                    } else {
+                        updateStarDisplay(0);
+                    }
+                });
+
+                // Initialize display
+                const checkedInput = document.querySelector('input[name="rating"]:checked');
+                if (checkedInput) {
+                    const rating = parseInt(checkedInput.value);
+                    updateStarDisplay(rating);
+                    updateRatingText(rating);
+                }
+            }
+
+            function updateStarDisplay(rating) {
+                starLabels.forEach((label, index) => {
+                    const starIcon = label.querySelector('i');
+                    if (index < rating) {
+                        starIcon.classList.remove('far');
+                        starIcon.classList.add('fas');
+                        label.style.color = '#ffc107';
+                    } else {
+                        starIcon.classList.remove('fas');
+                        starIcon.classList.add('far');
+                        label.style.color = '#ccc';
+                    }
+                });
+            }
+
+            function updateRatingText(rating) {
+                if (ratingText) {
+                    const texts = {
+                        1: 'Poor',
+                        2: 'Fair',
+                        3: 'Good',
+                        4: 'Very Good',
+                        5: 'Excellent'
+                    };
+                    ratingText.textContent = texts[rating] || '';
+                }
+            }
+        });
     </script>
     
     @include('layouts.footer-js')

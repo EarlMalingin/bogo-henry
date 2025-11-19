@@ -376,7 +376,91 @@
 
                     @if($submission->status === 'submitted' || $submission->status === 'graded')
                         <div class="submission-content">
-                            @if($submission->answers && count($submission->answers) > 0)
+                            @if($activity->questions && count($activity->questions) > 0)
+                                <div class="answers-section">
+                                    <h3 style="margin-bottom: 1.5rem; color: #333;">Questions and Student Answers</h3>
+                                    @foreach($activity->questions as $index => $question)
+                                        @php
+                                            $questionText = $question['question'] ?? $question;
+                                            $studentAnswerIndex = isset($submission->answers[$index]) ? (int)$submission->answers[$index] : null;
+                                            $correctAnswerIndex = isset($question['correct_answer']) ? (int)$question['correct_answer'] : null;
+                                            $isCorrect = $studentAnswerIndex !== null && $correctAnswerIndex !== null && $studentAnswerIndex === $correctAnswerIndex;
+                                        @endphp
+                                        
+                                        <div class="answer-item" style="margin-bottom: 1.5rem; padding: 1.5rem; background-color: {{ $isCorrect ? '#e8f5e9' : '#ffebee' }}; border-left: 4px solid {{ $isCorrect ? '#4caf50' : '#f44336' }}; border-radius: 5px;">
+                                            <div class="answer-question" style="font-weight: 600; color: #333; margin-bottom: 0.75rem; font-size: 1.1rem;">
+                                                Question {{ $index + 1 }}
+                                                @if($isCorrect)
+                                                    <span style="color: #4caf50; margin-left: 0.5rem;">
+                                                        <i class="fas fa-check-circle"></i> Correct
+                                                    </span>
+                                                @else
+                                                    <span style="color: #f44336; margin-left: 0.5rem;">
+                                                        <i class="fas fa-times-circle"></i> Incorrect
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            
+                                            <div style="margin-bottom: 1rem; color: #555; line-height: 1.6;">
+                                                <strong>Question:</strong> {{ $questionText }}
+                                            </div>
+                                            
+                                            @if(isset($question['type']) && $question['type'] === 'multiple_choice' && isset($question['options']))
+                                                <div style="margin-bottom: 0.75rem;">
+                                                    <strong style="color: #333;">Options:</strong>
+                                                    <div style="margin-top: 0.5rem;">
+                                                        @foreach($question['options'] as $optIndex => $option)
+                                                            @php
+                                                                $optionLabel = chr(65 + $optIndex); // A, B, C, D, etc.
+                                                                $isStudentAnswer = $studentAnswerIndex === $optIndex;
+                                                                $isCorrectAnswer = $correctAnswerIndex === $optIndex;
+                                                            @endphp
+                                                            <div style="padding: 0.5rem; margin-bottom: 0.5rem; background-color: white; border-radius: 3px; border: 2px solid {{ $isStudentAnswer ? ($isCorrect ? '#4caf50' : '#f44336') : ($isCorrectAnswer ? '#4caf50' : '#e0e0e0') }};">
+                                                                <span style="font-weight: 600; color: #2d7dd2; margin-right: 0.5rem;">{{ $optionLabel }}.</span>
+                                                                <span style="color: #333;">{{ $option }}</span>
+                                                                @if($isStudentAnswer)
+                                                                    <span style="color: {{ $isCorrect ? '#4caf50' : '#f44336' }}; margin-left: 0.5rem; font-weight: 600;">
+                                                                        <i class="fas fa-arrow-left"></i> Student's Answer
+                                                                    </span>
+                                                                @endif
+                                                                @if($isCorrectAnswer && !$isStudentAnswer)
+                                                                    <span style="color: #4caf50; margin-left: 0.5rem; font-weight: 600;">
+                                                                        <i class="fas fa-check"></i> Correct Answer
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                                
+                                                @if($studentAnswerIndex !== null)
+                                                    <div style="padding: 0.75rem; background-color: white; border-radius: 3px; margin-top: 0.5rem;">
+                                                        <strong style="color: #333;">Student Selected:</strong>
+                                                        <span style="color: #2d7dd2; font-weight: 600; margin-left: 0.5rem;">
+                                                            {{ chr(65 + $studentAnswerIndex) }}. {{ $question['options'][$studentAnswerIndex] ?? 'N/A' }}
+                                                        </span>
+                                                    </div>
+                                                @else
+                                                    <div style="padding: 0.75rem; background-color: #fff3cd; border-radius: 3px; margin-top: 0.5rem; color: #856404;">
+                                                        <i class="fas fa-exclamation-triangle"></i> No answer provided
+                                                    </div>
+                                                @endif
+                                            @else
+                                                @if(isset($submission->answers[$index]))
+                                                    <div style="padding: 0.75rem; background-color: white; border-radius: 3px; margin-top: 0.5rem;">
+                                                        <strong style="color: #333;">Student Answer:</strong>
+                                                        <div style="color: #555; margin-top: 0.5rem; white-space: pre-wrap;">{{ $submission->answers[$index] }}</div>
+                                                    </div>
+                                                @else
+                                                    <div style="padding: 0.75rem; background-color: #fff3cd; border-radius: 3px; margin-top: 0.5rem; color: #856404;">
+                                                        <i class="fas fa-exclamation-triangle"></i> No answer provided
+                                                    </div>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @elseif($submission->answers && count($submission->answers) > 0)
                                 <div class="answers-section">
                                     <h3 style="margin-bottom: 1rem; color: #333;">Student Answers</h3>
                                     @foreach($submission->answers as $index => $answer)
@@ -415,40 +499,102 @@
                                     </div>
                                 </div>
                             @endif
-                        </div>
 
-                        @if($submission->status === 'submitted')
-                            <!-- Grading Section -->
-                            <div class="grading-section">
-                                <h3 style="margin-bottom: 1.5rem; color: #333;">Grade This Activity</h3>
-                                <form id="grade-form" method="POST" action="{{ route('tutor.activities.grade', $activity) }}">
-                                    @csrf
-                                    <div class="grading-form">
-                                        <div class="form-group">
-                                            <label for="score">Score (out of {{ $activity->total_points }} points)</label>
-                                            <input type="number" 
-                                                   id="score" 
-                                                   name="score" 
-                                                   min="0" 
-                                                   max="{{ $activity->total_points }}" 
-                                                   value="{{ $submission->score ?? '' }}"
-                                                   required>
+                            @if($submission && $submission->status === 'graded' && isset($learningAnalysis))
+                                <!-- Adaptive Learning Recommendations -->
+                                <div class="adaptive-learning-section" style="margin-top: 2rem; padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                    <h3 style="margin-bottom: 1.5rem; color: white; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-brain"></i> AI-Powered Learning Recommendations
+                                    </h3>
+                                    
+                                    <!-- Learning Pace Indicator -->
+                                    <div style="background-color: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; backdrop-filter: blur(10px);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                            <span style="color: white; font-weight: 600;">Learning Pace:</span>
+                                            <span style="color: white; font-weight: 700; text-transform: capitalize; padding: 0.3rem 0.8rem; background-color: rgba(255,255,255,0.2); border-radius: 20px;">
+                                                {{ str_replace('_', ' ', $learningAnalysis['learning_pace']) }}
+                                            </span>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="feedback">Feedback</label>
-                                            <textarea id="feedback" 
-                                                      name="feedback" 
-                                                      placeholder="Provide feedback to the student...">{{ $submission->feedback ?? '' }}</textarea>
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="color: rgba(255,255,255,0.9);">Average Score:</span>
+                                            <span style="color: white; font-weight: 600;">{{ $learningAnalysis['average_score'] }}%</span>
                                         </div>
-                                        <div>
-                                            <button type="submit" class="btn btn-primary" id="submit-grade-btn">
-                                                <i class="fas fa-check"></i> Submit Grade
-                                            </button>
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                                            <span style="color: rgba(255,255,255,0.9);">Performance Trend:</span>
+                                            <span style="color: white; font-weight: 600; text-transform: capitalize;">
+                                                @if($learningAnalysis['performance_trend'] === 'improving')
+                                                    <i class="fas fa-arrow-up" style="color: #4ade80;"></i>
+                                                @elseif($learningAnalysis['performance_trend'] === 'declining')
+                                                    <i class="fas fa-arrow-down" style="color: #f87171;"></i>
+                                                @else
+                                                    <i class="fas fa-minus" style="color: #fbbf24;"></i>
+                                                @endif
+                                                {{ str_replace('_', ' ', $learningAnalysis['performance_trend']) }}
+                                            </span>
                                         </div>
                                     </div>
-                                </form>
-                            </div>
-                        @elseif($submission->status === 'graded')
+
+                                    <!-- Suggested Settings -->
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                                        <div style="background-color: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px; backdrop-filter: blur(10px);">
+                                            <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-bottom: 0.5rem;">Suggested Difficulty</div>
+                                            <div style="color: white; font-weight: 700; text-transform: capitalize; font-size: 1.1rem;">
+                                                {{ str_replace('_', ' ', $suggestedDifficulty ?? 'normal') }}
+                                            </div>
+                                        </div>
+                                        <div style="background-color: rgba(255,255,255,0.15); padding: 1rem; border-radius: 8px; backdrop-filter: blur(10px);">
+                                            <div style="color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-bottom: 0.5rem;">Suggested Frequency</div>
+                                            <div style="color: white; font-weight: 700; text-transform: capitalize; font-size: 1.1rem;">
+                                                {{ str_replace('_', ' ', $suggestedFrequency ?? 'normal') }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Recommendations -->
+                                    @if(!empty($learningAnalysis['recommendations']))
+                                        <div style="background-color: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 8px; backdrop-filter: blur(10px);">
+                                            <h4 style="color: white; margin-bottom: 1rem; font-size: 1.1rem;">
+                                                <i class="fas fa-lightbulb"></i> Teaching Recommendations
+                                            </h4>
+                                            <div style="display: grid; gap: 1rem;">
+                                                @foreach($learningAnalysis['recommendations'] as $recommendation)
+                                                    <div style="background-color: white; padding: 1rem; border-radius: 8px; border-left: 4px solid 
+                                                        @if($recommendation['type'] === 'success') #10b981
+                                                        @elseif($recommendation['type'] === 'info') #3b82f6
+                                                        @elseif($recommendation['type'] === 'warning') #f59e0b
+                                                        @else #ef4444
+                                                        @endif;">
+                                                        <div style="display: flex; align-items: start; gap: 0.75rem;">
+                                                            <div style="font-size: 1.5rem; color: 
+                                                                @if($recommendation['type'] === 'success') #10b981
+                                                                @elseif($recommendation['type'] === 'info') #3b82f6
+                                                                @elseif($recommendation['type'] === 'warning') #f59e0b
+                                                                @else #ef4444
+                                                                @endif;">
+                                                                <i class="{{ $recommendation['icon'] }}"></i>
+                                                            </div>
+                                                            <div style="flex: 1;">
+                                                                <div style="font-weight: 700; color: #333; margin-bottom: 0.5rem; font-size: 1rem;">
+                                                                    {{ $recommendation['title'] }}
+                                                                </div>
+                                                                <div style="color: #666; margin-bottom: 0.75rem; line-height: 1.6;">
+                                                                    {{ $recommendation['message'] }}
+                                                                </div>
+                                                                <div style="padding: 0.5rem; background-color: #f3f4f6; border-radius: 5px; font-size: 0.9rem; color: #4b5563;">
+                                                                    <strong>Action:</strong> {{ $recommendation['action'] }}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+
+                        @if($submission->status === 'graded')
                             <!-- Graded Results -->
                             <div class="grading-section">
                                 <h3 style="margin-bottom: 1rem; color: #333;">Grading Results</h3>

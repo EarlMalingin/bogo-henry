@@ -75,13 +75,19 @@ class TutorChat extends Component
                 ->where('is_read', false)
                 ->count();
 
-            // Always use initials instead of profile pictures
+            // Check if student has profile picture
+            if ($student->profile_picture) {
+                $avatar = asset('storage/' . $student->profile_picture);
+                $hasProfilePicture = true;
+            } else {
             $avatar = $student->getInitials();
             $hasProfilePicture = false;
+            }
 
             return [
                 'id' => $student->id,
                 'name' => $student->getFullName(),
+                'type' => 'student',
                 'avatar' => $avatar,
                 'has_profile_picture' => $hasProfilePicture,
                 'last_message' => $lastMessage ? $lastMessage->message : 'No messages yet',
@@ -121,17 +127,27 @@ class TutorChat extends Component
                 // Determine if this message is from the current user (tutor)
                 $isFromCurrentUser = $message->sender_type === 'tutor';
                 
-                // Always use initials instead of profile pictures
+                // Display profile pictures when available, otherwise use initials
                 if ($isFromCurrentUser) {
-                    // Message from current tutor - show tutor's initials
+                    // Message from current tutor - show tutor's profile picture or initials
+                    if ($currentTutor->profile_picture) {
+                        $displayAvatar = asset('storage/' . $currentTutor->profile_picture);
+                        $displayHasProfilePicture = true;
+                    } else {
                     $displayAvatar = $currentTutor->getInitials();
                     $displayHasProfilePicture = false;
+                    }
                 } else {
-                    // Message from student - show student's initials
+                    // Message from student - show student's profile picture or initials
                     $studentId = $message->sender_id;
                     $student = Student::find($studentId);
+                    if ($student && $student->profile_picture) {
+                        $displayAvatar = asset('storage/' . $student->profile_picture);
+                        $displayHasProfilePicture = true;
+                    } else {
                     $displayAvatar = $student ? $student->getInitials() : 'S';
                     $displayHasProfilePicture = false;
+                    }
                 }
                 
                 return [

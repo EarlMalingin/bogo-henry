@@ -230,6 +230,16 @@
             color: #d32f2f;
         }
 
+        .notification-icon.subscription {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .notification-icon.admin {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
         .notification-content {
             flex: 1;
         }
@@ -344,7 +354,7 @@
             <div id="notifications-list">
                 @forelse($notifications as $notification)
                     <div class="notification-card {{ !$notification->is_read ? 'unread' : '' }}" data-id="{{ $notification->id }}">
-                        <div class="notification-icon {{ $notification->type === 'activity_posted' ? 'activity' : ($notification->type === 'activity_graded' ? 'payment' : ($notification->type === 'activity_submitted' ? 'booking' : ($notification->type === 'booking_confirmed' ? 'booking' : 'alert'))) }}">
+                        <div class="notification-icon {{ $notification->type === 'activity_posted' ? 'activity' : ($notification->type === 'activity_graded' ? 'payment' : ($notification->type === 'activity_submitted' ? 'booking' : ($notification->type === 'booking_confirmed' ? 'booking' : ($notification->type === 'subscription_expiring' ? 'subscription' : ($notification->type === 'admin_message' ? 'admin' : 'alert'))))) }}">
                             @if($notification->type === 'problem_report_response')
                                 <i class="fas fa-exclamation-circle"></i>
                             @elseif($notification->type === 'booking_confirmed')
@@ -363,6 +373,10 @@
                                 <i class="fas fa-trophy" style="color: #FFD700;"></i>
                             @elseif($notification->type === 'achievement_progress')
                                 <i class="fas fa-chart-line" style="color: #4a90e2;"></i>
+                            @elseif($notification->type === 'subscription_expiring')
+                                <i class="fas fa-clock"></i>
+                            @elseif($notification->type === 'admin_message')
+                                <i class="fas fa-user-shield"></i>
                             @else
                                 <i class="fas fa-bell"></i>
                             @endif
@@ -450,13 +464,25 @@
         });
 
         function markAllAsRead() {
-            // Remove unread class from all notifications
-            document.querySelectorAll('.notification-card.unread').forEach(card => {
-                card.classList.remove('unread');
+            fetch('/student/notifications/mark-all-read', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove unread class from all notifications
+                    document.querySelectorAll('.notification-card.unread').forEach(card => {
+                        card.classList.remove('unread');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error marking all as read:', error);
             });
-            
-            // Optional: Send AJAX request to backend to mark as read
-            // fetch('/student/notifications/mark-all-read', { method: 'POST' })
         }
 
         function deleteNotification(id) {

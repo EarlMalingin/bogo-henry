@@ -34,8 +34,14 @@ class StudentSettingsController extends Controller
                 ->first();
             
             if (!$userAchievement) {
-                $progress = $this->calculateProgress($student, $achievement);
-                $isUnlocked = $progress >= 100;
+                // Handle "Welcome!" achievement or achievements with no requirement
+                if (!$achievement->requirement_type) {
+                    $progress = 100;
+                    $isUnlocked = true;
+                } else {
+                    $progress = $this->calculateProgress($student, $achievement);
+                    $isUnlocked = $progress >= 100;
+                }
                 
                 $userAchievement = UserAchievement::create([
                     'achievement_id' => $achievement->id,
@@ -46,16 +52,18 @@ class StudentSettingsController extends Controller
                     'unlocked_at' => $isUnlocked ? now() : null,
                 ]);
             } else {
-                // Update progress
-                $progress = $this->calculateProgress($student, $achievement);
-                $userAchievement->progress = $progress;
-                
-                // Check if achievement should be unlocked
-                if (!$userAchievement->is_unlocked && $progress >= 100) {
-                    $userAchievement->is_unlocked = true;
-                    $userAchievement->unlocked_at = now();
+                // Update progress (skip for achievements with no requirement)
+                if ($achievement->requirement_type) {
+                    $progress = $this->calculateProgress($student, $achievement);
+                    $userAchievement->progress = $progress;
+                    
+                    // Check if achievement should be unlocked
+                    if (!$userAchievement->is_unlocked && $progress >= 100) {
+                        $userAchievement->is_unlocked = true;
+                        $userAchievement->unlocked_at = now();
+                    }
+                    $userAchievement->save();
                 }
-                $userAchievement->save();
             }
             
             if ($userAchievement->is_unlocked) {

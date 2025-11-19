@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Models\Tutor;
 use Illuminate\Support\Facades\DB;
 use App\Services\PayMongoService;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminWalletController extends Controller
 {
@@ -102,6 +103,70 @@ class AdminWalletController extends Controller
         $transactions = $query->orderBy('created_at', 'desc')->paginate(20);
 
         return view('admin.wallet.transactions', compact('transactions'));
+    }
+
+    /**
+     * Download transactions as PDF
+     */
+    public function downloadPdf(Request $request)
+    {
+        $query = WalletTransaction::with(['wallet']);
+
+        // Apply filters (same as transactions method)
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Get all transactions (no pagination for PDF)
+        $transactions = $query->orderBy('created_at', 'desc')->get();
+
+        // Calculate summary statistics
+        $totalTransactions = $transactions->count();
+        $totalCashIn = $transactions->where('type', 'cash_in')->where('status', 'completed')->sum('amount');
+        $totalCashOut = $transactions->where('type', 'cash_out')->where('status', 'completed')->sum('amount');
+        $totalSessionBookings = $transactions->where('type', 'session_booking')->where('status', 'completed')->sum('amount');
+        $totalSessionEarnings = $transactions->where('type', 'session_earnings')->where('status', 'completed')->sum('amount');
+        $totalAssignmentPayments = $transactions->where('type', 'assignment_payment')->where('status', 'completed')->sum('amount');
+        $totalAssignmentEarnings = $transactions->where('type', 'assignment_earnings')->where('status', 'completed')->sum('amount');
+
+        // Generate PDF
+        $pdf = Pdf::loadView('admin.wallet.transactions-pdf', compact(
+            'transactions',
+            'totalTransactions',
+            'totalCashIn',
+            'totalCashOut',
+            'totalSessionBookings',
+            'totalSessionEarnings',
+            'totalAssignmentPayments',
+            'totalAssignmentEarnings'
+        ));
+
+        // Generate filename with filters
+        $filename = 'admin-transactions';
+        if ($request->filled('type')) {
+            $filename .= '-' . $request->type;
+        }
+        if ($request->filled('status')) {
+            $filename .= '-' . $request->status;
+        }
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            $filename .= '-' . now()->format('Y-m-d');
+        }
+        $filename .= '.pdf';
+
+        return $pdf->download($filename);
     }
 
     /**

@@ -181,27 +181,6 @@
             background-color: #3a7ccc;
         }
         
-        .filter-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        
-        .filter-options select {
-            padding: 0.5rem 1rem;
-            border: 1px solid #ddd;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            outline: none;
-            background-color: white;
-            cursor: pointer;
-        }
-        
-        .filter-options select:focus {
-            border-color: #4a90e2;
-        }
-        
         .tutor-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -215,11 +194,36 @@
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
             overflow: hidden;
             transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
         }
         
         .tutor-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tutor-card.tutor-matched {
+            border: 2px solid #28a745;
+            box-shadow: 0 3px 15px rgba(40, 167, 69, 0.2);
+            background: linear-gradient(to bottom, rgba(40, 167, 69, 0.02), white);
+        }
+
+        .tutor-card.tutor-matched:hover {
+            box-shadow: 0 5px 25px rgba(40, 167, 69, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .match-badge {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
         }
         
         .tutor-header {
@@ -778,20 +782,26 @@
                     <input type="text" id="search-input" placeholder="Search for tutors by name, subject, or keyword...">
                     <button onclick="searchTutors()">Search</button>
                 </div>
-                <div class="filter-options">
-                    <select id="price-filter">
-                        <option value="">Sort by Price</option>
-                        <option value="lowest">Lowest to Highest</option>
-                        <option value="highest">Highest to Lowest</option>
-                    </select>
-                </div>
             </div>
             
             <!-- Tutor Grid -->
-            <h2 class="section-title">Available Tutors</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <h2 class="section-title" style="margin: 0;">Available Tutors</h2>
+                @if($student && $student->subjects_interest)
+                    <div style="font-size: 0.9rem; color: #666; background: #f8f9fa; padding: 0.5rem 1rem; border-radius: 20px; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-magic" style="color: #28a745;"></i> 
+                        <span>Smart matching enabled</span>
+                    </div>
+                @endif
+            </div>
             <div class="tutor-grid" id="tutor-grid">
                 @forelse($tutors as $tutor)
-                    <div class="tutor-card" data-tutor-id="{{ $tutor->id }}">
+                    <div class="tutor-card {{ isset($tutor->is_matched) && $tutor->is_matched ? 'tutor-matched' : '' }}" data-tutor-id="{{ $tutor->id }}">
+                        @if(isset($tutor->is_matched) && $tutor->is_matched)
+                            <div class="match-badge" style="position: absolute; top: 10px; right: 10px; background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; z-index: 10; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);">
+                                <i class="fas fa-check-circle"></i> Matched
+                            </div>
+                        @endif
                         <div class="tutor-header">
                             <div class="tutor-avatar">
                                 @if($tutor->profile_picture)
@@ -812,8 +822,9 @@
                             @php
                                 $hourlyRate = $tutor->hourly_rate ?? $tutor->session_rate ?? 0;
                                 $monthlyRate = $tutor->session_rate;
-                                $averageRating = round($tutor->reviews_avg_rating ?? 0, 1);
-                                $ratingCount = $tutor->reviews_count ?? 0;
+                                // Use the updated method that includes both session reviews and assignment answer ratings
+                                $averageRating = round($tutor->getAverageRating(), 1);
+                                $ratingCount = $tutor->getRatingCount();
                                 $filledStars = floor($averageRating);
                                 $hasHalfStar = ($averageRating - $filledStars) >= 0.5;
                             @endphp
@@ -835,7 +846,7 @@
                                 @endfor
                                 <span class="rating-text">
                                     @if($ratingCount > 0)
-                                        {{ number_format($averageRating, 1) }} ({{ $ratingCount }})
+                                        {{ number_format($averageRating, 1) }}
                                     @else
                                         No reviews yet
                                     @endif
@@ -1118,14 +1129,6 @@
             
             // Initialize booking modal functionality
             initializeBookingModal();
-            
-            // Add event listener for price filter
-            const priceFilter = document.getElementById('price-filter');
-            if (priceFilter) {
-                priceFilter.addEventListener('change', function() {
-                    searchTutors();
-                });
-            }
         });
 
         // Currency display functionality
@@ -1164,10 +1167,9 @@
         
         function searchTutors() {
             const searchTerm = document.getElementById('search-input').value.toLowerCase();
-            const priceFilter = document.getElementById('price-filter').value;
             const tutorCards = document.querySelectorAll('.tutor-card');
             
-            // First, filter by search term
+            // Filter by search term
             tutorCards.forEach(card => {
                 const tutorName = card.querySelector('.tutor-name').textContent.toLowerCase();
                 const tutorTitle = card.querySelector('.tutor-title').textContent.toLowerCase();
@@ -1181,42 +1183,12 @@
                 
                 card.style.display = showCard ? 'block' : 'none';
             });
-            
-            // Then sort by price if a price filter is selected
-            if (priceFilter) {
-                sortTutorsByPrice(priceFilter);
-            }
-        }
-        
-        function sortTutorsByPrice(sortOrder) {
-            const tutorGrid = document.getElementById('tutor-grid');
-            const tutorCards = Array.from(tutorGrid.querySelectorAll('.tutor-card'));
-            
-            // Filter out hidden cards
-            const visibleCards = tutorCards.filter(card => card.style.display !== 'none');
-            
-            // Sort cards by price
-            visibleCards.sort((a, b) => {
-                const priceA = parseFloat(a.querySelector('.tutor-rate').textContent.replace(/[^0-9.]/g, ''));
-                const priceB = parseFloat(b.querySelector('.tutor-rate').textContent.replace(/[^0-9.]/g, ''));
-                
-                if (sortOrder === 'lowest') {
-                    return priceA - priceB;
-                } else if (sortOrder === 'highest') {
-                    return priceB - priceA;
-                }
-                return 0;
-            });
-            
-            // Re-append sorted cards to maintain order
-            visibleCards.forEach(card => {
-                tutorGrid.appendChild(card);
-            });
         }
         
         function extractRatingData(tutor) {
-            const rawAverage = tutor.reviews_avg_rating ?? tutor.average_rating ?? 0;
-            const rawCount = tutor.reviews_count ?? tutor.rating_count ?? 0;
+            // Try to get from model methods first, then fallback to eager loaded data
+            const rawAverage = tutor.average_rating ?? tutor.reviews_avg_rating ?? 0;
+            const rawCount = tutor.rating_count ?? tutor.reviews_count ?? 0;
             const average = Math.round((parseFloat(rawAverage) || 0) * 10) / 10;
             const count = parseInt(rawCount, 10) || 0;
             return { average, count };
@@ -1236,7 +1208,7 @@
                 starsHtml += `<span class="star ${starClass}">&#9733;</span>`;
             }
             const ratingLabel = count > 0
-                ? `${average.toFixed(1)} (${count} review${count === 1 ? '' : 's'})`
+                ? `${average.toFixed(1)}`
                 : 'No reviews yet';
             return `${starsHtml}<span class="rating-text">${ratingLabel}</span>`;
         }

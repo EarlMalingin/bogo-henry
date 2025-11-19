@@ -482,6 +482,71 @@
             <div class="date-time" id="current-date-time">Tuesday, May 13, 2025</div>
         </div>
         
+        <!-- Streak Display Section -->
+        @auth('student')
+        <div class="streaks-section" style="margin: 2rem 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <!-- Login Streak -->
+            <div class="streak-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: white;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="font-size: 2rem;">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Daily Login Streak</div>
+                        <div style="font-size: 2rem; font-weight: bold;">{{ $loginStreak ?? 0 }}</div>
+                    </div>
+                </div>
+                @if(isset($longestLoginStreak) && $longestLoginStreak > 0)
+                    <div style="font-size: 0.85rem; opacity: 0.8;">Longest: {{ $longestLoginStreak }} days</div>
+                @endif
+                @if(($loginStreak ?? 0) >= 3)
+                    <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.9;">
+                        <i class="fas fa-trophy"></i> Keep it up!
+                    </div>
+                @endif
+            </div>
+            
+            <!-- Activity Submission Streak -->
+            <div class="streak-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: white;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="font-size: 2rem;">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Activity Submission Streak</div>
+                        <div style="font-size: 2rem; font-weight: bold;">{{ $activityStreak ?? 0 }}</div>
+                    </div>
+                </div>
+                @if(isset($longestActivityStreak) && $longestActivityStreak > 0)
+                    <div style="font-size: 0.85rem; opacity: 0.8;">Longest: {{ $longestActivityStreak }} days</div>
+                @endif
+                @if(($activityStreak ?? 0) >= 3)
+                    <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.9;">
+                        <i class="fas fa-star"></i> Great consistency!
+                    </div>
+                @endif
+            </div>
+            
+            <!-- Perfect Score Streak -->
+            @if(($perfectScoreStreak ?? 0) > 0)
+            <div class="streak-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: white;">
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <div style="font-size: 2rem;">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; opacity: 0.9;">Perfect Score Streak</div>
+                        <div style="font-size: 2rem; font-weight: bold;">{{ $perfectScoreStreak ?? 0 }}</div>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; opacity: 0.9;">
+                    <i class="fas fa-medal"></i> Outstanding!
+                </div>
+            </div>
+            @endif
+        </div>
+        @endauth
+        
         <!-- Upcoming Sessions -->
         <h2 class="section-title">Upcoming Sessions</h2>
         <div class="sessions-container" id="sessions-container">
@@ -533,6 +598,8 @@
                             <i class="fas fa-trophy"></i>
                         @elseif($notification->type === 'achievement_progress')
                             <i class="fas fa-chart-line"></i>
+                        @elseif($notification->type === 'admin_message')
+                            <i class="fas fa-user-shield"></i>
                         @else
                             <i class="fas fa-bell"></i>
                         @endif
@@ -894,6 +961,13 @@
             const sessionDate = new Date(session.date);
             const formattedDate = !isNaN(sessionDate) ? sessionDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Invalid Date';
             
+            // Calculate end date (for monthly subscriptions, it's 1 month from start date)
+            let endDate = new Date(sessionDate);
+            if (session.booking_type === 'monthly') {
+                endDate.setMonth(endDate.getMonth() + 1);
+            }
+            const formattedEndDate = !isNaN(endDate) ? endDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Invalid Date';
+            
             const startTime = new Date(`1970-01-01T${session.start_time}`);
             const formattedStartTime = !isNaN(startTime) ? startTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'Invalid Time';
 
@@ -926,6 +1000,7 @@
                 <p><strong>Tutor:</strong> ${session.tutor ? `${session.tutor.first_name} ${session.tutor.last_name}` : 'N/A'}</p>
                 <p><strong>Subject:</strong> ${session.tutor && session.tutor.specialization ? session.tutor.specialization.split(',')[0] : 'General Tutoring'}</p>
                 <p><strong>Date:</strong> ${formattedDate}</p>
+                ${session.booking_type === 'monthly' ? `<p><strong>End Date:</strong> ${formattedEndDate}</p>` : ''}
                 <p><strong>Time:</strong> ${formattedStartTime} - ${formattedEndTime}</p>
                 <p><strong>Type:</strong> ${session.session_type === 'face_to_face' ? 'Face-to-Face' : 'Online'}</p>
                 <p><strong>Status:</strong> <span class="status-badge ${statusClass}">${session.status}</span></p>

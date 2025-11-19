@@ -167,15 +167,9 @@
                                     </span>
                                 </td>
                                 <td>
-                                    @if($tutor['is_terrible'])
-                                        <button type="button" class="btn-message" onclick="openMessageModal({{ $tutor['id'] }}, '{{ addslashes($tutor['name']) }}')">
-                                            Send Message
-                                        </button>
-                                    @else
-                                        <button type="button" class="btn-message" disabled>
-                                            Send Message
-                                        </button>
-                                    @endif
+                                    <button type="button" class="btn-message" onclick="openMessageModal({{ $tutor['id'] }}, '{{ addslashes($tutor['name']) }}')">
+                                        Send Message
+                                    </button>
                                 </td>
                             </tr>
                         @empty
@@ -291,7 +285,8 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
-                    tutor_id: tutorId,
+                    user_id: tutorId,
+                    user_type: 'tutor',
                     message: message
                 })
             })

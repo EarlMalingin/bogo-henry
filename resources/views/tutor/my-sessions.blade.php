@@ -738,11 +738,6 @@
                             <a href="{{ route('tutor.activities.show', $activity) }}" class="btn btn-primary btn-sm">
                                 <i class="fas fa-eye"></i> View
                             </a>
-                            @if($activity->status === 'completed')
-                                <button class="btn btn-secondary btn-sm" onclick="gradeActivity({{ $activity->id }})">
-                                    <i class="fas fa-graduation-cap"></i> Grade
-                                </button>
-                            @endif
                         </div>
                     </div>
                 @empty
@@ -843,10 +838,6 @@
         }
 
 
-        function gradeActivity(activityId) {
-            // Redirect to grading page
-            window.location.href = `/tutor/activities/${activityId}/grade`;
-        }
     </script>
     @include('layouts.footer-js')
 </body>
