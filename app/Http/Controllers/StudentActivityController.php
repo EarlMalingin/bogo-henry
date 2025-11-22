@@ -315,13 +315,13 @@ class StudentActivityController extends Controller
         $activity->refresh();
 
         // Create notification for student about grading
-        \App\Models\Notification::create([
+            \App\Models\Notification::create([
             'user_id' => $student->id,
             'user_type' => 'student',
             'type' => 'activity_graded',
             'title' => 'Activity Graded',
             'message' => 'Your activity "' . $activity->title . '" has been automatically graded. Score: ' . $score . '/' . $activity->total_points,
-        ]);
+            ]);
 
         // Check achievements for student
         $achievementService = new \App\Services\AchievementNotificationService();

@@ -50,7 +50,7 @@ class ChatSocket {
                 this.isConnected = false;
                 this.showConnectionError(error);
             });
-
+            
             this.pusher.connection.bind('state_change', (states) => {
                 console.log('Pusher state changed:', states);
             });
@@ -73,7 +73,7 @@ class ChatSocket {
         if (userId && userType) {
             this.userId = userId;
             this.userType = userType;
-
+            
             // Subscribe to user's personal channel for notifications
             const personalChannel = `private-user-${userType}-${userId}`;
             this.subscribeToChannel(personalChannel, (channel) => {
@@ -176,12 +176,12 @@ class ChatSocket {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
                 body: JSON.stringify({
-                    senderId: this.userId,
-                    senderType: this.userType,
-                    receiverId: receiverId,
-                    receiverType: receiverType,
-                    message: message,
-                    fileData: fileData
+            senderId: this.userId,
+            senderType: this.userType,
+            receiverId: receiverId,
+            receiverType: receiverType,
+            message: message,
+            fileData: fileData
                 })
             });
 
@@ -216,13 +216,13 @@ class ChatSocket {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
                 body: JSON.stringify({
-                    senderId: this.userId,
-                    senderType: this.userType,
-                    receiverId: receiverId,
+            senderId: this.userId,
+            senderType: this.userType,
+            receiverId: receiverId,
                     receiverType: receiverType,
                     isTyping: isTyping
                 })
-            });
+        });
         } catch (error) {
             console.error('Error sending typing event:', error);
         }
@@ -238,11 +238,11 @@ class ChatSocket {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
                 body: JSON.stringify({
-                    messageId: messageId,
-                    readerId: this.userId,
-                    readerType: this.userType
+            messageId: messageId,
+            readerId: this.userId,
+            readerType: this.userType
                 })
-            });
+        });
         } catch (error) {
             console.error('Error marking message as read:', error);
         }
@@ -353,12 +353,12 @@ class ChatSocket {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
                 body: JSON.stringify({
-                    callType,
-                    callerId: this.userId,
-                    callerName: this.getCurrentUserName(),
-                    receiverId,
-                    receiverType,
-                    roomId
+            callType,
+            callerId: this.userId,
+            callerName: this.getCurrentUserName(),
+            receiverId,
+            receiverType,
+            roomId
                 })
             });
         } catch (error) {
@@ -376,9 +376,9 @@ class ChatSocket {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
                 body: JSON.stringify({
-                    roomId,
-                    receiverId,
-                    receiverType
+            roomId,
+            receiverId,
+            receiverType
                 })
             });
         } catch (error) {
@@ -396,8 +396,8 @@ class ChatSocket {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
                 body: JSON.stringify({
-                    roomId,
-                    endedBy
+            roomId,
+            endedBy
                 })
             });
         } catch (error) {
@@ -525,18 +525,18 @@ class ChatSocket {
             `;
         }
     }
-
+            
     // Hide connection error
     hideConnectionError() {
         const errorDiv = document.getElementById('socket-connection-error');
         if (errorDiv) {
-            errorDiv.style.opacity = '0';
-            errorDiv.style.transition = 'opacity 0.5s';
-            setTimeout(() => {
-                if (errorDiv && errorDiv.parentNode) {
-                    errorDiv.parentNode.removeChild(errorDiv);
-                }
-            }, 500);
+                    errorDiv.style.opacity = '0';
+                    errorDiv.style.transition = 'opacity 0.5s';
+                    setTimeout(() => {
+                        if (errorDiv && errorDiv.parentNode) {
+                            errorDiv.parentNode.removeChild(errorDiv);
+                        }
+                    }, 500);
         }
     }
 
@@ -575,20 +575,20 @@ class ChatSocket {
     }
 }
 
-// Initialize socket when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, checking for messaging container or CallManager...');
-    
-    if (document.querySelector('.messaging-container') || document.querySelector('[wire\\:id*="call-manager"]')) {
+    // Initialize socket when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded, checking for messaging container or CallManager...');
+        
+        if (document.querySelector('.messaging-container') || document.querySelector('[wire\\:id*="call-manager"]')) {
         console.log('Chat page or CallManager found, initializing Pusher...');
-        window.chatSocket = new ChatSocket();
-        window.chatSocket.connect();
-    } else {
+            window.chatSocket = new ChatSocket();
+            window.chatSocket.connect();
+        } else {
         console.log('Neither messaging container nor CallManager found, Pusher not initialized');
-    }
-});
+        }
+    });
 
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ChatSocket;
-}
+} 

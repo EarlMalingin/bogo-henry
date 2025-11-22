@@ -64,20 +64,20 @@
         // Store new activity
         public function store(Request $request)
         {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'type' => 'required|in:activity,exam,assignment,quiz',
-            'student_id' => 'required|exists:students,id',
-            'session_id' => 'nullable|exists:sessions,id',
-            'instructions' => 'nullable|string',
-            'due_date' => 'nullable|date|after:now',
-            'total_points' => 'required|integer|min:1',
-            'time_limit' => 'nullable|integer|min:1',
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'required|string',
+                'type' => 'required|in:activity,exam,assignment,quiz',
+                'student_id' => 'required|exists:students,id',
+                'session_id' => 'nullable|exists:sessions,id',
+                'instructions' => 'nullable|string',
+                'due_date' => 'nullable|date|after:now',
+                'total_points' => 'required|integer|min:1',
+                'time_limit' => 'nullable|integer|min:1',
             'questions' => 'nullable'
-        ]);
+            ]);
 
-        $tutor = Auth::guard('tutor')->user();
+            $tutor = Auth::guard('tutor')->user();
 
         // Handle questions - decode if it's a JSON string
         $questions = $request->questions;
@@ -97,66 +97,66 @@
                     return redirect()->back()
                         ->withErrors(['questions' => 'Each question must have at least 2 options.'])
                         ->withInput();
-                }
+                    }
                 if (!isset($question['type']) || $question['type'] !== 'multiple_choice') {
                     return redirect()->back()
                         ->withErrors(['questions' => 'All questions must be multiple choice type.'])
                         ->withInput();
                 }
+                }
             }
-        }
 
-        $activity = Activity::create([
-            'tutor_id' => $tutor->id,
-            'student_id' => $request->student_id,
-            'session_id' => $request->session_id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'type' => $request->type,
-            'status' => 'sent',
-            'instructions' => $request->instructions,
+            $activity = Activity::create([
+                'tutor_id' => $tutor->id,
+                'student_id' => $request->student_id,
+                'session_id' => $request->session_id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'type' => $request->type,
+                'status' => 'sent',
+                'instructions' => $request->instructions,
             'questions' => $questions,
             'attachments' => null, // No longer using attachments
-            'due_date' => $request->due_date,
-            'total_points' => $request->total_points,
-            'time_limit' => $request->time_limit,
-        ]);
-
-        // Create notification for student
-        $student = \App\Models\Student::find($request->student_id);
-        if ($student) {
-            \App\Models\Notification::create([
-                'user_id' => $student->id,
-                'user_type' => 'student',
-                'type' => 'activity_posted',
-                'title' => 'New Activity Assigned',
-                'message' => $tutor->first_name . ' ' . $tutor->last_name . ' has assigned you a new activity: "' . $activity->title . '".' . ($activity->due_date ? ' Due date: ' . $activity->due_date->format('M d, Y') : ''),
+                'due_date' => $request->due_date,
+                'total_points' => $request->total_points,
+                'time_limit' => $request->time_limit,
             ]);
-        }
 
-        // Check achievements for tutor
-        $achievementService = new \App\Services\AchievementNotificationService();
-        $achievementService->checkAndNotifyProgress($tutor, 'tutor', 'activities_created');
+            // Create notification for student
+            $student = \App\Models\Student::find($request->student_id);
+            if ($student) {
+                \App\Models\Notification::create([
+                    'user_id' => $student->id,
+                    'user_type' => 'student',
+                    'type' => 'activity_posted',
+                    'title' => 'New Activity Assigned',
+                    'message' => $tutor->first_name . ' ' . $tutor->last_name . ' has assigned you a new activity: "' . $activity->title . '".' . ($activity->due_date ? ' Due date: ' . $activity->due_date->format('M d, Y') : ''),
+                ]);
+            }
+
+            // Check achievements for tutor
+            $achievementService = new \App\Services\AchievementNotificationService();
+            $achievementService->checkAndNotifyProgress($tutor, 'tutor', 'activities_created');
 
         // Update activity creation streak
         $streakService = new \App\Services\StreakService();
         $streakService->checkActivityCreationStreak($tutor, 'tutor');
 
-        return redirect()->route('tutor.my-sessions')->with('success', 'Activity sent successfully!');
-    }
-
-    // Show activity details
-    public function show(Activity $activity)
-    {
-        $tutor = Auth::guard('tutor')->user();
-        
-        // Ensure the tutor owns this activity
-        if ($activity->tutor_id !== $tutor->id) {
-            abort(403);
+            return redirect()->route('tutor.my-sessions')->with('success', 'Activity sent successfully!');
         }
 
-        $activity->load(['student', 'session']);
-        
+        // Show activity details
+        public function show(Activity $activity)
+        {
+            $tutor = Auth::guard('tutor')->user();
+            
+            // Ensure the tutor owns this activity
+            if ($activity->tutor_id !== $tutor->id) {
+                abort(403);
+            }
+
+            $activity->load(['student', 'session']);
+
         // Get the student submission
         $submission = $activity->studentSubmission($activity->student_id);
         
@@ -173,7 +173,7 @@
         }
 
         return view('tutor.activities.show', compact('activity', 'tutor', 'submission', 'learningAnalysis', 'suggestedDifficulty', 'suggestedFrequency'));
-    }
+        }
 
         // Grade an activity
         public function grade(Request $request, Activity $activity)

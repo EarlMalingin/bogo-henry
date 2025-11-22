@@ -434,20 +434,20 @@
                     </p>
                     
                     @if($submission->score !== null)
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                             <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px;">
-                                <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $submission->score }}</div>
-                                <div style="color: #666; margin-top: 0.5rem;">Your Score</div>
-                            </div>
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $submission->score }}</div>
+                            <div style="color: #666; margin-top: 0.5rem;">Your Score</div>
+                    </div>
                             <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px;">
-                                <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $activity->total_points }}</div>
-                                <div style="color: #666; margin-top: 0.5rem;">Total Points</div>
-                            </div>
+                            <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $activity->total_points }}</div>
+                            <div style="color: #666; margin-top: 0.5rem;">Total Points</div>
+                        </div>
                             <div style="text-align: center; padding: 1.5rem; background-color: white; border-radius: 8px;">
                                 <div style="font-size: 2.5rem; font-weight: bold; color: #4a90e2;">{{ $activity->total_points > 0 ? round(($submission->score / $activity->total_points) * 100) : 0 }}%</div>
-                                <div style="color: #666; margin-top: 0.5rem;">Percentage</div>
-                            </div>
+                            <div style="color: #666; margin-top: 0.5rem;">Percentage</div>
                         </div>
+                    </div>
                     @endif
                     
                     @if($submission->feedback)
@@ -497,20 +497,20 @@
                                     <!-- Multiple Choice -->
                                     @if(isset($question['options']))
                                         <div style="margin-top: 1rem;">
-                                            @foreach($question['options'] as $optionIndex => $option)
+                                        @foreach($question['options'] as $optionIndex => $option)
                                                 @php
                                                     $optionLabel = chr(65 + $optionIndex); // A, B, C, D, etc.
                                                 @endphp
                                                 <label style="display: flex; align-items: center; margin-bottom: 0.75rem; padding: 0.75rem; background-color: #f8f9fa; border-radius: 5px; cursor: pointer; transition: background-color 0.2s;">
-                                                    <input type="radio" 
-                                                           name="answers[{{ $index }}]" 
-                                                           value="{{ $optionIndex }}"
-                                                           {{ ($submission && isset($submission->answers[$index]) && $submission->answers[$index] == $optionIndex) ? 'checked' : '' }}
+                                                <input type="radio" 
+                                                       name="answers[{{ $index }}]" 
+                                                       value="{{ $optionIndex }}"
+                                                       {{ ($submission && isset($submission->answers[$index]) && $submission->answers[$index] == $optionIndex) ? 'checked' : '' }}
                                                            style="margin-right: 0.75rem; cursor: pointer;">
                                                     <span style="font-weight: 600; color: #2d7dd2; min-width: 25px; margin-right: 0.5rem;">{{ $optionLabel }}.</span>
                                                     <span style="flex: 1; font-size: 1rem;">{{ $option }}</span>
-                                                </label>
-                                            @endforeach
+                                            </label>
+                                        @endforeach
                                         </div>
                                     @endif
                                 @else
@@ -564,7 +564,7 @@
                                     <strong>Question:</strong> {{ $questionText }}
                                 </div>
                                 
-                                @if(isset($question['type']) && $question['type'] === 'multiple_choice' && isset($question['options']))
+                                        @if(isset($question['type']) && $question['type'] === 'multiple_choice' && isset($question['options']))
                                     <div style="margin-bottom: 0.75rem;">
                                         <strong style="color: #333;">Options:</strong>
                                         <div style="margin-top: 0.5rem;">
@@ -599,12 +599,12 @@
                                                 {{ chr(65 + $studentAnswerIndex) }}. {{ $question['options'][$studentAnswerIndex] ?? 'N/A' }}
                                             </span>
                                         </div>
-                                    @else
+                                            @else
                                         <div style="padding: 0.75rem; background-color: #fff3cd; border-radius: 3px; margin-top: 0.5rem; color: #856404;">
                                             <i class="fas fa-exclamation-triangle"></i> No answer provided
                                         </div>
-                                    @endif
-                                @else
+                                            @endif
+                                        @else
                                     @if(isset($submission->answers[$index]))
                                         <div style="padding: 0.75rem; background-color: white; border-radius: 3px; margin-top: 0.5rem;">
                                             <strong style="color: #333;">Your Answer:</strong>
@@ -615,7 +615,7 @@
                                             <i class="fas fa-exclamation-triangle"></i> No answer provided
                                         </div>
                                     @endif
-                                @endif
+                                        @endif
                             </div>
                         @endforeach
                     </div>

@@ -39,8 +39,8 @@ class StudentSettingsController extends Controller
                     $progress = 100;
                     $isUnlocked = true;
                 } else {
-                    $progress = $this->calculateProgress($student, $achievement);
-                    $isUnlocked = $progress >= 100;
+                $progress = $this->calculateProgress($student, $achievement);
+                $isUnlocked = $progress >= 100;
                 }
                 
                 $userAchievement = UserAchievement::create([
@@ -54,15 +54,15 @@ class StudentSettingsController extends Controller
             } else {
                 // Update progress (skip for achievements with no requirement)
                 if ($achievement->requirement_type) {
-                    $progress = $this->calculateProgress($student, $achievement);
-                    $userAchievement->progress = $progress;
-                    
-                    // Check if achievement should be unlocked
-                    if (!$userAchievement->is_unlocked && $progress >= 100) {
-                        $userAchievement->is_unlocked = true;
-                        $userAchievement->unlocked_at = now();
-                    }
-                    $userAchievement->save();
+                $progress = $this->calculateProgress($student, $achievement);
+                $userAchievement->progress = $progress;
+                
+                // Check if achievement should be unlocked
+                if (!$userAchievement->is_unlocked && $progress >= 100) {
+                    $userAchievement->is_unlocked = true;
+                    $userAchievement->unlocked_at = now();
+                }
+                $userAchievement->save();
                 }
             }
             

@@ -1182,7 +1182,7 @@
             </div>
             <div class="date-time" id="current-date-time">Tuesday, May 13, 2025</div>
         </div>
-        
+
         <!-- Streak Display Section -->
         <div class="streaks-section" style="margin: 2rem 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
             <!-- Login Streak -->

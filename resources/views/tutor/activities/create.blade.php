@@ -1089,7 +1089,7 @@
                     <button type="button" class="remove-option" onclick="removeOption(this)">
                         <i class="fas fa-times"></i>
                     </button>
-                `;
+                        `;
                 
                 optionsList.appendChild(optionItem);
             }

@@ -518,7 +518,7 @@
                                         <div style="display: flex; justify-content: space-between; align-items: center;">
                                             <span style="color: rgba(255,255,255,0.9);">Average Score:</span>
                                             <span style="color: white; font-weight: 600;">{{ $learningAnalysis['average_score'] }}%</span>
-                                        </div>
+                        </div>
                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
                                             <span style="color: rgba(255,255,255,0.9);">Performance Trend:</span>
                                             <span style="color: white; font-weight: 600; text-transform: capitalize;">
@@ -592,7 +592,7 @@
                                     @endif
                                 </div>
                             @endif
-                        </div>
+                            </div>
 
                         @if($submission->status === 'graded')
                             <!-- Graded Results -->
